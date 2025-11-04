@@ -1,5 +1,6 @@
 :root {
   color-scheme: only light;
+  --header-height: 4.5rem;
 }
 
 * {
@@ -38,6 +39,7 @@ body {
 
 .site-header {
   padding: 1.5rem 0 0.5rem;
+  min-height: var(--header-height);
 }
 
 .site-nav {
@@ -72,6 +74,20 @@ body {
   gap: 1.5rem;
 }
 
+#home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: clamp(3rem, 14vh, 6rem);
+  min-height: calc(100vh - var(--header-height));
+}
+
+@supports (height: 100dvh) {
+  #home {
+    min-height: calc(100dvh - var(--header-height));
+  }
+}
+
 .section-content h2 {
   margin: 0;
   font-size: 1.5rem;
@@ -81,6 +97,11 @@ body {
   margin: 0;
   font-size: 1.4rem;
   line-height: 1.6;
+}
+
+.home-content {
+  width: 100%;
+  gap: clamp(1rem, 3vh, 2rem);
 }
 
 .primary {
