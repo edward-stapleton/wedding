@@ -1,7 +1,7 @@
 const ACCESS_CODE = 'STARFORD';
 const STORAGE_KEY = 'weddingSiteUnlocked';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
-const MAPBOX_TOKEN = 'YOUR_MAPBOX_ACCESS_TOKEN';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
 
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
@@ -13,6 +13,8 @@ const rsvpFeedback = document.getElementById('rsvp-feedback');
 const openRsvpButton = document.getElementById('open-rsvp');
 const closeModalEls = document.querySelectorAll('[data-close-modal]');
 const mapContainer = document.querySelector('[data-map-container]');
+const navToggle = document.querySelector('[data-nav-toggle]');
+const primaryNav = document.querySelector('[data-nav]');
 
 let mapLoaded = false;
 let mapInstance;
@@ -78,6 +80,66 @@ function setupFadeSections() {
 }
 
 setupFadeSections();
+
+if (navToggle && primaryNav) {
+  const navLinks = Array.from(primaryNav.querySelectorAll('a'));
+  const navMediaQuery = window.matchMedia('(min-width: 768px)');
+
+  const enableNavLinks = () => {
+    navLinks.forEach(link => link.removeAttribute('tabindex'));
+  };
+
+  const disableNavLinks = () => {
+    navLinks.forEach(link => link.setAttribute('tabindex', '-1'));
+  };
+
+  const openNav = () => {
+    primaryNav.dataset.collapsed = 'false';
+    primaryNav.setAttribute('aria-hidden', 'false');
+    navToggle.setAttribute('aria-expanded', 'true');
+    enableNavLinks();
+  };
+
+  const closeNav = () => {
+    primaryNav.dataset.collapsed = 'true';
+    primaryNav.setAttribute('aria-hidden', 'true');
+    navToggle.setAttribute('aria-expanded', 'false');
+    disableNavLinks();
+  };
+
+  const handleMediaChange = event => {
+    if (event.matches) {
+      navToggle.hidden = true;
+      primaryNav.dataset.collapsed = 'false';
+      primaryNav.removeAttribute('aria-hidden');
+      navToggle.setAttribute('aria-expanded', 'false');
+      enableNavLinks();
+    } else {
+      navToggle.hidden = false;
+      closeNav();
+    }
+  };
+
+  navToggle.addEventListener('click', () => {
+    const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+    if (expanded) {
+      closeNav();
+    } else {
+      openNav();
+    }
+  });
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      if (!navMediaQuery.matches) {
+        closeNav();
+      }
+    });
+  });
+
+  handleMediaChange(navMediaQuery);
+  navMediaQuery.addEventListener('change', handleMediaChange);
+}
 
 function openModal() {
   rsvpModal.hidden = false;
