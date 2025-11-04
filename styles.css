@@ -38,13 +38,97 @@ body {
 
 .site-header {
   padding: 1.5rem 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.nav-toggle {
+  background: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 999px;
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+  color: #000000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease,
+    transform 0.2s ease;
+}
+
+.nav-toggle:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 4px;
+}
+
+.nav-toggle:hover {
+  transform: translateY(-1px);
+}
+
+.nav-toggle[aria-expanded='true'] {
+  background: #000000;
+  color: #ffffff;
+}
+
+.nav-toggle-bars {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+}
+
+.nav-toggle-bars span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  border-radius: 999px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.nav-toggle[aria-expanded='true'] .nav-toggle-bars span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.nav-toggle[aria-expanded='true'] .nav-toggle-bars span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-toggle[aria-expanded='true'] .nav-toggle-bars span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
 }
 
 .site-nav {
+  width: 100%;
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: stretch;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease, transform 0.35s ease,
+    padding 0.35s ease;
+  padding: 1rem;
+}
+
+.site-nav[data-collapsed='false'] {
+  max-height: 500px;
+}
+
+.site-nav[data-collapsed='true'] {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-0.5rem);
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
 }
 
 .site-nav a {
@@ -288,6 +372,48 @@ body {
 .overlay.hidden {
   opacity: 0;
   pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .page {
+    max-width: 900px;
+  }
+
+  .site-header {
+    padding: 2rem 0 1rem;
+    align-items: center;
+  }
+
+  .nav-toggle {
+    display: none;
+  }
+
+  .site-nav {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    max-height: none;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .site-nav[data-collapsed] {
+    max-height: none;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    padding: 0;
+  }
+
+  .site-nav a {
+    padding: 0.5rem 0;
+    border-bottom-width: 2px;
+  }
 }
 
 .password-form {

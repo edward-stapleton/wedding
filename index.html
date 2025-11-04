@@ -27,7 +27,27 @@
 
     <div class="page" id="page">
       <header class="site-header">
-        <nav class="site-nav" aria-label="Primary">
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="primary-navigation"
+          data-nav-toggle
+        >
+          <span class="nav-toggle-bars" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+          <span class="visually-hidden">Menu</span>
+        </button>
+        <nav
+          id="primary-navigation"
+          class="site-nav"
+          aria-label="Primary"
+          data-nav
+          data-collapsed="false"
+        >
           <a href="#home">Home</a>
           <a href="#schedule">Schedule &amp; Info</a>
           <a href="#accommodation">Accommodation</a>
