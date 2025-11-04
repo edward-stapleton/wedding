@@ -1,7 +1,7 @@
 const ACCESS_CODE = 'STARFORD';
 const STORAGE_KEY = 'weddingSiteUnlocked';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
-const MAPBOX_TOKEN = 'YOUR_MAPBOX_ACCESS_TOKEN';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
 
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
