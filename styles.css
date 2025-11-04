@@ -106,6 +106,29 @@ body {
   display: inline-flex;
   justify-content: center;
   width: 100%;
+  animation: scrollInvite 3.2s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes scrollInvite {
+  0% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(10px);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-invite {
+    animation: none;
+  }
 }
 
 .timeline {
