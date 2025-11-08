@@ -27,46 +27,37 @@
 
     <div class="page" id="page">
       <header class="site-header">
-        <button
-          class="nav-toggle"
-          type="button"
-          aria-expanded="false"
-          aria-controls="primary-navigation"
-          data-nav-toggle
-        >
-          <span class="nav-toggle-bars" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </span>
-          <span class="visually-hidden">Menu</span>
-        </button>
-        <nav
-          id="primary-navigation"
-          class="site-nav"
-          aria-label="Primary"
-          data-nav
-          data-collapsed="false"
-        >
-          <a href="#home">Home</a>
-          <a href="#schedule">Schedule &amp; Info</a>
-          <a href="#accommodation">Accommodation</a>
-          <a href="#faqs">FAQs</a>
+        <nav class="site-nav" aria-label="Primary">
+          <button
+            class="nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="primary-nav"
+          >
+            Menu
+          </button>
+          <ul id="primary-nav" class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#schedule">Schedule &amp; Info</a></li>
+            <li><a href="#accommodation">Accommodation</a></li>
+            <li><a href="#faqs">FAQs</a></li>
+          </ul>
         </nav>
       </header>
 
       <main>
-        <section id="home" class="section fade-section" data-section>
-          <div class="section-content home-content">
-            <p class="home-line">Edward Stapleton &amp; Laura Harford</p>
-            <p class="home-line">Saturday 22 August 2026, Oxford</p>
+        <section id="home" class="section hero-section fade-section" data-section>
+          <div class="hero-content">
+            <p class="hero-names">Edward Stapleton &amp; Laura Harford</p>
+            <p class="hero-date">Saturday 22 August 2026</p>
+            <p class="hero-location">The Medley Walled Garden, Oxford</p>
             <button class="primary" id="open-rsvp">RSVP</button>
-            <div class="scroll-invite" aria-hidden="true">&#8595;</div>
-            <p class="visually-hidden">Scroll for the schedule and details.</p>
           </div>
+          <div class="scroll-invite" aria-hidden="true">&#8595;</div>
+          <p class="visually-hidden">Scroll for the schedule and details.</p>
         </section>
 
-        <section id="schedule" class="section fade-section" data-section>
+        <section id="schedule" class="section alt fade-section" data-section>
           <div class="section-content">
             <h2>Schedule &amp; Info</h2>
             <ol class="timeline" aria-label="Wedding schedule">
@@ -141,39 +132,39 @@
             <ol class="accommodation-list">
               <li>
                 <h3>The Randolph Hotel</h3>
-                <p>Oxford’s landmark five-star stay on Beaumont Street with elegant rooms and a spa.</p>
-                <a href="https://www.graduatehotels.com/oxford-uk/" target="_blank" rel="noopener noreferrer">Book via Graduate Hotels</a>
+                <p>Elegant city landmark with classic rooms opposite the Ashmolean.</p>
+                <a href="https://www.randolphhotel.co.uk/stay/" target="_blank" rel="noopener">Visit website</a>
               </li>
               <li>
                 <h3>Malmaison Oxford</h3>
-                <p>Boutique rooms in the converted Oxford Castle prison, a short stroll to Jericho.</p>
-                <a href="https://www.malmaison.com/locations/oxford/" target="_blank" rel="noopener noreferrer">Reserve at Malmaison</a>
+                <p>Boutique bolthole in a converted prison within Oxford Castle Quarter.</p>
+                <a href="https://www.malmaison.com/locations/oxford/" target="_blank" rel="noopener">Visit website</a>
               </li>
               <li>
                 <h3>The Old Parsonage</h3>
-                <p>Intimate 17th-century townhouse hotel moments from St Margaret’s with a walled garden.</p>
-                <a href="https://www.oldparsonagehotel.co.uk/" target="_blank" rel="noopener noreferrer">Book the Old Parsonage</a>
+                <p>Intimate townhouse hotel with cosy lounges near St Giles.</p>
+                <a href="https://www.oldparsonagehotel.co.uk/rooms/" target="_blank" rel="noopener">Visit website</a>
               </li>
               <li>
                 <h3>Premier Inn Oxford Botley</h3>
-                <p>Reliable, budget-friendly rooms with parking just off the A34 for easy driving access.</p>
-                <a href="https://www.premierinn.com/gb/en/hotels/england/oxfordshire/oxford/oxford-botley.html" target="_blank" rel="noopener noreferrer">Book with Premier Inn</a>
+                <p>Comfortable value option with easy access to the A34 and city centre.</p>
+                <a href="https://www.premierinn.com/gb/en/hotels/england/oxfordshire/oxford/oxford-botley.html" target="_blank" rel="noopener">Visit website</a>
               </li>
               <li>
                 <h3>easyHotel Oxford</h3>
-                <p>No-frills, compact rooms close to transport links for a simple overnight stay.</p>
-                <a href="https://www.easyhotel.com/hotels/united-kingdom/oxford" target="_blank" rel="noopener noreferrer">Check easyHotel availability</a>
+                <p>Simple, great-value stay close to Summertown and transport links.</p>
+                <a href="https://www.easyhotel.com/hotels/united-kingdom/oxford" target="_blank" rel="noopener">Visit website</a>
               </li>
               <li>
                 <h3>Leonardo Royal Hotel Oxford</h3>
-                <p>Modern hotel with pool and gym on Godstow Road, handy for taxis or parking.</p>
-                <a href="https://www.leonardohotels.co.uk/hotels/uk-and-ireland/oxford/leonardo-royal-hotel-oxford" target="_blank" rel="noopener noreferrer">Book at Leonardo Royal</a>
+                <p>Spacious modern hotel with pool and parking on Godstow Road.</p>
+                <a href="https://www.leonardohotels.co.uk/hotels/leonardo-royal-hotel-oxford" target="_blank" rel="noopener">Visit website</a>
               </li>
             </ol>
           </div>
         </section>
 
-        <section id="faqs" class="section fade-section" data-section>
+        <section id="faqs" class="section alt fade-section" data-section>
           <div class="section-content">
             <h2>FAQs</h2>
             <div class="accordion" id="faq-accordion">
@@ -184,19 +175,19 @@
                 </div>
               </div>
               <div class="accordion-item">
-                <button type="button" aria-expanded="false">Can we bring children?</button>
+                <button type="button" aria-expanded="false">Can we bring our children?</button>
                 <div class="accordion-panel" hidden>
                   <p>We are keeping the day adults-only so that everyone can relax. Thank you for understanding.</p>
                 </div>
               </div>
               <div class="accordion-item">
-                <button type="button" aria-expanded="false">Do you have a gift registry?</button>
+                <button type="button" aria-expanded="false">Do you have a gift list?</button>
                 <div class="accordion-panel" hidden>
                   <p>Your presence is the only gift we need. If you insist, a contribution to our honeymoon would be cherished.</p>
                 </div>
               </div>
               <div class="accordion-item">
-                <button type="button" aria-expanded="false">How should we handle transport and parking?</button>
+                <button type="button" aria-expanded="false">How should we plan transport and parking?</button>
                 <div class="accordion-panel" hidden>
                   <p>Oxford is well served by taxis and Park &amp; Ride options. Limited parking is available near the reception.</p>
                 </div>
@@ -228,7 +219,7 @@
               <label><input type="radio" name="attendance" value="Maybe" required /> Maybe</label>
             </fieldset>
 
-            <label for="dietary">Dietary requirements</label>
+            <label for="dietary">Do you have any dietary requirements?</label>
             <textarea id="dietary" name="dietary" rows="3" placeholder="Let us know about allergies or preferences"></textarea>
 
             <button type="submit" class="primary">Submit</button>
