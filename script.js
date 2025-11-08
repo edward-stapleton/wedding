@@ -3,7 +3,7 @@ const STORAGE_KEY = 'weddingSiteUnlocked';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
-const MAPBOX_STYLE = 'mapbox://styles/mapbox/light-v11';
+const MAPBOX_STYLE = 'mapbox://styles/edwardstapleton/cmhpzpf2d004r01r0296e5r22';
 
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
