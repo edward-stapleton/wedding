@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edward &amp; Laura — 22 August 2026</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="password-screen" class="overlay">
+      <form id="password-form" class="password-form" autocomplete="off">
+        <h1 class="wedding-title">Edward &amp; Laura</h1>
+        <label for="access-code" class="visually-hidden">Access code</label>
+        <input
+          id="access-code"
+          name="access-code"
+          type="password"
+          inputmode="text"
+          aria-label="Access code"
+          placeholder="Access code"
+          required
+        />
+        <button type="submit">Enter</button>
+        <p id="password-error" role="alert" aria-live="polite"></p>
+      </form>
+    </div>
+
+    <div class="page" id="page">
+      <header class="site-header">
+        <nav class="site-nav" aria-label="Primary">
+          <button
+            class="nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="primary-nav"
+          >
+            Menu
+          </button>
+          <ul id="primary-nav" class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#schedule">Schedule &amp; Info</a></li>
+            <li><a href="#accommodation">Accommodation</a></li>
+            <li><a href="#faqs">FAQs</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <main>
+        <section id="home" class="section hero-section fade-section" data-section>
+          <div class="hero-content">
+            <p class="hero-names">Edward Stapleton &amp; Laura Harford</p>
+            <p class="hero-date">Saturday 22 August 2026</p>
+            <p class="hero-location">The Medley Walled Garden, Oxford</p>
+            <button class="primary" id="open-rsvp">RSVP</button>
+          </div>
+          <div class="scroll-invite" aria-hidden="true">&#8595;</div>
+          <p class="visually-hidden">Scroll for the schedule and details.</p>
+        </section>
+
+        <section id="schedule" class="section alt fade-section" data-section>
+          <div class="section-content">
+            <h2>Schedule &amp; Info</h2>
+            <ol class="timeline" aria-label="Wedding schedule">
+              <li>
+                <time datetime="2026-08-22T13:00">13:00</time>
+                <div class="event-details">
+                  <span class="event-name">Wedding Ceremony</span>
+                  <span class="event-location">St Margaret&#8217;s Church, St Margaret&#8217;s Road, Oxford OX2 6RX</span>
+                </div>
+              </li>
+              <li>
+                <time datetime="2026-08-22T14:30">14:30</time>
+                <div class="event-details">
+                  <span class="event-name">Welcome Drinks</span>
+                  <span class="event-location">The Medley Walled Garden, Medley Manor Farm, Oxford OX2 0NJ</span>
+                </div>
+              </li>
+              <li>
+                <time datetime="2026-08-22T16:00">16:00</time>
+                <div class="event-details">
+                  <span class="event-name">Wedding Breakfast</span>
+                  <span class="event-location">The Medley Walled Garden, Medley Manor Farm, Oxford OX2 0NJ</span>
+                </div>
+              </li>
+              <li>
+                <time datetime="2026-08-22T18:30">18:30</time>
+                <div class="event-details">
+                  <span class="event-name">Cocktails</span>
+                  <span class="event-location">The Medley Walled Garden, Medley Manor Farm, Oxford OX2 0NJ</span>
+                </div>
+              </li>
+              <li>
+                <time datetime="2026-08-22T19:15">19:15</time>
+                <div class="event-details">
+                  <span class="event-name">Dancing</span>
+                  <span class="event-location">The Medley Walled Garden, Medley Manor Farm, Oxford OX2 0NJ</span>
+                </div>
+              </li>
+              <li>
+                <time datetime="2026-08-22T21:30">21:30</time>
+                <div class="event-details">
+                  <span class="event-name">Evening Food</span>
+                  <span class="event-location">The Medley Walled Garden, Medley Manor Farm, Oxford OX2 0NJ</span>
+                </div>
+              </li>
+              <li>
+                <time datetime="2026-08-22T23:15">23:15</time>
+                <div class="event-details">
+                  <span class="event-name">Carriages</span>
+                  <span class="event-location">The Medley Walled Garden, Medley Manor Farm, Oxford OX2 0NJ</span>
+                </div>
+              </li>
+            </ol>
+
+            <div class="map-wrapper fade-section" data-map-container>
+              <div class="map-header">
+                <h3>Map</h3>
+                <div class="map-toggle" role="group" aria-label="Route toggle">
+                  <button type="button" data-route="walk" class="active">Walk</button>
+                  <button type="button" data-route="drive">Drive</button>
+                </div>
+              </div>
+              <div id="map" class="map" aria-label="Locations map"></div>
+              <p class="map-note">Map loads when in view. Toggle to see the walking route or parking area.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="accommodation" class="section fade-section" data-section>
+          <div class="section-content">
+            <h2>Accommodation</h2>
+            <ol class="accommodation-list">
+              <li>
+                <h3>The Randolph Hotel</h3>
+                <p>Elegant city landmark with classic rooms opposite the Ashmolean.</p>
+                <a href="https://www.randolphhotel.co.uk/stay/" target="_blank" rel="noopener">Visit website</a>
+              </li>
+              <li>
+                <h3>Malmaison Oxford</h3>
+                <p>Boutique bolthole in a converted prison within Oxford Castle Quarter.</p>
+                <a href="https://www.malmaison.com/locations/oxford/" target="_blank" rel="noopener">Visit website</a>
+              </li>
+              <li>
+                <h3>The Old Parsonage</h3>
+                <p>Intimate townhouse hotel with cosy lounges near St Giles.</p>
+                <a href="https://www.oldparsonagehotel.co.uk/rooms/" target="_blank" rel="noopener">Visit website</a>
+              </li>
+              <li>
+                <h3>Premier Inn Oxford Botley</h3>
+                <p>Comfortable value option with easy access to the A34 and city centre.</p>
+                <a href="https://www.premierinn.com/gb/en/hotels/england/oxfordshire/oxford/oxford-botley.html" target="_blank" rel="noopener">Visit website</a>
+              </li>
+              <li>
+                <h3>easyHotel Oxford</h3>
+                <p>Simple, great-value stay close to Summertown and transport links.</p>
+                <a href="https://www.easyhotel.com/hotels/united-kingdom/oxford" target="_blank" rel="noopener">Visit website</a>
+              </li>
+              <li>
+                <h3>Leonardo Royal Hotel Oxford</h3>
+                <p>Spacious modern hotel with pool and parking on Godstow Road.</p>
+                <a href="https://www.leonardohotels.co.uk/hotels/leonardo-royal-hotel-oxford" target="_blank" rel="noopener">Visit website</a>
+              </li>
+            </ol>
+          </div>
+        </section>
+
+        <section id="faqs" class="section alt fade-section" data-section>
+          <div class="section-content">
+            <h2>FAQs</h2>
+            <div class="accordion" id="faq-accordion">
+              <div class="accordion-item">
+                <button type="button" aria-expanded="false">What is the dress code?</button>
+                <div class="accordion-panel" hidden>
+                  <p>We would love to see guests in elegant summer attire. Hats are welcome at the church.</p>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <button type="button" aria-expanded="false">Can we bring our children?</button>
+                <div class="accordion-panel" hidden>
+                  <p>We are keeping the day adults-only so that everyone can relax. Thank you for understanding.</p>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <button type="button" aria-expanded="false">Do you have a gift list?</button>
+                <div class="accordion-panel" hidden>
+                  <p>Your presence is the only gift we need. If you insist, a contribution to our honeymoon would be cherished.</p>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <button type="button" aria-expanded="false">How should we plan transport and parking?</button>
+                <div class="accordion-panel" hidden>
+                  <p>Oxford is well served by taxis and Park &amp; Ride options. Limited parking is available near the reception.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <p>Edward &amp; Laura — 22 August 2026</p>
+      </footer>
+    </div>
+
+    <div class="modal" id="rsvp-modal" role="dialog" aria-modal="true" aria-labelledby="rsvp-title" hidden>
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-content" role="document">
+        <button type="button" class="modal-close" aria-label="Close" data-close-modal>&times;</button>
+        <div class="modal-body">
+          <h2 id="rsvp-title">RSVP</h2>
+          <form id="rsvp-form" novalidate>
+            <label for="guest-name">Name</label>
+            <input id="guest-name" name="name" type="text" autocomplete="name" required />
+
+            <fieldset>
+              <legend>Will you attend?</legend>
+              <label><input type="radio" name="attendance" value="Yes" required /> Yes</label>
+              <label><input type="radio" name="attendance" value="No" required /> No</label>
+              <label><input type="radio" name="attendance" value="Maybe" required /> Maybe</label>
+            </fieldset>
+
+            <label for="dietary">Do you have any dietary requirements?</label>
+            <textarea id="dietary" name="dietary" rows="3" placeholder="Let us know about allergies or preferences"></textarea>
+
+            <button type="submit" class="primary">Submit</button>
+            <p id="rsvp-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js" defer></script>
+  </body>
+</html>
