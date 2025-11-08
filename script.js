@@ -1,7 +1,9 @@
 const ACCESS_CODE = 'STARFORD';
 const STORAGE_KEY = 'weddingSiteUnlocked';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
+const MAPBOX_TOKEN =
+  'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
+const MAPBOX_STYLE = 'mapbox://styles/edwardstapleton/cmhpzpf2d004r01r0296e5r22';
 
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
@@ -13,8 +15,10 @@ const rsvpFeedback = document.getElementById('rsvp-feedback');
 const openRsvpButton = document.getElementById('open-rsvp');
 const closeModalEls = document.querySelectorAll('[data-close-modal]');
 const mapContainer = document.querySelector('[data-map-container]');
-const navToggle = document.querySelector('[data-nav-toggle]');
-const primaryNav = document.querySelector('[data-nav]');
+const siteNav = document.querySelector('.site-nav');
+const navToggle = document.querySelector('.nav-toggle');
+const navLinks = document.querySelectorAll('.nav-links a');
+const header = document.querySelector('.site-header');
 
 let mapLoaded = false;
 let mapInstance;
@@ -81,65 +85,47 @@ function setupFadeSections() {
 
 setupFadeSections();
 
-if (navToggle && primaryNav) {
-  const navLinks = Array.from(primaryNav.querySelectorAll('a'));
-  const navMediaQuery = window.matchMedia('(min-width: 768px)');
-
-  const enableNavLinks = () => {
-    navLinks.forEach(link => link.removeAttribute('tabindex'));
-  };
-
-  const disableNavLinks = () => {
-    navLinks.forEach(link => link.setAttribute('tabindex', '-1'));
-  };
-
-  const openNav = () => {
-    primaryNav.dataset.collapsed = 'false';
-    primaryNav.setAttribute('aria-hidden', 'false');
-    navToggle.setAttribute('aria-expanded', 'true');
-    enableNavLinks();
-  };
-
-  const closeNav = () => {
-    primaryNav.dataset.collapsed = 'true';
-    primaryNav.setAttribute('aria-hidden', 'true');
-    navToggle.setAttribute('aria-expanded', 'false');
-    disableNavLinks();
-  };
-
-  const handleMediaChange = event => {
-    if (event.matches) {
-      navToggle.hidden = true;
-      primaryNav.dataset.collapsed = 'false';
-      primaryNav.removeAttribute('aria-hidden');
-      navToggle.setAttribute('aria-expanded', 'false');
-      enableNavLinks();
-    } else {
-      navToggle.hidden = false;
-      closeNav();
-    }
-  };
-
-  navToggle.addEventListener('click', () => {
-    const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-    if (expanded) {
-      closeNav();
-    } else {
-      openNav();
-    }
-  });
-
-  navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      if (!navMediaQuery.matches) {
-        closeNav();
-      }
-    });
-  });
-
-  handleMediaChange(navMediaQuery);
-  navMediaQuery.addEventListener('change', handleMediaChange);
+function toggleNavigation(force) {
+  if (!siteNav || !navToggle) return;
+  const isOpen =
+    typeof force === 'boolean' ? force : !siteNav.classList.contains('open');
+  siteNav.classList.toggle('open', isOpen);
+  navToggle.setAttribute('aria-expanded', String(isOpen));
+  requestAnimationFrame(updateHeaderOffset);
 }
+
+if (navToggle) {
+  navToggle.addEventListener('click', () => toggleNavigation());
+}
+
+navLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    if (window.matchMedia('(min-width: 768px)').matches) return;
+    toggleNavigation(false);
+  });
+});
+
+const desktopMedia = window.matchMedia('(min-width: 768px)');
+const handleDesktopChange = event => {
+  if (event.matches) {
+    toggleNavigation(false);
+  }
+};
+if (desktopMedia.addEventListener) {
+  desktopMedia.addEventListener('change', handleDesktopChange);
+} else if (desktopMedia.addListener) {
+  desktopMedia.addListener(handleDesktopChange);
+}
+
+function updateHeaderOffset() {
+  if (!header) return;
+  const height = header.offsetHeight;
+  document.documentElement.style.setProperty('--header-height', `${height}px`);
+}
+
+window.addEventListener('resize', updateHeaderOffset);
+window.addEventListener('load', updateHeaderOffset);
+updateHeaderOffset();
 
 function openModal() {
   rsvpModal.hidden = false;
@@ -376,7 +362,7 @@ function initialiseMap() {
   mapboxgl.accessToken = MAPBOX_TOKEN;
   mapInstance = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/mapbox/light-v11',
+    style: MAPBOX_STYLE,
     center: [-1.268, 51.7695],
     zoom: 14,
     attributionControl: false,
