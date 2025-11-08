@@ -120,8 +120,12 @@
                   <button type="button" data-route="drive">Drive</button>
                 </div>
               </div>
-              <div id="map" class="map" aria-label="Locations map"></div>
-              <p class="map-note">Map loads when in view. Toggle to see the walking route or parking area.</p>
+              <div
+                id="map"
+                class="map"
+                aria-label="Locations map"
+                data-style="mapbox://styles/mapbox/light-v11"
+              ></div>
             </div>
           </div>
         </section>
@@ -129,6 +133,9 @@
         <section id="accommodation" class="section fade-section" data-section>
           <div class="section-content">
             <h2>Accommodation</h2>
+            <p class="accommodation-intro">
+              There's plenty of accommodation options in and around Oxford, whether you'd like to experience an historic hotel, the university accommodation or a rural retreat nearby. Here are some of our recommendations:
+            </p>
             <ol class="accommodation-list">
               <li>
                 <h3>The Randolph Hotel</h3>
@@ -220,7 +227,12 @@
             </fieldset>
 
             <label for="dietary">Do you have any dietary requirements?</label>
-            <textarea id="dietary" name="dietary" rows="3" placeholder="Let us know about allergies or preferences"></textarea>
+            <textarea
+              id="dietary"
+              name="dietary"
+              rows="3"
+              placeholder="Let us know about any allergies or preferences"
+            ></textarea>
 
             <button type="submit" class="primary">Submit</button>
             <p id="rsvp-feedback" role="status" aria-live="polite"></p>

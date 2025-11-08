@@ -3,7 +3,9 @@ const STORAGE_KEY = 'weddingSiteUnlocked';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
-const MAPBOX_STYLE = 'mapbox://styles/edwardstapleton/cmhpzpf2d004r01r0296e5r22';
+const MAPBOX_DEFAULT_STYLE = 'mapbox://styles/mapbox/light-v11';
+const mapElement = document.getElementById('map');
+const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
 
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
@@ -230,33 +232,6 @@ function loadMapboxResources() {
   });
 }
 
-function configureMapStyle(map) {
-  const style = map?.getStyle?.();
-  if (!style?.layers) return;
-  style.layers.forEach(layer => {
-    if (layer.type === 'background') {
-      map.setPaintProperty(layer.id, 'background-color', '#ffffff');
-      return;
-    }
-    const paint = layer.paint || {};
-    Object.keys(paint).forEach(prop => {
-      if (prop.includes('color')) {
-        let value = '#000000';
-        if (prop.includes('fill') && !prop.includes('outline')) {
-          value = '#f5f5f5';
-        }
-        if (prop.includes('halo')) {
-          value = '#ffffff';
-        }
-        map.setPaintProperty(layer.id, prop, value);
-      }
-      if (prop.includes('saturation')) {
-        map.setPaintProperty(layer.id, prop, -100);
-      }
-    });
-  });
-}
-
 function addMapLayers(map) {
   const church = [-1.26493, 51.7692];
   const garden = [-1.2713, 51.7697];
@@ -353,22 +328,23 @@ function addMapLayers(map) {
 function initialiseMap() {
   if (mapLoaded) return;
   if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes('YOUR_MAPBOX_ACCESS_TOKEN')) {
-    const mapElement = document.getElementById('map');
-    mapElement.textContent = 'Add your Mapbox token in script.js to display the map.';
+    if (mapElement) {
+      mapElement.textContent = 'Add your Mapbox token in script.js to display the map.';
+    }
     mapLoaded = true;
     return;
   }
 
   mapboxgl.accessToken = MAPBOX_TOKEN;
   mapInstance = new mapboxgl.Map({
-    container: 'map',
+    container: mapElement || 'map',
     style: MAPBOX_STYLE,
     center: [-1.268, 51.7695],
     zoom: 14,
     attributionControl: false,
   });
 
-  mapInstance.once('styledata', () => configureMapStyle(mapInstance));
+  mapInstance.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
   mapInstance.on('load', () => {
     const { church, garden } = addMapLayers(mapInstance);
@@ -408,8 +384,9 @@ function observeMap() {
           loadMapboxResources()
             .then(initialiseMap)
             .catch(() => {
-              const mapElement = document.getElementById('map');
-              mapElement.textContent = 'The map is unavailable right now.';
+              if (mapElement) {
+                mapElement.textContent = 'The map is unavailable right now.';
+              }
             });
           observer.disconnect();
         }
