@@ -6,6 +6,8 @@ const MAPBOX_TOKEN =
 const MAPBOX_DEFAULT_STYLE = 'mapbox://styles/mapbox/light-v11';
 const mapElement = document.getElementById('map');
 const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
+const CHURCH_COORDS = [-1.26493, 51.7692];
+const GARDEN_COORDS = [-1.2713, 51.7697];
 
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
@@ -24,9 +26,6 @@ const header = document.querySelector('.site-header');
 
 let mapLoaded = false;
 let mapInstance;
-let walkLayerId;
-let driveLayerId;
-let driveFillId;
 
 function unlockSite() {
   passwordInput.removeAttribute('aria-invalid');
@@ -232,97 +231,116 @@ function loadMapboxResources() {
   });
 }
 
-function addMapLayers(map) {
-  const church = [-1.26493, 51.7692];
-  const garden = [-1.2713, 51.7697];
-
-  new mapboxgl.Marker({ color: '#000000' }).setLngLat(church).addTo(map);
-  new mapboxgl.Marker({ color: '#000000' }).setLngLat(garden).addTo(map);
-
-  const walkRoute = {
-    type: 'Feature',
-    geometry: {
-      type: 'LineString',
-      coordinates: [
-        church,
-        [-1.26525, 51.76903],
-        [-1.26735, 51.76954],
-        [-1.26881, 51.7699],
-        [-1.2702, 51.76989],
-        garden,
-      ],
-    },
+function addLocationLayers(map) {
+  const points = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {
+          name: "St Margaret's Church",
+          color: '#f05a7e',
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: CHURCH_COORDS,
+        },
+      },
+      {
+        type: 'Feature',
+        properties: {
+          name: 'The Medley Walled Garden',
+          color: '#4ba87d',
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: GARDEN_COORDS,
+        },
+      },
+    ],
   };
 
-  const parkingArea = {
-    type: 'Feature',
-    geometry: {
-      type: 'Polygon',
-      coordinates: [
-        [
-          [-1.27225, 51.7701],
-          [-1.2729, 51.76985],
-          [-1.2716, 51.7693],
-          [-1.2709, 51.7695],
-          [-1.27225, 51.7701],
-        ],
-      ],
-    },
-  };
-
-  if (!map.getSource('walk-route')) {
-    map.addSource('walk-route', {
+  if (!map.getSource('wedding-locations')) {
+    map.addSource('wedding-locations', {
       type: 'geojson',
-      data: walkRoute,
+      data: points,
     });
   }
 
-  if (!map.getSource('parking-area')) {
-    map.addSource('parking-area', {
-      type: 'geojson',
-      data: parkingArea,
+  map.addLayer({
+    id: 'wedding-locations-circle',
+    type: 'circle',
+    source: 'wedding-locations',
+    paint: {
+      'circle-radius': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        12,
+        6,
+        16,
+        16,
+      ],
+      'circle-color': ['get', 'color'],
+      'circle-opacity': 0.9,
+      'circle-stroke-width': 2,
+      'circle-stroke-color': '#ffffff',
+    },
+  });
+
+  map.addLayer({
+    id: 'wedding-locations-labels',
+    type: 'symbol',
+    source: 'wedding-locations',
+    layout: {
+      'text-field': ['get', 'name'],
+      'text-offset': [0, 1.2],
+      'text-anchor': 'top',
+      'text-size': 14,
+      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+    },
+    paint: {
+      'text-color': '#1f2933',
+      'text-halo-color': 'rgba(255, 255, 255, 0.95)',
+      'text-halo-width': 1.4,
+    },
+  });
+}
+
+function addTerrainAndBuildings(map) {
+  if (!map.getSource('mapbox-dem')) {
+    map.addSource('mapbox-dem', {
+      type: 'raster-dem',
+      url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+      tileSize: 512,
+      maxzoom: 14,
     });
   }
 
-  walkLayerId = 'walk-line';
-  driveLayerId = 'drive-outline';
-  driveFillId = 'drive-fill';
+  map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.3 });
 
-  map.addLayer({
-    id: walkLayerId,
-    type: 'line',
-    source: 'walk-route',
-    paint: {
-      'line-color': '#000000',
-      'line-width': 3,
-      'line-opacity': 0.8,
-      'line-dasharray': [0.5, 1.5],
+  const layers = map.getStyle().layers;
+  const labelLayerId = layers.find(
+    layer => layer.type === 'symbol' && layer.layout && layer.layout['text-field']
+  )?.id;
+
+  map.addLayer(
+    {
+      id: '3d-buildings',
+      source: 'composite',
+      'source-layer': 'building',
+      filter: ['==', 'extrude', 'true'],
+      type: 'fill-extrusion',
+      minzoom: 15,
+      paint: {
+        'fill-extrusion-color': '#d4d4d4',
+        'fill-extrusion-height': ['get', 'height'],
+        'fill-extrusion-base': ['get', 'min_height'],
+        'fill-extrusion-opacity': 0.6,
+      },
     },
-  });
-
-  map.addLayer({
-    id: driveFillId,
-    type: 'fill',
-    source: 'parking-area',
-    layout: { visibility: 'none' },
-    paint: {
-      'fill-color': '#000000',
-      'fill-opacity': 0.1,
-    },
-  });
-
-  map.addLayer({
-    id: driveLayerId,
-    type: 'line',
-    source: 'parking-area',
-    layout: { visibility: 'none' },
-    paint: {
-      'line-color': '#000000',
-      'line-width': 2,
-    },
-  });
-
-  return { church, garden };
+    labelLayerId
+  );
 }
 
 function initialiseMap() {
@@ -339,40 +357,31 @@ function initialiseMap() {
   mapInstance = new mapboxgl.Map({
     container: mapElement || 'map',
     style: MAPBOX_STYLE,
-    center: [-1.268, 51.7695],
-    zoom: 14,
+    center: CHURCH_COORDS,
+    zoom: 15.4,
+    pitch: 64,
+    bearing: -28,
+    antialias: true,
     attributionControl: false,
   });
 
   mapInstance.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
+  mapInstance.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right');
+
   mapInstance.on('load', () => {
-    const { church, garden } = addMapLayers(mapInstance);
-    mapInstance.fitBounds([church, garden], { padding: 60 });
-    setupRouteToggle();
+    addTerrainAndBuildings(mapInstance);
+    addLocationLayers(mapInstance);
+    mapInstance.easeTo({
+      center: CHURCH_COORDS,
+      zoom: 16,
+      pitch: 68,
+      bearing: -35,
+      duration: 1800,
+    });
   });
 
   mapLoaded = true;
-}
-
-function setupRouteToggle() {
-  const toggleButtons = document.querySelectorAll('.map-toggle button');
-  toggleButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const selected = button.getAttribute('data-route');
-      toggleButtons.forEach(btn => btn.classList.toggle('active', btn === button));
-      if (!mapInstance) return;
-      if (selected === 'walk') {
-        mapInstance.setLayoutProperty(walkLayerId, 'visibility', 'visible');
-        mapInstance.setLayoutProperty(driveLayerId, 'visibility', 'none');
-        mapInstance.setLayoutProperty(driveFillId, 'visibility', 'none');
-      } else {
-        mapInstance.setLayoutProperty(walkLayerId, 'visibility', 'none');
-        mapInstance.setLayoutProperty(driveLayerId, 'visibility', 'visible');
-        mapInstance.setLayoutProperty(driveFillId, 'visibility', 'visible');
-      }
-    });
-  });
 }
 
 function observeMap() {
