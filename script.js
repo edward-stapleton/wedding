@@ -92,6 +92,7 @@ function toggleNavigation(force) {
     typeof force === 'boolean' ? force : !siteNav.classList.contains('open');
   siteNav.classList.toggle('open', isOpen);
   navToggle.setAttribute('aria-expanded', String(isOpen));
+  document.body.classList.toggle('nav-open', isOpen);
   requestAnimationFrame(updateHeaderOffset);
 }
 
@@ -120,7 +121,8 @@ if (desktopMedia.addEventListener) {
 
 function updateHeaderOffset() {
   if (!header) return;
-  const height = header.offsetHeight;
+  const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+  const height = isDesktop ? header.offsetHeight : 0;
   document.documentElement.style.setProperty('--header-height', `${height}px`);
 }
 
