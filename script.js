@@ -3,7 +3,7 @@ const STORAGE_KEY = 'weddingSiteUnlocked';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
-const MAPBOX_DEFAULT_STYLE = 'mapbox://styles/mapbox/light-v11';
+const MAPBOX_DEFAULT_STYLE = 'mapbox://styles/mapbox/standard';
 const mapElement = document.getElementById('map');
 const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
 const CHURCH_COORDS = [-1.2684928, 51.7666909];
@@ -17,37 +17,54 @@ const WALKING_ROUTE = {
       geometry: {
         type: 'LineString',
         coordinates: [
-          [-1.2685999267090438, 51.76648498246533],
-          [-1.2688935299391062, 51.76645418556669],
-          [-1.269074797597483, 51.76733425005639],
-          [-1.2692134415083842, 51.76757326555489],
-          [-1.269644227948021, 51.76761616563837],
-          [-1.2704839775425683, 51.76750202248476],
-          [-1.2714353151561966, 51.767336814777195],
-          [-1.2715103618206456, 51.76734614605388],
-          [-1.2715505705211854, 51.7673088209352],
-          [-1.2717817705466246, 51.76724972276793],
-          [-1.272988031548266, 51.76699155618175],
-          [-1.2737125882784426, 51.766927770752005],
-          [-1.2739261592040236, 51.76690373967139],
-          [-1.2749357672171584, 51.76675354512608],
-          [-1.2751302975135843, 51.766759523104014],
-          [-1.2757598452428454, 51.7668368491336],
-          [-1.2757742623636261, 51.76676556682756],
-          [-1.2757646509470533, 51.76667039616083],
-          [-1.2757165938691344, 51.766384882956174],
-          [-1.2757213995764687, 51.766197513934856],
-          [-1.2758847936443658, 51.764793708587945],
-          [-1.2758799879360936, 51.76463012673537],
-          [-1.2762067760699551, 51.76409178954455],
-          [-1.2764662842947132, 51.76382410567874],
-          [-1.2776545475779528, 51.763151562655764],
-          [-1.278620494856682, 51.76265187441598],
-          [-1.2792164026308797, 51.762491259164676],
-          [-1.2793173224960128, 51.76259833606238],
-          [-1.280172738494997, 51.76383862495547],
-          [-1.2804851095059746, 51.763755345233534],
-          [-1.2803265211463497, 51.763475762186744],
+          [-1.268910374597823, 51.76645696949447],
+          [-1.2692626919094323, 51.76765240358776],
+          [-1.2757564118993514, 51.76682913633243],
+          [-1.2758821253287351, 51.76461556119929],
+          [-1.279199506591283, 51.762487079908624],
+          [-1.2801810281823407, 51.76384317739718],
+          [-1.2805189580681429, 51.76376221749646],
+          [-1.2803336416793627, 51.763438376441684],
+        ],
+      },
+    },
+  ],
+};
+
+const CHURCH_FOOTPRINT = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [-1.2684455873902891, 51.766878097709906],
+            [-1.268418708679235, 51.76682661078229],
+            [-1.2687681319231956, 51.76677116325658],
+            [-1.268747652905546, 51.76673234994786],
+            [-1.2687719717386017, 51.76672680518672],
+            [-1.2687374133956553, 51.766657099560405],
+            [-1.268715654439518, 51.76665947589035],
+            [-1.2686990152373028, 51.76661670193235],
+            [-1.2687284538253039, 51.76661036504598],
+            [-1.268702855053732, 51.76656283837164],
+            [-1.2686170991655956, 51.76657709637948],
+            [-1.2686337383678108, 51.76662224670696],
+            [-1.2684993448124544, 51.76664680212909],
+            [-1.2684878253651561, 51.76662779148094],
+            [-1.268234397518171, 51.766667396989305],
+            [-1.2682612762292536, 51.76673472627388],
+            [-1.2682036789916822, 51.76674423157644],
+            [-1.268248476842416, 51.766833739745124],
+            [-1.2683188734668533, 51.76682265024709],
+            [-1.2683367926075562, 51.76685908715885],
+            [-1.2683035142040637, 51.76686700822279],
+            [-1.2683175935283373, 51.76689948456996],
+            [-1.2684455873902891, 51.766878097709906],
+          ],
         ],
       },
     },
@@ -71,25 +88,6 @@ const header = document.querySelector('.site-header');
 
 let mapLoaded = false;
 let mapInstance;
-
-function toRadians(degrees) {
-  return (degrees * Math.PI) / 180;
-}
-
-function calculateBearing(start, end) {
-  if (!start || !end) return -35;
-  const [lng1, lat1] = start.map(Number);
-  const [lng2, lat2] = end.map(Number);
-  const radLat1 = toRadians(lat1);
-  const radLat2 = toRadians(lat2);
-  const deltaLng = toRadians(lng2 - lng1);
-  const y = Math.sin(deltaLng) * Math.cos(radLat2);
-  const x =
-    Math.cos(radLat1) * Math.sin(radLat2) -
-    Math.sin(radLat1) * Math.cos(radLat2) * Math.cos(deltaLng);
-  const bearing = (Math.atan2(y, x) * 180) / Math.PI;
-  return (bearing + 360) % 360;
-}
 
 function unlockSite() {
   passwordInput.removeAttribute('aria-invalid');
@@ -298,20 +296,9 @@ function loadMapboxResources() {
 }
 
 function addLocationLayers(map) {
-  const points = {
+  const gardenPoint = {
     type: 'FeatureCollection',
     features: [
-      {
-        type: 'Feature',
-        properties: {
-          name: "St Margaret's Church",
-          color: '#f05a7e',
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: CHURCH_COORDS,
-        },
-      },
       {
         type: 'Feature',
         properties: {
@@ -329,48 +316,98 @@ function addLocationLayers(map) {
   if (!map.getSource('wedding-locations')) {
     map.addSource('wedding-locations', {
       type: 'geojson',
-      data: points,
+      data: gardenPoint,
+    });
+  } else {
+    map.getSource('wedding-locations').setData(gardenPoint);
+  }
+
+  if (!map.getLayer('wedding-locations-circle')) {
+    map.addLayer({
+      id: 'wedding-locations-circle',
+      type: 'circle',
+      source: 'wedding-locations',
+      paint: {
+        'circle-radius': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          12,
+          6,
+          16,
+          16,
+        ],
+        'circle-color': ['get', 'color'],
+        'circle-opacity': 0.9,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
     });
   }
 
-  map.addLayer({
-    id: 'wedding-locations-circle',
-    type: 'circle',
-    source: 'wedding-locations',
-    paint: {
-      'circle-radius': [
-        'interpolate',
-        ['linear'],
-        ['zoom'],
-        12,
-        6,
-        16,
-        16,
-      ],
-      'circle-color': ['get', 'color'],
-      'circle-opacity': 0.9,
-      'circle-stroke-width': 2,
-      'circle-stroke-color': '#ffffff',
-    },
-  });
+  if (!map.getLayer('wedding-locations-labels')) {
+    map.addLayer({
+      id: 'wedding-locations-labels',
+      type: 'symbol',
+      source: 'wedding-locations',
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-offset': [0, 1.2],
+        'text-anchor': 'top',
+        'text-size': 14,
+        'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      },
+      paint: {
+        'text-color': '#ffffff',
+        'text-halo-color': 'rgba(3, 138, 93, 0.8)',
+        'text-halo-width': 1.6,
+      },
+    });
+  }
 
-  map.addLayer({
-    id: 'wedding-locations-labels',
-    type: 'symbol',
-    source: 'wedding-locations',
-    layout: {
-      'text-field': ['get', 'name'],
-      'text-offset': [0, 1.2],
-      'text-anchor': 'top',
-      'text-size': 14,
-      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-    },
-    paint: {
-      'text-color': '#ffffff',
-      'text-halo-color': 'rgba(3, 138, 93, 0.8)',
-      'text-halo-width': 1.6,
-    },
-  });
+  if (!map.getSource('st-margarets-footprint')) {
+    map.addSource('st-margarets-footprint', {
+      type: 'geojson',
+      data: CHURCH_FOOTPRINT,
+    });
+  } else {
+    map.getSource('st-margarets-footprint').setData(CHURCH_FOOTPRINT);
+  }
+
+  if (!map.getLayer('st-margarets-extrusion')) {
+    map.addLayer({
+      id: 'st-margarets-extrusion',
+      type: 'fill-extrusion',
+      source: 'st-margarets-footprint',
+      paint: {
+        'fill-extrusion-color': '#f05a7e',
+        'fill-extrusion-height': 16,
+        'fill-extrusion-base': 0,
+        'fill-extrusion-opacity': 0.95,
+        'fill-extrusion-vertical-gradient': true,
+      },
+    });
+  }
+
+  if (!map.getLayer('st-margarets-label')) {
+    map.addLayer({
+      id: 'st-margarets-label',
+      type: 'symbol',
+      source: 'st-margarets-footprint',
+      layout: {
+        'text-field': "St Margaret's Church",
+        'text-offset': [0, 1.1],
+        'text-anchor': 'top',
+        'text-size': 13,
+        'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      },
+      paint: {
+        'text-color': '#ffffff',
+        'text-halo-color': 'rgba(240, 90, 126, 0.85)',
+        'text-halo-width': 1.8,
+      },
+    });
+  }
 }
 
 function addWalkingRoute(map) {
@@ -460,12 +497,14 @@ function animateRouteFlyover(map) {
     return acc.extend(coord);
   }, null);
 
+  const southeastBearing = 135;
+
   if (bounds) {
     map.fitBounds(bounds, {
       padding: { top: 120, bottom: 160, left: 160, right: 160 },
       duration: 2000,
       pitch: 68,
-      bearing: calculateBearing(coordinates[0], coordinates[1]) - 20,
+      bearing: southeastBearing,
       essential: true,
     });
   }
@@ -476,14 +515,12 @@ function animateRouteFlyover(map) {
   function advanceAlongRoute() {
     if (stepIndex >= coordinates.length) return;
     const current = coordinates[stepIndex];
-    const next = coordinates[Math.min(stepIndex + 1, coordinates.length - 1)];
-    const bearing = calculateBearing(current, next);
 
     map.easeTo({
       center: current,
       zoom: 16.2,
       pitch: 72,
-      bearing,
+      bearing: southeastBearing,
       duration: stepDuration,
       essential: true,
     });
@@ -495,16 +532,12 @@ function animateRouteFlyover(map) {
         setTimeout(advanceAlongRoute, 150);
       });
     } else {
-      const finalBearing = calculateBearing(
-        coordinates[coordinates.length - 2] ?? current,
-        coordinates[coordinates.length - 1]
-      );
       map.once('moveend', () => {
         map.easeTo({
           center: coordinates[coordinates.length - 1],
           zoom: 15.8,
           pitch: 64,
-          bearing: finalBearing,
+          bearing: southeastBearing,
           duration: 1800,
           essential: true,
         });
@@ -570,7 +603,7 @@ function initialiseMap() {
     center: CHURCH_COORDS,
     zoom: 15.4,
     pitch: 64,
-    bearing: -28,
+    bearing: 135,
     antialias: true,
     attributionControl: false,
   });
