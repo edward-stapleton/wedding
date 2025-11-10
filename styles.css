@@ -381,7 +381,7 @@ body.nav-open {
 .map-container {
   width: 100%;
   margin: 1.5rem auto 0;
-  padding: 0 0 3.5rem;
+  padding: 0 0 1.75rem;
 }
 
 .map {
@@ -408,7 +408,7 @@ body.nav-open {
 @media (min-width: 768px) {
   .map-container {
     width: min(100%, 960px);
-    padding: 0 1.5rem 4rem;
+    padding: 0 1.5rem 2.25rem;
   }
 
   .map {
