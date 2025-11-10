@@ -1,8 +1,17 @@
 :root {
-  color-scheme: only light;
+  color-scheme: only dark;
   --header-height: 0px;
-  --alt-background: #f5f5f5;
+  --alt-background: rgba(255, 255, 255, 0.08);
   --content-max-width: 600px;
+  --page-background: #038a5d;
+  --text-color: #ffffff;
+  --accent-color: #ffffff;
+  --card-background: rgba(255, 255, 255, 0.12);
+  --border-color: rgba(255, 255, 255, 0.45);
+  --overlay-background: rgba(3, 138, 93, 0.96);
+  --input-border: rgba(255, 255, 255, 0.75);
+  --input-background: #ffffff;
+  --input-text: #026a49;
 }
 
 html {
@@ -15,10 +24,12 @@ html {
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #ffffff;
-  color: #000000;
+  font-family: 'Stack Sans Headline', system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
+  background-color: var(--page-background);
+  color: var(--text-color);
   min-height: 100vh;
+  letter-spacing: 0.01em;
 }
 
 body.nav-open {
@@ -63,7 +74,7 @@ body.nav-open {
   flex-direction: column;
   gap: 0.75rem;
   align-items: stretch;
-  border-bottom: 1px solid #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .nav-toggle {
@@ -74,19 +85,20 @@ body.nav-open {
   width: 3rem;
   height: 3rem;
   border-radius: 999px;
-  border: 1px solid #000000;
-  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--accent-color);
   cursor: pointer;
   transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .nav-toggle:focus-visible {
-  outline: 3px solid rgba(0, 0, 0, 0.8);
+  outline: 3px solid rgba(255, 255, 255, 0.85);
   outline-offset: 4px;
 }
 
 .nav-toggle:hover {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .nav-toggle-icon,
@@ -151,7 +163,7 @@ body.nav-open {
 
 .nav-links a:focus,
 .nav-links a:hover {
-  border-color: #000000;
+  border-color: rgba(255, 255, 255, 0.75);
 }
 
 .section {
@@ -159,6 +171,7 @@ body.nav-open {
   padding: 3.5rem 0;
   scroll-snap-align: start;
   scroll-snap-stop: always;
+  background: transparent;
 }
 
 .section.alt {
@@ -222,12 +235,14 @@ body.nav-open {
 }
 
 .primary {
-  background: #000000;
-  color: #ffffff;
+  background: #ffffff;
+  color: #038a5d;
   border: none;
   padding: 0.85rem 2.5rem;
   font-size: 1rem;
   cursor: pointer;
+  border-radius: 999px;
+  font-weight: 600;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
@@ -282,8 +297,8 @@ body.nav-open {
     position: fixed;
     top: 1.25rem;
     right: 1.25rem;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
-    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+    background: rgba(255, 255, 255, 0.2);
     z-index: 1100;
   }
 
@@ -295,7 +310,7 @@ body.nav-open {
     position: fixed;
     inset: 0;
     padding: 5.5rem 1.5rem 2.5rem;
-    background: rgba(255, 255, 255, 0.97);
+    background: var(--overlay-background);
     display: none;
     flex-direction: column;
     gap: 1.75rem;
@@ -354,7 +369,7 @@ body.nav-open {
 }
 
 .map-section .section-content {
-  gap: 0.75rem;
+  gap: 1.5rem;
 }
 
 .map-intro {
@@ -365,7 +380,7 @@ body.nav-open {
 
 .map-container {
   width: 100%;
-  margin: 0 auto;
+  margin: 1.5rem auto 0;
   padding: 0 0 3.5rem;
 }
 
@@ -444,14 +459,16 @@ body.nav-open {
 .accordion-item button {
   width: 100%;
   text-align: left;
-  padding: 1rem;
+  padding: 1rem 1.25rem;
   font-size: 1rem;
-  border: 1px solid #000000;
-  background: transparent;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.1);
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-radius: 14px;
+  color: var(--text-color);
 }
 
 .accordion-item button::after {
@@ -465,14 +482,17 @@ body.nav-open {
 }
 
 .accordion-panel {
-  border: 1px solid #000000;
+  border: 1px solid var(--border-color);
   border-top: none;
-  padding: 0 1rem;
+  padding: 0 1.25rem;
   font-size: 0.95rem;
   line-height: 1.6;
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease, padding 0.3s ease;
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
 }
 
 .accordion-panel.open {
@@ -481,8 +501,8 @@ body.nav-open {
 
 .site-footer {
   width: min(100%, var(--content-max-width));
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
+  margin: 0 auto 2rem;
+  padding: 2rem 1.5rem 0;
   text-align: center;
   font-size: 0.95rem;
   scroll-snap-align: start;
@@ -492,12 +512,13 @@ body.nav-open {
 .overlay {
   position: fixed;
   inset: 0;
-  background: #ffffff;
+  background: var(--overlay-background);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   transition: opacity 0.4s ease;
+  color: var(--text-color);
 }
 
 .overlay.hidden {
@@ -509,27 +530,35 @@ body.nav-open {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.2rem;
   padding: 2rem;
   width: min(90vw, 320px);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  text-align: center;
 }
 
 .password-form input {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 1rem;
-  border: 1px solid #000000;
+  border: 1px solid var(--border-color);
+  background: var(--input-background);
+  color: var(--input-text);
 }
 
 .password-form button {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 1rem;
-  background: #000000;
-  color: #ffffff;
+  background: #ffffff;
+  color: #038a5d;
   border: none;
+  border-radius: 999px;
   cursor: pointer;
   transition: opacity 0.3s ease;
+  font-weight: 600;
 }
 
 .password-form button:hover,
@@ -541,7 +570,7 @@ body.nav-open {
   height: 1.5rem;
   margin: 0;
   font-size: 0.9rem;
-  color: #000000;
+  color: #ffffff;
 }
 
 .modal[hidden] {
@@ -559,20 +588,22 @@ body.nav-open {
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(3, 138, 93, 0.6);
 }
 
 .modal-content {
   position: relative;
   width: min(94vw, 500px);
   max-height: 90vh;
-  background: #ffffff;
-  border: 1px solid #000000;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   transform: translateY(20px);
   opacity: 0;
   transition: transform 0.4s ease, opacity 0.4s ease;
+  backdrop-filter: blur(12px);
+  color: var(--text-color);
 }
 
 .modal.open .modal-content {
@@ -588,6 +619,7 @@ body.nav-open {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
+  color: var(--text-color);
 }
 
 .modal-body {
@@ -608,29 +640,32 @@ body.nav-open {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 1rem;
-  border: 1px solid #000000;
-  background: #ffffff;
-  color: #000000;
+  border: 1px solid var(--border-color);
+  background: var(--input-background);
+  color: var(--input-text);
+  border-radius: 12px;
 }
 
+input::placeholder,
 textarea::placeholder {
-  font-family: Arial, sans-serif;
-  color: #000000;
-  opacity: 0.6;
+  font-family: 'Stack Sans Headline', system-ui, sans-serif;
+  color: rgba(2, 106, 73, 0.7);
 }
 
 #rsvp-form fieldset {
-  border: 1px solid #000000;
+  border: 1px solid var(--border-color);
   padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  border-radius: 12px;
 }
 
 #rsvp-feedback {
   margin: 0;
   min-height: 1.5rem;
   font-size: 0.95rem;
+  color: var(--text-color);
 }
 
 .fade-section {
