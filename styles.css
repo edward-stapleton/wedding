@@ -1,17 +1,17 @@
 :root {
   color-scheme: only dark;
   --header-height: 0px;
-  --alt-background: rgba(255, 255, 255, 0.08);
+  --alt-background: rgba(255, 255, 255, 0.12);
   --content-max-width: 600px;
-  --page-background: #038a5d;
+  --page-background: #4f752a;
   --text-color: #ffffff;
   --accent-color: #ffffff;
-  --card-background: rgba(255, 255, 255, 0.12);
-  --border-color: rgba(255, 255, 255, 0.45);
-  --overlay-background: rgba(3, 138, 93, 0.96);
+  --card-background: rgba(255, 255, 255, 0.16);
+  --border-color: rgba(255, 255, 255, 0.5);
+  --overlay-background: rgba(79, 117, 42, 0.96);
   --input-border: rgba(255, 255, 255, 0.75);
   --input-background: #ffffff;
-  --input-text: #026a49;
+  --input-text: #2e4a18;
 }
 
 html {
@@ -84,12 +84,11 @@ body.nav-open {
   justify-content: center;
   width: 3rem;
   height: 3rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  background: transparent;
   color: var(--accent-color);
   cursor: pointer;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  transition: color 0.3s ease;
 }
 
 .nav-toggle:focus-visible {
@@ -98,7 +97,7 @@ body.nav-open {
 }
 
 .nav-toggle:hover {
-  background: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .nav-toggle-icon,
@@ -236,7 +235,7 @@ body.nav-open {
 
 .primary {
   background: #ffffff;
-  color: #038a5d;
+  color: #4f752a;
   border: none;
   padding: 0.85rem 2.5rem;
   font-size: 1rem;
@@ -297,8 +296,6 @@ body.nav-open {
     position: fixed;
     top: 1.25rem;
     right: 1.25rem;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
-    background: rgba(255, 255, 255, 0.2);
     z-index: 1100;
   }
 
@@ -553,7 +550,7 @@ body.nav-open {
   padding: 0.75rem 1rem;
   font-size: 1rem;
   background: #ffffff;
-  color: #038a5d;
+  color: #4f752a;
   border: none;
   border-radius: 999px;
   cursor: pointer;
@@ -588,7 +585,7 @@ body.nav-open {
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(3, 138, 93, 0.6);
+  background: rgba(79, 117, 42, 0.6);
 }
 
 .modal-content {
