@@ -8,6 +8,51 @@ const mapElement = document.getElementById('map');
 const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
 const CHURCH_COORDS = [-1.2684928, 51.7666909];
 const GARDEN_COORDS = [-1.2801823, 51.7632022];
+const WALKING_ROUTE = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [-1.2685999267090438, 51.76648498246533],
+          [-1.2688935299391062, 51.76645418556669],
+          [-1.269074797597483, 51.76733425005639],
+          [-1.2692134415083842, 51.76757326555489],
+          [-1.269644227948021, 51.76761616563837],
+          [-1.2704839775425683, 51.76750202248476],
+          [-1.2714353151561966, 51.767336814777195],
+          [-1.2715103618206456, 51.76734614605388],
+          [-1.2715505705211854, 51.7673088209352],
+          [-1.2717817705466246, 51.76724972276793],
+          [-1.272988031548266, 51.76699155618175],
+          [-1.2737125882784426, 51.766927770752005],
+          [-1.2739261592040236, 51.76690373967139],
+          [-1.2749357672171584, 51.76675354512608],
+          [-1.2751302975135843, 51.766759523104014],
+          [-1.2757598452428454, 51.7668368491336],
+          [-1.2757742623636261, 51.76676556682756],
+          [-1.2757646509470533, 51.76667039616083],
+          [-1.2757165938691344, 51.766384882956174],
+          [-1.2757213995764687, 51.766197513934856],
+          [-1.2758847936443658, 51.764793708587945],
+          [-1.2758799879360936, 51.76463012673537],
+          [-1.2762067760699551, 51.76409178954455],
+          [-1.2764662842947132, 51.76382410567874],
+          [-1.2776545475779528, 51.763151562655764],
+          [-1.278620494856682, 51.76265187441598],
+          [-1.2792164026308797, 51.762491259164676],
+          [-1.2793173224960128, 51.76259833606238],
+          [-1.280172738494997, 51.76383862495547],
+          [-1.2804851095059746, 51.763755345233534],
+          [-1.2803265211463497, 51.763475762186744],
+        ],
+      },
+    },
+  ],
+};
 
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
@@ -26,6 +71,25 @@ const header = document.querySelector('.site-header');
 
 let mapLoaded = false;
 let mapInstance;
+
+function toRadians(degrees) {
+  return (degrees * Math.PI) / 180;
+}
+
+function calculateBearing(start, end) {
+  if (!start || !end) return -35;
+  const [lng1, lat1] = start.map(Number);
+  const [lng2, lat2] = end.map(Number);
+  const radLat1 = toRadians(lat1);
+  const radLat2 = toRadians(lat2);
+  const deltaLng = toRadians(lng2 - lng1);
+  const y = Math.sin(deltaLng) * Math.cos(radLat2);
+  const x =
+    Math.cos(radLat1) * Math.sin(radLat2) -
+    Math.sin(radLat1) * Math.cos(radLat2) * Math.cos(deltaLng);
+  const bearing = (Math.atan2(y, x) * 180) / Math.PI;
+  return (bearing + 360) % 360;
+}
 
 function unlockSite() {
   passwordInput.removeAttribute('aria-invalid');
@@ -302,10 +366,154 @@ function addLocationLayers(map) {
       'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
     },
     paint: {
-      'text-color': '#1f2933',
-      'text-halo-color': 'rgba(255, 255, 255, 0.95)',
-      'text-halo-width': 1.4,
+      'text-color': '#ffffff',
+      'text-halo-color': 'rgba(3, 138, 93, 0.8)',
+      'text-halo-width': 1.6,
     },
+  });
+}
+
+function addWalkingRoute(map) {
+  const sourceId = 'wedding-walking-route';
+  const lineData = WALKING_ROUTE;
+
+  if (!map.getSource(sourceId)) {
+    map.addSource(sourceId, {
+      type: 'geojson',
+      data: lineData,
+      lineMetrics: true,
+    });
+  } else {
+    const existingSource = map.getSource(sourceId);
+    existingSource.setData(lineData);
+  }
+
+  if (!map.getLayer('wedding-walking-route-glow')) {
+    map.addLayer({
+      id: 'wedding-walking-route-glow',
+      type: 'line',
+      source: sourceId,
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round',
+      },
+      paint: {
+        'line-color': 'rgba(255, 255, 255, 0.55)',
+        'line-width': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          12,
+          4,
+          16,
+          18,
+        ],
+        'line-blur': 6,
+        'line-opacity': 0.6,
+      },
+    });
+  }
+
+  if (!map.getLayer('wedding-walking-route-line')) {
+    map.addLayer({
+      id: 'wedding-walking-route-line',
+      type: 'line',
+      source: sourceId,
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round',
+      },
+      paint: {
+        'line-color': '#ffffff',
+        'line-width': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          12,
+          3,
+          17,
+          10,
+        ],
+        'line-gradient': [
+          'interpolate',
+          ['linear'],
+          ['line-progress'],
+          0,
+          'rgba(255, 255, 255, 0.6)',
+          1,
+          '#ffffff',
+        ],
+        'line-opacity': 0.95,
+      },
+    });
+  }
+}
+
+function animateRouteFlyover(map) {
+  const coordinates = WALKING_ROUTE.features?.[0]?.geometry?.coordinates;
+  if (!Array.isArray(coordinates) || coordinates.length === 0) return;
+
+  const bounds = coordinates.reduce((acc, coord) => {
+    if (!acc) {
+      return new mapboxgl.LngLatBounds(coord, coord);
+    }
+    return acc.extend(coord);
+  }, null);
+
+  if (bounds) {
+    map.fitBounds(bounds, {
+      padding: { top: 120, bottom: 160, left: 160, right: 160 },
+      duration: 2000,
+      pitch: 68,
+      bearing: calculateBearing(coordinates[0], coordinates[1]) - 20,
+      essential: true,
+    });
+  }
+
+  let stepIndex = 0;
+  const stepDuration = 1600;
+
+  function advanceAlongRoute() {
+    if (stepIndex >= coordinates.length) return;
+    const current = coordinates[stepIndex];
+    const next = coordinates[Math.min(stepIndex + 1, coordinates.length - 1)];
+    const bearing = calculateBearing(current, next);
+
+    map.easeTo({
+      center: current,
+      zoom: 16.2,
+      pitch: 72,
+      bearing,
+      duration: stepDuration,
+      essential: true,
+    });
+
+    stepIndex += 1;
+
+    if (stepIndex < coordinates.length) {
+      map.once('moveend', () => {
+        setTimeout(advanceAlongRoute, 150);
+      });
+    } else {
+      const finalBearing = calculateBearing(
+        coordinates[coordinates.length - 2] ?? current,
+        coordinates[coordinates.length - 1]
+      );
+      map.once('moveend', () => {
+        map.easeTo({
+          center: coordinates[coordinates.length - 1],
+          zoom: 15.8,
+          pitch: 64,
+          bearing: finalBearing,
+          duration: 1800,
+          essential: true,
+        });
+      });
+    }
+  }
+
+  map.once('moveend', () => {
+    setTimeout(advanceAlongRoute, 400);
   });
 }
 
@@ -374,13 +582,8 @@ function initialiseMap() {
   mapInstance.on('load', () => {
     addTerrainAndBuildings(mapInstance);
     addLocationLayers(mapInstance);
-    mapInstance.easeTo({
-      center: CHURCH_COORDS,
-      zoom: 16,
-      pitch: 68,
-      bearing: -35,
-      duration: 1800,
-    });
+    addWalkingRoute(mapInstance);
+    animateRouteFlyover(mapInstance);
   });
 
   mapLoaded = true;
