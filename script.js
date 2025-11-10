@@ -6,8 +6,8 @@ const MAPBOX_TOKEN =
 const MAPBOX_DEFAULT_STYLE = 'mapbox://styles/mapbox/light-v11';
 const mapElement = document.getElementById('map');
 const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
-const CHURCH_COORDS = [-1.26493, 51.7692];
-const GARDEN_COORDS = [-1.2713, 51.7697];
+const CHURCH_COORDS = [-1.2684928, 51.7666909];
+const GARDEN_COORDS = [-1.2801823, 51.7632022];
 
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
