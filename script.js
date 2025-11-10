@@ -3,7 +3,7 @@ const STORAGE_KEY = 'weddingSiteUnlocked';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
-const MAPBOX_DEFAULT_STYLE = 'mapbox://styles/mapbox/standard';
+const MAPBOX_DEFAULT_STYLE = 'mapbox://styles/mapbox/standard?optimize=true';
 const mapElement = document.getElementById('map');
 const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
 const CHURCH_COORDS = [-1.2684928, 51.7666909];
@@ -282,13 +282,13 @@ function loadMapboxResources() {
     }
 
     const script = document.createElement('script');
-    script.src = 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js';
+    script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js';
     script.onload = () => resolve();
     script.onerror = () => reject(new Error('Map could not load.'));
 
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css';
+    link.href = 'https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css';
 
     document.head.appendChild(link);
     document.head.appendChild(script);
@@ -562,15 +562,30 @@ function addTerrainAndBuildings(map) {
 
   map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.3 });
 
-  const layers = map.getStyle().layers;
+  const style = map.getStyle();
+  const layers = style?.layers ?? [];
   const labelLayerId = layers.find(
     layer => layer.type === 'symbol' && layer.layout && layer.layout['text-field']
   )?.id;
 
+  if (map.getLayer('3d-buildings')) {
+    return;
+  }
+
+  const sourceId = style?.sources?.composite
+    ? 'composite'
+    : style?.sources?.basemap
+    ? 'basemap'
+    : null;
+
+  if (!sourceId) {
+    return;
+  }
+
   map.addLayer(
     {
       id: '3d-buildings',
-      source: 'composite',
+      source: sourceId,
       'source-layer': 'building',
       filter: ['==', 'extrude', 'true'],
       type: 'fill-extrusion',
