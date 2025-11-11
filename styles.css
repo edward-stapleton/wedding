@@ -453,6 +453,12 @@ body.nav-open {
   gap: 1rem;
 }
 
+.accordion-item button,
+.accordion-panel,
+.accordion-panel h3 {
+  font-family: inherit;
+}
+
 .accordion-item button {
   width: 100%;
   text-align: left;
@@ -686,11 +692,6 @@ textarea.form-control {
 .guest-heading {
   margin: 0;
   font-size: 1.1rem;
-}
-
-.rsvp-summary {
-  margin: 0;
-  font-size: 1rem;
 }
 
 .rsvp-email {
