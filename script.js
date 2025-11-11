@@ -120,11 +120,13 @@ const plusOneDietaryInput = document.getElementById('plusone-dietary');
 const rsvpEmailField = document.getElementById('rsvp-email');
 const openRsvpButton = document.getElementById('open-rsvp');
 const closeModalEls = document.querySelectorAll('[data-close-modal]');
+const guestSections = document.querySelectorAll('.guest-response');
 const mapContainer = document.querySelector('[data-map-container]');
 const siteNav = document.querySelector('.site-nav');
 const navToggle = document.querySelector('.nav-toggle');
 const navLinks = document.querySelectorAll('.nav-links a');
 const header = document.querySelector('.site-header');
+const mobileModalMedia = window.matchMedia('(max-width: 600px)');
 
 let mapLoaded = false;
 let mapInstance;
@@ -140,6 +142,51 @@ function createGuestProfile(email) {
     primary: { name: 'Joe Bloggs' },
     plusOne: { name: 'Jill Bloggs' },
   };
+}
+
+function setGuestSectionState(section, expanded) {
+  if (!section) return;
+  const body = section.querySelector('[data-guest-body]');
+  const toggle = section.querySelector('.guest-toggle');
+  if (!body || !toggle) return;
+  body.hidden = !expanded;
+  section.classList.toggle('collapsed', !expanded);
+  toggle.setAttribute('aria-expanded', String(expanded));
+}
+
+function applyGuestSectionResponsiveState(isMobile) {
+  guestSections.forEach((section, index) => {
+    const expanded = !isMobile || index === 0;
+    setGuestSectionState(section, expanded);
+  });
+}
+
+function setupGuestSectionToggles() {
+  guestSections.forEach(section => {
+    const toggle = section.querySelector('.guest-toggle');
+    if (!toggle) return;
+    toggle.addEventListener('click', () => {
+      const expanded = toggle.getAttribute('aria-expanded') === 'true';
+      setGuestSectionState(section, !expanded);
+    });
+  });
+
+  const handleChange = event => {
+    const matches = typeof event === 'boolean' ? event : event.matches;
+    applyGuestSectionResponsiveState(matches);
+  };
+
+  if (mobileModalMedia.addEventListener) {
+    mobileModalMedia.addEventListener('change', handleChange);
+  } else if (mobileModalMedia.addListener) {
+    mobileModalMedia.addListener(handleChange);
+  }
+
+  handleChange(mobileModalMedia.matches);
+}
+
+function resetGuestSectionStateForModal() {
+  applyGuestSectionResponsiveState(mobileModalMedia.matches);
 }
 
 function updateGuestUi(profile) {
@@ -167,6 +214,9 @@ function updateGuestUi(profile) {
 
   if (plusOneSection) {
     plusOneSection.hidden = !hasPlusOne;
+    if (!hasPlusOne) {
+      setGuestSectionState(plusOneSection, false);
+    }
   }
 
   if (hasPlusOne) {
@@ -363,6 +413,8 @@ window.addEventListener('resize', updateHeaderOffset);
 window.addEventListener('load', updateHeaderOffset);
 updateHeaderOffset();
 
+setupGuestSectionToggles();
+
 function openModal() {
   if (!rsvpModal) return;
   rsvpModal.hidden = false;
@@ -378,6 +430,8 @@ function openModal() {
   } else {
     updateGuestUi(guestProfile);
   }
+
+  resetGuestSectionStateForModal();
 
   const initialFocusControl = rsvpForm?.querySelector('[data-initial-focus]');
   setTimeout(() => initialFocusControl?.focus(), 50);
