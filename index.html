@@ -297,56 +297,84 @@
             <p class="rsvp-email">Linked email: <span data-guest-email></span></p>
 
             <section class="guest-response" data-guest-section="primary">
-              <h3 class="guest-heading" data-guest-name="primary">Joe Bloggs</h3>
-              <fieldset>
-                <legend data-attendance-legend="primary">Able to come?</legend>
-                <label>
-                  <input
-                    id="primary-attending"
-                    type="radio"
-                    name="primary-attendance"
-                    value="Yes"
-                    required
-                    data-initial-focus
-                  />
-                  Yes
-                </label>
-                <label>
-                  <input type="radio" name="primary-attendance" value="No" required />
-                  No
-                </label>
-              </fieldset>
-              <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
-              <textarea
-                id="primary-dietary"
-                name="primary-dietary"
-                class="form-control"
-                rows="3"
-                placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
-              ></textarea>
+              <header class="guest-response__header">
+                <h3 class="guest-title">
+                  <button
+                    type="button"
+                    class="guest-toggle"
+                    aria-expanded="true"
+                    aria-controls="primary-response"
+                  >
+                    <span class="guest-heading" data-guest-name="primary">Joe Bloggs</span>
+                    <span class="guest-toggle-icon" aria-hidden="true"></span>
+                  </button>
+                </h3>
+              </header>
+              <div class="guest-response__body" id="primary-response" data-guest-body>
+                <fieldset>
+                  <legend data-attendance-legend="primary">Able to come?</legend>
+                  <label>
+                    <input
+                      id="primary-attending"
+                      type="radio"
+                      name="primary-attendance"
+                      value="Yes"
+                      required
+                      data-initial-focus
+                    />
+                    Yes
+                  </label>
+                  <label>
+                    <input type="radio" name="primary-attendance" value="No" required />
+                    No
+                  </label>
+                </fieldset>
+                <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
+                <textarea
+                  id="primary-dietary"
+                  name="primary-dietary"
+                  class="form-control"
+                  rows="3"
+                  placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
+                ></textarea>
+              </div>
             </section>
 
             <section class="guest-response" data-guest-section="plusOne">
-              <h3 class="guest-heading" data-guest-name="plusOne">Jill Bloggs</h3>
-              <fieldset>
-                <legend data-attendance-legend="plusOne">Able to come?</legend>
-                <label>
-                  <input type="radio" name="plusone-attendance" value="Yes" required />
-                  Yes
-                </label>
-                <label>
-                  <input type="radio" name="plusone-attendance" value="No" required />
-                  No
-                </label>
-              </fieldset>
-              <label for="plusone-dietary" data-dietary-label="plusOne">Any dietary requirements?</label>
-              <textarea
-                id="plusone-dietary"
-                name="plusone-dietary"
-                class="form-control"
-                rows="3"
-                placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
-              ></textarea>
+              <header class="guest-response__header">
+                <h3 class="guest-title">
+                  <button
+                    type="button"
+                    class="guest-toggle"
+                    aria-expanded="true"
+                    aria-controls="plusone-response"
+                  >
+                    <span class="guest-heading" data-guest-name="plusOne">Jill Bloggs</span>
+                    <span class="guest-toggle-icon" aria-hidden="true"></span>
+                  </button>
+                </h3>
+              </header>
+              <div class="guest-response__body" id="plusone-response" data-guest-body>
+                <fieldset>
+                  <legend data-attendance-legend="plusOne">Able to come?</legend>
+                  <label>
+                    <input type="radio" name="plusone-attendance" value="Yes" required />
+                    Yes
+                  </label>
+                  <label>
+                    <input type="radio" name="plusone-attendance" value="No" required />
+                    No
+                  </label>
+                </fieldset>
+                <label for="plusone-dietary" data-dietary-label="plusOne">Any dietary requirements?</label>
+                <textarea
+                  id="plusone-dietary"
+                  name="plusone-dietary"
+                  class="form-control"
+                  rows="3"
+                  placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
+                ></textarea>
+              </div>
             </section>
 
             <input type="hidden" name="guest-email" id="rsvp-email" />
