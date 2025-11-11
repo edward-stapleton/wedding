@@ -16,15 +16,28 @@
     <div id="password-screen" class="overlay">
       <form id="password-form" class="password-form" autocomplete="off">
         <h1 class="wedding-title">Edward &amp; Laura</h1>
-        <label for="access-code" class="visually-hidden">Access code</label>
+        <p class="password-intro">Please enter your email address and the access password to continue.</p>
+        <label for="guest-email" class="visually-hidden">Email address</label>
+        <input
+          id="guest-email"
+          name="guest-email"
+          type="email"
+          inputmode="email"
+          aria-label="Email address"
+          placeholder="Email address"
+          required
+          class="form-control"
+        />
+        <label for="access-code" class="visually-hidden">Access password</label>
         <input
           id="access-code"
           name="access-code"
           type="password"
           inputmode="text"
-          aria-label="Access code"
-          placeholder="Access code"
+          aria-label="Access password"
+          placeholder="Password"
           required
+          class="form-control"
         />
         <button type="submit">Enter</button>
         <p id="password-error" role="alert" aria-live="polite"></p>
@@ -276,24 +289,65 @@
         <div class="modal-body">
           <h2 id="rsvp-title">RSVP</h2>
           <form id="rsvp-form" novalidate>
-            <label for="guest-name">Name</label>
-            <input id="guest-name" name="name" type="text" autocomplete="name" required />
+            <p class="rsvp-summary" id="rsvp-guest-summary">
+              RSVP for <span id="rsvp-guest-summary-names">Joe Bloggs &amp; Jill Bloggs</span>
+            </p>
+            <p class="rsvp-email">Linked email: <span data-guest-email></span></p>
 
-            <fieldset>
-              <legend>Will you attend?</legend>
-              <label><input type="radio" name="attendance" value="Yes" required /> Yes</label>
-              <label><input type="radio" name="attendance" value="No" required /> No</label>
-              <label><input type="radio" name="attendance" value="Maybe" required /> Maybe</label>
-            </fieldset>
+            <section class="guest-response" data-guest-section="primary">
+              <h3 class="guest-heading" data-guest-name="primary">Joe Bloggs</h3>
+              <fieldset>
+                <legend data-attendance-legend="primary">Will Joe Bloggs attend?</legend>
+                <label>
+                  <input
+                    id="primary-attending"
+                    type="radio"
+                    name="primary-attendance"
+                    value="Attending"
+                    required
+                    data-initial-focus
+                  />
+                  Attending
+                </label>
+                <label>
+                  <input type="radio" name="primary-attendance" value="Not attending" required />
+                  Not attending
+                </label>
+              </fieldset>
+              <label for="primary-dietary" data-dietary-label="primary">Dietary requirements for Joe Bloggs</label>
+              <textarea
+                id="primary-dietary"
+                name="primary-dietary"
+                class="form-control"
+                rows="3"
+                placeholder="Let us know about Joe Bloggs's dietary needs"
+              ></textarea>
+            </section>
 
-            <label for="dietary">Do you have any dietary requirements?</label>
-            <textarea
-              id="dietary"
-              name="dietary"
-              rows="3"
-              placeholder="Let us know about any allergies or preferences"
-            ></textarea>
+            <section class="guest-response" data-guest-section="plusOne">
+              <h3 class="guest-heading" data-guest-name="plusOne">Jill Bloggs</h3>
+              <fieldset>
+                <legend data-attendance-legend="plusOne">Will Jill Bloggs attend?</legend>
+                <label>
+                  <input type="radio" name="plusone-attendance" value="Attending" required />
+                  Attending
+                </label>
+                <label>
+                  <input type="radio" name="plusone-attendance" value="Not attending" required />
+                  Not attending
+                </label>
+              </fieldset>
+              <label for="plusone-dietary" data-dietary-label="plusOne">Dietary requirements for Jill Bloggs</label>
+              <textarea
+                id="plusone-dietary"
+                name="plusone-dietary"
+                class="form-control"
+                rows="3"
+                placeholder="Let us know about Jill Bloggs's dietary needs"
+              ></textarea>
+            </section>
 
+            <input type="hidden" name="guest-email" id="rsvp-email" />
             <button type="submit" class="primary">Submit</button>
             <p id="rsvp-feedback" role="status" aria-live="polite"></p>
           </form>
