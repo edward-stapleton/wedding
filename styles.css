@@ -188,6 +188,11 @@ body.nav-open {
   gap: 1.5rem;
 }
 
+#schedule .section-content {
+  align-items: center;
+  text-align: center;
+}
+
 .section-content h2 {
   margin: 0;
   font-size: 1.5rem;
@@ -326,29 +331,34 @@ body.nav-open {
 .timeline {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  width: 100%;
+  width: min(100%, 520px);
+  text-align: left;
+  align-self: center;
 }
 
 .timeline li {
   display: grid;
-  grid-template-columns: minmax(4rem, auto) 1fr;
+  grid-template-columns: minmax(4.25rem, auto) 1fr;
   gap: 1rem;
-  align-items: baseline;
+  align-items: start;
 }
 
 .timeline time {
   font-weight: bold;
   letter-spacing: 0.05em;
+  justify-self: end;
 }
 
 .event-details {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .event-name {
@@ -385,7 +395,7 @@ body.nav-open {
   width: 100%;
   height: 360px;
   border: none;
-  border-radius: 12px;
+  border-radius: 0;
   overflow: hidden;
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
 }
@@ -413,37 +423,178 @@ body.nav-open {
   }
 }
 
-.accommodation-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  width: 100%;
-}
-
 .accommodation-intro {
   margin: 0;
   font-size: 1rem;
   line-height: 1.6;
 }
 
-.accommodation-list h3 {
-  margin: 0 0 0.5rem;
+.accommodation-carousel {
+  position: relative;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0 2.5rem 2.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.carousel-track {
+  display: flex;
+  width: 100%;
+  transform: translateX(0);
+  transition: transform 0.45s ease;
+  will-change: transform;
+  touch-action: pan-y;
+}
+
+.accommodation-card {
+  flex: 0 0 100%;
+  padding: 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  align-items: center;
+  text-align: center;
+}
+
+.accommodation-card__media {
+  margin: 0;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.accommodation-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.accommodation-card__body {
+  width: min(100%, 420px);
+  background: var(--card-background);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.accommodation-card__body h3 {
+  margin: 0;
   font-size: 1.2rem;
 }
 
-.accommodation-list p {
+.accommodation-card__body p {
   margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
-.accommodation-list a {
+.accommodation-card__body a {
   color: inherit;
   text-decoration: underline;
-  display: inline-block;
-  margin-top: 0.5rem;
   font-size: 1rem;
+}
+
+.carousel-control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.25);
+  color: #1d3412;
+  font-size: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.3s ease;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+.carousel-control:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+
+.carousel-control:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.carousel-control--prev {
+  left: 0.75rem;
+}
+
+.carousel-control--next {
+  right: 0.75rem;
+}
+
+.carousel-control[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  z-index: 1;
+}
+
+.carousel-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.carousel-dot[aria-current='true'] {
+  background: rgba(255, 255, 255, 0.85);
+  transform: scale(1.1);
+}
+
+.carousel-dot:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .accommodation-carousel {
+    padding: 0 1.5rem 2.5rem;
+  }
+
+  .carousel-control--prev {
+    left: 0.25rem;
+  }
+
+  .carousel-control--next {
+    right: 0.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .accommodation-card__body {
+    width: min(100%, 480px);
+  }
 }
 
 .accordion {
@@ -888,6 +1039,11 @@ textarea.form-control {
 
   .timeline li {
     grid-template-columns: 6rem 1fr;
+  }
+
+  #schedule .section-content {
+    align-items: center;
+    text-align: center;
   }
 }
 
