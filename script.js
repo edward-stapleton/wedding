@@ -107,7 +107,6 @@ const passwordError = document.getElementById('password-error');
 const rsvpModal = document.getElementById('rsvp-modal');
 const rsvpForm = document.getElementById('rsvp-form');
 const rsvpFeedback = document.getElementById('rsvp-feedback');
-const rsvpSummaryNames = document.getElementById('rsvp-guest-summary-names');
 const rsvpEmailDisplay = document.querySelector('[data-guest-email]');
 const primaryNameEl = document.querySelector('[data-guest-name="primary"]');
 const plusOneNameEl = document.querySelector('[data-guest-name="plusOne"]');
@@ -131,6 +130,10 @@ let mapLoaded = false;
 let mapInstance;
 let guestProfile = null;
 
+const ATTENDANCE_PROMPT = 'Able to come?';
+const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
+const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
+
 function createGuestProfile(email) {
   return {
     email,
@@ -151,15 +154,15 @@ function updateGuestUi(profile) {
   }
 
   if (primaryLegend) {
-    primaryLegend.textContent = `Will ${primaryName} attend?`;
+    primaryLegend.textContent = ATTENDANCE_PROMPT;
   }
 
   if (primaryDietaryLabel) {
-    primaryDietaryLabel.textContent = `Dietary requirements for ${primaryName}`;
+    primaryDietaryLabel.textContent = DIETARY_LABEL_TEXT;
   }
 
   if (primaryDietaryInput) {
-    primaryDietaryInput.placeholder = `Let us know about ${primaryName}'s dietary needs`;
+    primaryDietaryInput.placeholder = DIETARY_PLACEHOLDER;
   }
 
   if (plusOneSection) {
@@ -172,15 +175,15 @@ function updateGuestUi(profile) {
     }
 
     if (plusOneLegend) {
-      plusOneLegend.textContent = `Will ${plusOneName} attend?`;
+      plusOneLegend.textContent = ATTENDANCE_PROMPT;
     }
 
     if (plusOneDietaryLabel) {
-      plusOneDietaryLabel.textContent = `Dietary requirements for ${plusOneName}`;
+      plusOneDietaryLabel.textContent = DIETARY_LABEL_TEXT;
     }
 
     if (plusOneDietaryInput) {
-      plusOneDietaryInput.placeholder = `Let us know about ${plusOneName}'s dietary needs`;
+      plusOneDietaryInput.placeholder = DIETARY_PLACEHOLDER;
     }
 
     if (rsvpForm) {
@@ -203,12 +206,6 @@ function updateGuestUi(profile) {
     if (plusOneDietaryInput) {
       plusOneDietaryInput.value = '';
     }
-  }
-
-  const summaryNames = hasPlusOne ? `${primaryName} & ${plusOneName}` : primaryName;
-
-  if (rsvpSummaryNames) {
-    rsvpSummaryNames.textContent = summaryNames;
   }
 
   const emailValue = profile.email || '';
@@ -425,11 +422,11 @@ function validateForm(formData, profile) {
   }
 
   if (!formData.get('primary-attendance')) {
-    errors.push(`Please let us know if ${primaryName} is attending.`);
+    errors.push(`Please let us know if ${primaryName} can make it.`);
   }
 
   if (hasPlusOne && !formData.get('plusone-attendance')) {
-    errors.push(`Please let us know if ${plusOneName} is attending.`);
+    errors.push(`Please let us know if ${plusOneName} can make it.`);
   }
 
   return errors;
@@ -687,16 +684,31 @@ function addWalkingRoute(map) {
   }
 }
 
-function animateRouteFlyover(map) {
+function getRouteBounds() {
+  const coordinates = WALKING_ROUTE.features?.[0]?.geometry?.coordinates;
+
+  if (typeof mapboxgl === 'undefined' || !Array.isArray(coordinates) || coordinates.length === 0) {
+    return null;
+  }
+
+  return coordinates.reduce((bounds, coord) => {
+    if (!Array.isArray(coord) || coord.length < 2) {
+      return bounds;
+    }
+
+    if (!bounds) {
+      return new mapboxgl.LngLatBounds(coord, coord);
+    }
+
+    return bounds.extend(coord);
+  }, null);
+}
+
+function animateRouteFlyover(map, routeBounds) {
   const coordinates = WALKING_ROUTE.features?.[0]?.geometry?.coordinates;
   if (!Array.isArray(coordinates) || coordinates.length === 0) return;
 
-  const bounds = coordinates.reduce((acc, coord) => {
-    if (!acc) {
-      return new mapboxgl.LngLatBounds(coord, coord);
-    }
-    return acc.extend(coord);
-  }, null);
+  const bounds = routeBounds || getRouteBounds();
 
   const southeastBearing = 135;
 
@@ -828,11 +840,24 @@ function initialiseMap() {
 
   mapInstance.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right');
 
+  const routeBounds = getRouteBounds();
+
   mapInstance.on('load', () => {
     addTerrainAndBuildings(mapInstance);
     addLocationLayers(mapInstance);
     addWalkingRoute(mapInstance);
-    animateRouteFlyover(mapInstance);
+
+    if (routeBounds) {
+      mapInstance.fitBounds(routeBounds, {
+        padding: { top: 120, bottom: 160, left: 160, right: 160 },
+        duration: 0,
+        pitch: 64,
+        bearing: 135,
+        essential: true,
+      });
+    }
+
+    animateRouteFlyover(mapInstance, routeBounds);
   });
 
   mapLoaded = true;
