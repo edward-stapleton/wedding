@@ -83,10 +83,16 @@
             <h2>Schedule</h2>
             <ol class="timeline" aria-label="Wedding schedule">
               <li>
+                <time datetime="2026-08-22T12:45">12:45</time>
+                <div class="event-details">
+                  <span class="event-name">Arrival</span>
+                  <span class="event-location">St Margaret&rsquo;s Church, St Margaret&rsquo;s Road, Oxford OX2 6RX</span>
+                </div>
+              </li>
+              <li>
                 <time datetime="2026-08-22T13:00">13:00</time>
                 <div class="event-details">
                   <span class="event-name">Wedding Ceremony</span>
-                  <span class="event-location">St Margaret&#8217;s Church, St Margaret&#8217;s Road, Oxford OX2 6RX</span>
                 </div>
               </li>
               <li>
@@ -100,7 +106,6 @@
                 <time datetime="2026-08-22T23:30">23:30</time>
                 <div class="event-details">
                   <span class="event-name">Carriages</span>
-                  <span class="event-location">Departures from The Medley Walled Garden</span>
                 </div>
               </li>
             </ol>
@@ -289,61 +294,58 @@
         <div class="modal-body">
           <h2 id="rsvp-title">RSVP</h2>
           <form id="rsvp-form" novalidate>
-            <p class="rsvp-summary" id="rsvp-guest-summary">
-              RSVP for <span id="rsvp-guest-summary-names">Joe Bloggs &amp; Jill Bloggs</span>
-            </p>
             <p class="rsvp-email">Linked email: <span data-guest-email></span></p>
 
             <section class="guest-response" data-guest-section="primary">
               <h3 class="guest-heading" data-guest-name="primary">Joe Bloggs</h3>
               <fieldset>
-                <legend data-attendance-legend="primary">Will Joe Bloggs attend?</legend>
+                <legend data-attendance-legend="primary">Able to come?</legend>
                 <label>
                   <input
                     id="primary-attending"
                     type="radio"
                     name="primary-attendance"
-                    value="Attending"
+                    value="Yes"
                     required
                     data-initial-focus
                   />
-                  Attending
+                  Yes
                 </label>
                 <label>
-                  <input type="radio" name="primary-attendance" value="Not attending" required />
-                  Not attending
+                  <input type="radio" name="primary-attendance" value="No" required />
+                  No
                 </label>
               </fieldset>
-              <label for="primary-dietary" data-dietary-label="primary">Dietary requirements for Joe Bloggs</label>
+              <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
               <textarea
                 id="primary-dietary"
                 name="primary-dietary"
                 class="form-control"
                 rows="3"
-                placeholder="Let us know about Joe Bloggs's dietary needs"
+                placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
               ></textarea>
             </section>
 
             <section class="guest-response" data-guest-section="plusOne">
               <h3 class="guest-heading" data-guest-name="plusOne">Jill Bloggs</h3>
               <fieldset>
-                <legend data-attendance-legend="plusOne">Will Jill Bloggs attend?</legend>
+                <legend data-attendance-legend="plusOne">Able to come?</legend>
                 <label>
-                  <input type="radio" name="plusone-attendance" value="Attending" required />
-                  Attending
+                  <input type="radio" name="plusone-attendance" value="Yes" required />
+                  Yes
                 </label>
                 <label>
-                  <input type="radio" name="plusone-attendance" value="Not attending" required />
-                  Not attending
+                  <input type="radio" name="plusone-attendance" value="No" required />
+                  No
                 </label>
               </fieldset>
-              <label for="plusone-dietary" data-dietary-label="plusOne">Dietary requirements for Jill Bloggs</label>
+              <label for="plusone-dietary" data-dietary-label="plusOne">Any dietary requirements?</label>
               <textarea
                 id="plusone-dietary"
                 name="plusone-dietary"
                 class="form-control"
                 rows="3"
-                placeholder="Let us know about Jill Bloggs's dietary needs"
+                placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
               ></textarea>
             </section>
 
