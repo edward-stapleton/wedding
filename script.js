@@ -350,6 +350,128 @@ if (localStorage.getItem(STORAGE_KEY) === 'true') {
 
 passwordForm?.addEventListener('submit', handlePasswordSubmit);
 
+function setupCarousel(carousel) {
+  if (!carousel || carousel.dataset.carouselInitialised === 'true') {
+    return;
+  }
+
+  const track = carousel.querySelector('[data-carousel-track]');
+  const prevButton = carousel.querySelector('[data-carousel-prev]');
+  const nextButton = carousel.querySelector('[data-carousel-next]');
+  const dotsContainer = carousel.querySelector('[data-carousel-dots]');
+
+  if (!track) {
+    return;
+  }
+
+  const slides = Array.from(track.children).filter(child => child instanceof HTMLElement);
+  if (slides.length === 0) {
+    return;
+  }
+
+  carousel.setAttribute('role', carousel.getAttribute('role') || 'region');
+  carousel.dataset.carouselInitialised = 'true';
+
+  if (dotsContainer) {
+    dotsContainer.innerHTML = '';
+    dotsContainer.setAttribute('role', 'tablist');
+  }
+
+  let currentIndex = 0;
+  const dots = [];
+
+  function update() {
+    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+    if (prevButton) {
+      prevButton.disabled = currentIndex === 0;
+    }
+    if (nextButton) {
+      nextButton.disabled = currentIndex === slides.length - 1;
+    }
+    dots.forEach((dot, index) => {
+      dot.setAttribute('aria-current', index === currentIndex ? 'true' : 'false');
+    });
+  }
+
+  function moveTo(index) {
+    const clamped = Math.max(0, Math.min(index, slides.length - 1));
+    if (clamped === currentIndex) {
+      update();
+      return;
+    }
+    currentIndex = clamped;
+    update();
+  }
+
+  slides.forEach((slide, index) => {
+    slide.setAttribute('role', 'group');
+    slide.setAttribute('aria-roledescription', 'slide');
+    slide.setAttribute('aria-label', `${index + 1} of ${slides.length}`);
+
+    if (!dotsContainer) {
+      return;
+    }
+
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'carousel-dot';
+    dot.setAttribute('aria-label', `Go to accommodation ${index + 1} of ${slides.length}`);
+    dot.setAttribute('role', 'tab');
+    dot.addEventListener('click', () => moveTo(index));
+    dotsContainer.appendChild(dot);
+    dots.push(dot);
+  });
+
+  prevButton?.addEventListener('click', () => moveTo(currentIndex - 1));
+  nextButton?.addEventListener('click', () => moveTo(currentIndex + 1));
+
+  carousel.addEventListener('keydown', event => {
+    if (event.target !== carousel) {
+      return;
+    }
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      moveTo(currentIndex - 1);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      moveTo(currentIndex + 1);
+    }
+  });
+
+  let touchStartX = null;
+
+  track.addEventListener('touchstart', event => {
+    touchStartX = event.touches?.[0]?.clientX ?? null;
+  });
+
+  track.addEventListener('touchmove', event => {
+    if (touchStartX === null) return;
+    const currentX = event.touches?.[0]?.clientX;
+    if (typeof currentX !== 'number') return;
+    const delta = currentX - touchStartX;
+    if (Math.abs(delta) < 40) return;
+    moveTo(delta > 0 ? currentIndex - 1 : currentIndex + 1);
+    touchStartX = null;
+  });
+
+  const clearTouch = () => {
+    touchStartX = null;
+  };
+
+  track.addEventListener('touchend', clearTouch);
+  track.addEventListener('touchcancel', clearTouch);
+
+  carousel.setAttribute('tabindex', '0');
+  update();
+}
+
+function setupCarousels() {
+  const carousels = document.querySelectorAll('[data-carousel]');
+  carousels.forEach(setupCarousel);
+}
+
+setupCarousels();
+
 function setupFadeSections() {
   const sections = document.querySelectorAll('[data-section], [data-map-container]');
   const observer = new IntersectionObserver(
