@@ -1,5 +1,6 @@
 const ACCESS_CODE = 'STARFORD';
 const STORAGE_KEY = 'weddingSiteUnlocked';
+const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
@@ -7,7 +8,6 @@ const MAPBOX_DEFAULT_STYLE = 'mapbox://styles/mapbox/standard?optimize=true';
 const mapElement = document.getElementById('map');
 const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
 const CHURCH_COORDS = [-1.2684928, 51.7666909];
-const GARDEN_COORDS = [-1.2801823, 51.7632022];
 const WALKING_ROUTE = {
   type: 'FeatureCollection',
   features: [
@@ -71,13 +71,54 @@ const CHURCH_FOOTPRINT = {
   ],
 };
 
+const GARDEN_FOOTPRINT = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        name: 'The Medley Walled Garden',
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [-1.2802992622484908, 51.76347306334887],
+            [-1.2805981364095942, 51.76335837809077],
+            [-1.2804885492170115, 51.7632547911563],
+            [-1.2810125752451142, 51.7630426838337],
+            [-1.280522421622038, 51.76256420551704],
+            [-1.2798748609405095, 51.76280221211758],
+            [-1.2801637726291517, 51.76319189897248],
+            [-1.2801518176624995, 51.76321902894463],
+            [-1.2802992622484908, 51.76347306334887],
+          ],
+        ],
+      },
+    },
+  ],
+};
+
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
+const emailInput = document.getElementById('guest-email');
 const passwordInput = document.getElementById('access-code');
 const passwordError = document.getElementById('password-error');
 const rsvpModal = document.getElementById('rsvp-modal');
 const rsvpForm = document.getElementById('rsvp-form');
 const rsvpFeedback = document.getElementById('rsvp-feedback');
+const rsvpSummaryNames = document.getElementById('rsvp-guest-summary-names');
+const rsvpEmailDisplay = document.querySelector('[data-guest-email]');
+const primaryNameEl = document.querySelector('[data-guest-name="primary"]');
+const plusOneNameEl = document.querySelector('[data-guest-name="plusOne"]');
+const plusOneSection = document.querySelector('[data-guest-section="plusOne"]');
+const primaryLegend = document.querySelector('[data-attendance-legend="primary"]');
+const plusOneLegend = document.querySelector('[data-attendance-legend="plusOne"]');
+const primaryDietaryLabel = document.querySelector('[data-dietary-label="primary"]');
+const plusOneDietaryLabel = document.querySelector('[data-dietary-label="plusOne"]');
+const primaryDietaryInput = document.getElementById('primary-dietary');
+const plusOneDietaryInput = document.getElementById('plusone-dietary');
+const rsvpEmailField = document.getElementById('rsvp-email');
 const openRsvpButton = document.getElementById('open-rsvp');
 const closeModalEls = document.querySelectorAll('[data-close-modal]');
 const mapContainer = document.querySelector('[data-map-container]');
@@ -88,9 +129,112 @@ const header = document.querySelector('.site-header');
 
 let mapLoaded = false;
 let mapInstance;
+let guestProfile = null;
+
+function createGuestProfile(email) {
+  return {
+    email,
+    primary: { name: 'Joe Bloggs' },
+    plusOne: { name: 'Jill Bloggs' },
+  };
+}
+
+function updateGuestUi(profile) {
+  if (!profile) return;
+
+  const primaryName = profile.primary?.name || 'Joe Bloggs';
+  const plusOneName = profile.plusOne?.name || 'Jill Bloggs';
+  const hasPlusOne = Boolean(profile.plusOne && profile.plusOne.name);
+
+  if (primaryNameEl) {
+    primaryNameEl.textContent = primaryName;
+  }
+
+  if (primaryLegend) {
+    primaryLegend.textContent = `Will ${primaryName} attend?`;
+  }
+
+  if (primaryDietaryLabel) {
+    primaryDietaryLabel.textContent = `Dietary requirements for ${primaryName}`;
+  }
+
+  if (primaryDietaryInput) {
+    primaryDietaryInput.placeholder = `Let us know about ${primaryName}'s dietary needs`;
+  }
+
+  if (plusOneSection) {
+    plusOneSection.hidden = !hasPlusOne;
+  }
+
+  if (hasPlusOne) {
+    if (plusOneNameEl) {
+      plusOneNameEl.textContent = plusOneName;
+    }
+
+    if (plusOneLegend) {
+      plusOneLegend.textContent = `Will ${plusOneName} attend?`;
+    }
+
+    if (plusOneDietaryLabel) {
+      plusOneDietaryLabel.textContent = `Dietary requirements for ${plusOneName}`;
+    }
+
+    if (plusOneDietaryInput) {
+      plusOneDietaryInput.placeholder = `Let us know about ${plusOneName}'s dietary needs`;
+    }
+
+    if (rsvpForm) {
+      const plusOneRadios = rsvpForm.querySelectorAll('[name="plusone-attendance"]');
+      plusOneRadios.forEach(input => {
+        input.disabled = false;
+        input.required = true;
+      });
+    }
+  } else {
+    if (rsvpForm) {
+      const plusOneRadios = rsvpForm.querySelectorAll('[name="plusone-attendance"]');
+      plusOneRadios.forEach(input => {
+        input.checked = false;
+        input.disabled = true;
+        input.required = false;
+      });
+    }
+
+    if (plusOneDietaryInput) {
+      plusOneDietaryInput.value = '';
+    }
+  }
+
+  const summaryNames = hasPlusOne ? `${primaryName} & ${plusOneName}` : primaryName;
+
+  if (rsvpSummaryNames) {
+    rsvpSummaryNames.textContent = summaryNames;
+  }
+
+  const emailValue = profile.email || '';
+
+  if (rsvpEmailDisplay) {
+    rsvpEmailDisplay.textContent = emailValue || 'Not provided yet';
+  }
+
+  if (rsvpEmailField) {
+    rsvpEmailField.value = emailValue;
+  }
+
+  if (emailInput && emailValue) {
+    emailInput.value = emailValue;
+  }
+}
+
+function setGuestProfile(profile) {
+  guestProfile = profile;
+  updateGuestUi(profile);
+}
 
 function unlockSite() {
-  passwordInput.removeAttribute('aria-invalid');
+  passwordInput?.removeAttribute('aria-invalid');
+  emailInput?.removeAttribute('aria-invalid');
+  if (!passwordScreen) return;
   passwordScreen.classList.add('hidden');
   setTimeout(() => {
     passwordScreen.style.display = 'none';
@@ -98,36 +242,66 @@ function unlockSite() {
 }
 
 function lockSite() {
+  if (!passwordScreen) return;
   passwordScreen.style.display = 'flex';
   passwordScreen.classList.remove('hidden');
 }
 
 function handlePasswordSubmit(event) {
   event.preventDefault();
+  if (!emailInput || !passwordInput) return;
+
+  passwordError.textContent = '';
+  emailInput.removeAttribute('aria-invalid');
+  passwordInput.removeAttribute('aria-invalid');
+
+  const emailValue = emailInput.value.trim();
   const entered = passwordInput.value.trim().toUpperCase();
-  if (entered === ACCESS_CODE) {
-    localStorage.setItem(STORAGE_KEY, 'true');
-    passwordError.textContent = '';
-    unlockSite();
-  } else {
+
+  if (!emailValue || !emailValue.includes('@')) {
+    passwordError.textContent = 'Please enter a valid email address to continue.';
+    emailInput.setAttribute('aria-invalid', 'true');
+    emailInput.focus();
+    return;
+  }
+
+  if (entered !== ACCESS_CODE) {
     passwordError.textContent = 'That code is not quite right.';
     passwordInput.setAttribute('aria-invalid', 'true');
     passwordInput.focus();
+    return;
   }
+
+  localStorage.setItem(STORAGE_KEY, 'true');
+  localStorage.setItem(EMAIL_STORAGE_KEY, emailValue);
+  passwordError.textContent = '';
+  setGuestProfile(createGuestProfile(emailValue));
+  unlockSite();
 }
 
-passwordInput.addEventListener('input', () => {
+passwordInput?.addEventListener('input', () => {
   passwordInput.removeAttribute('aria-invalid');
   passwordError.textContent = '';
 });
 
+emailInput?.addEventListener('input', () => {
+  emailInput.removeAttribute('aria-invalid');
+  passwordError.textContent = '';
+});
+
+const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
+setGuestProfile(createGuestProfile(storedEmail));
+
 if (localStorage.getItem(STORAGE_KEY) === 'true') {
   unlockSite();
 } else {
+  if (emailInput && storedEmail) {
+    emailInput.value = storedEmail;
+  }
   lockSite();
 }
 
-passwordForm.addEventListener('submit', handlePasswordSubmit);
+passwordForm?.addEventListener('submit', handlePasswordSubmit);
 
 function setupFadeSections() {
   const sections = document.querySelectorAll('[data-section], [data-map-container]');
@@ -193,14 +367,27 @@ window.addEventListener('load', updateHeaderOffset);
 updateHeaderOffset();
 
 function openModal() {
+  if (!rsvpModal) return;
   rsvpModal.hidden = false;
   rsvpModal.classList.add('open');
   document.body.style.overflow = 'hidden';
-  const nameInput = document.getElementById('guest-name');
-  setTimeout(() => nameInput?.focus(), 50);
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+
+  if (!guestProfile) {
+    const fallbackEmail = emailInput?.value.trim() || storedEmail || '';
+    setGuestProfile(createGuestProfile(fallbackEmail));
+  } else {
+    updateGuestUi(guestProfile);
+  }
+
+  const initialFocusControl = rsvpForm?.querySelector('[data-initial-focus]');
+  setTimeout(() => initialFocusControl?.focus(), 50);
 }
 
 function closeModal() {
+  if (!rsvpModal) return;
   rsvpModal.classList.remove('open');
   document.body.style.overflow = '';
   setTimeout(() => {
@@ -208,49 +395,84 @@ function closeModal() {
   }, 300);
 }
 
-openRsvpButton.addEventListener('click', openModal);
+openRsvpButton?.addEventListener('click', openModal);
 closeModalEls.forEach(el => el.addEventListener('click', closeModal));
-rsvpModal.addEventListener('click', event => {
+rsvpModal?.addEventListener('click', event => {
   if (event.target === rsvpModal) {
     closeModal();
   }
 });
 
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && !rsvpModal.hidden) {
+  if (event.key === 'Escape' && rsvpModal && !rsvpModal.hidden) {
     closeModal();
   }
 });
 
-function validateForm(formData) {
+function validateForm(formData, profile) {
   const errors = [];
-  if (!formData.get('name')?.trim()) {
-    errors.push('Please enter your name.');
+  if (!profile) {
+    errors.push('Please unlock the site with your email before responding.');
+    return errors;
   }
-  if (!formData.get('attendance')) {
-    errors.push('Please let us know if you can attend.');
+
+  const primaryName = profile.primary?.name || 'Joe Bloggs';
+  const plusOneName = profile.plusOne?.name || 'Jill Bloggs';
+  const hasPlusOne = Boolean(profile.plusOne && profile.plusOne.name);
+
+  if (!formData.get('guest-email')) {
+    errors.push('We could not detect your email. Please reload the page and try again.');
   }
+
+  if (!formData.get('primary-attendance')) {
+    errors.push(`Please let us know if ${primaryName} is attending.`);
+  }
+
+  if (hasPlusOne && !formData.get('plusone-attendance')) {
+    errors.push(`Please let us know if ${plusOneName} is attending.`);
+  }
+
   return errors;
 }
 
 async function submitRsvp(event) {
   event.preventDefault();
-  rsvpFeedback.textContent = '';
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+
+  if (!rsvpForm) return;
 
   const formData = new FormData(rsvpForm);
-  const errors = validateForm(formData);
+  const profile = guestProfile || createGuestProfile(formData.get('guest-email')?.trim() || '');
+  const errors = validateForm(formData, profile);
 
   if (errors.length > 0) {
-    rsvpFeedback.textContent = errors.join(' ');
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = errors.join(' ');
+    }
     return;
   }
 
   const payload = {
-    name: formData.get('name').trim(),
-    attendance: formData.get('attendance'),
-    dietary: formData.get('dietary')?.trim() ?? '',
+    email: (formData.get('guest-email') || profile.email || '').trim(),
+    guests: [
+      {
+        name: profile.primary?.name || 'Joe Bloggs',
+        attendance: formData.get('primary-attendance'),
+        dietary: formData.get('primary-dietary')?.trim() ?? '',
+      },
+    ],
     submittedAt: new Date().toISOString(),
   };
+
+  if (profile.plusOne && profile.plusOne.name) {
+    payload.guests.push({
+      name: profile.plusOne.name,
+      attendance: formData.get('plusone-attendance'),
+      dietary: formData.get('plusone-dietary')?.trim() ?? '',
+    });
+  }
 
   try {
     const response = await fetch(RSVP_ENDPOINT, {
@@ -266,13 +488,17 @@ async function submitRsvp(event) {
     }
 
     rsvpForm.reset();
+    updateGuestUi(profile);
     rsvpForm.innerHTML = '<p class="thank-you">Thank you for letting us know. We will be in touch soon.</p>';
   } catch (error) {
-    rsvpFeedback.textContent = 'We could not send your response. Please try again later or contact us directly.';
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent =
+        'We could not send your response. Please try again later or contact us directly.';
+    }
   }
 }
 
-rsvpForm.addEventListener('submit', submitRsvp);
+rsvpForm?.addEventListener('submit', submitRsvp);
 
 function loadMapboxResources() {
   return new Promise((resolve, reject) => {
@@ -296,71 +522,46 @@ function loadMapboxResources() {
 }
 
 function addLocationLayers(map) {
-  const gardenPoint = {
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        properties: {
-          name: 'The Medley Walled Garden',
-          color: '#4ba87d',
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: GARDEN_COORDS,
-        },
-      },
-    ],
-  };
-
-  if (!map.getSource('wedding-locations')) {
-    map.addSource('wedding-locations', {
+  if (!map.getSource('medley-footprint')) {
+    map.addSource('medley-footprint', {
       type: 'geojson',
-      data: gardenPoint,
+      data: GARDEN_FOOTPRINT,
     });
   } else {
-    map.getSource('wedding-locations').setData(gardenPoint);
+    map.getSource('medley-footprint').setData(GARDEN_FOOTPRINT);
   }
 
-  if (!map.getLayer('wedding-locations-circle')) {
+  if (!map.getLayer('medley-extrusion')) {
     map.addLayer({
-      id: 'wedding-locations-circle',
-      type: 'circle',
-      source: 'wedding-locations',
+      id: 'medley-extrusion',
+      type: 'fill-extrusion',
+      source: 'medley-footprint',
       paint: {
-        'circle-radius': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          12,
-          6,
-          16,
-          16,
-        ],
-        'circle-color': ['get', 'color'],
-        'circle-opacity': 0.9,
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#ffffff',
+        'fill-extrusion-color': '#4ba87d',
+        'fill-extrusion-height': 14,
+        'fill-extrusion-base': 0,
+        'fill-extrusion-opacity': 0.95,
+        'fill-extrusion-vertical-gradient': true,
       },
     });
   }
 
-  if (!map.getLayer('wedding-locations-labels')) {
+  if (!map.getLayer('medley-label')) {
     map.addLayer({
-      id: 'wedding-locations-labels',
+      id: 'medley-label',
       type: 'symbol',
-      source: 'wedding-locations',
+      source: 'medley-footprint',
       layout: {
         'text-field': ['get', 'name'],
-        'text-offset': [0, 1.2],
+        'text-offset': [0, 1.1],
         'text-anchor': 'top',
-        'text-size': 14,
+        'text-size': 13,
         'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
       },
       paint: {
         'text-color': '#ffffff',
-        'text-halo-color': 'rgba(3, 138, 93, 0.8)',
-        'text-halo-width': 1.6,
+        'text-halo-color': 'rgba(75, 168, 125, 0.85)',
+        'text-halo-width': 1.8,
       },
     });
   }
