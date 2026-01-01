@@ -122,7 +122,6 @@ const openRsvpButton = document.getElementById('open-rsvp');
 const closeModalEls = document.querySelectorAll('[data-close-modal]');
 const guestSections = document.querySelectorAll('.guest-response');
 const mapContainer = document.querySelector('[data-map-container]');
-const guideButtons = document.querySelectorAll('[data-map-location]');
 const siteNav = document.querySelector('.site-nav');
 const navToggle = document.querySelector('.nav-toggle');
 const navLinks = document.querySelectorAll('.nav-links a');
@@ -132,7 +131,6 @@ const mobileModalMedia = window.matchMedia('(max-width: 600px)');
 let mapLoaded = false;
 let mapInstance;
 let guestProfile = null;
-let guideLocations = [];
 
 const ATTENDANCE_PROMPT = 'Able to come?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
@@ -696,89 +694,6 @@ function loadMapboxResources() {
   });
 }
 
-function collectGuideLocations() {
-  guideLocations = Array.from(guideButtons)
-    .map(button => {
-      const name = button.dataset.mapName?.trim();
-      const lng = Number.parseFloat(button.dataset.lng);
-      const lat = Number.parseFloat(button.dataset.lat);
-
-      if (!name || Number.isNaN(lng) || Number.isNaN(lat)) {
-        return null;
-      }
-
-      return {
-        button,
-        name,
-        coordinates: [lng, lat],
-        marker: null,
-      };
-    })
-    .filter(Boolean);
-}
-
-function addGuideMarkers(map) {
-  if (typeof mapboxgl === 'undefined' || !guideLocations.length) return;
-
-  guideLocations.forEach(location => {
-    if (location.marker) {
-      location.marker.addTo(map);
-      return;
-    }
-
-    location.marker = new mapboxgl.Marker({ color: '#7b6a4d' })
-      .setLngLat(location.coordinates)
-      .setPopup(new mapboxgl.Popup({ offset: 24 }).setText(location.name))
-      .addTo(map);
-  });
-}
-
-function focusMapLocation(location) {
-  if (!location || !mapInstance) return;
-
-  mapInstance.easeTo({
-    center: location.coordinates,
-    zoom: 16.6,
-    pitch: 55,
-    bearing: 0,
-    duration: 1500,
-    essential: true,
-  });
-
-  if (location.marker) {
-    location.marker.togglePopup();
-  }
-}
-
-function setupGuideInteractions() {
-  collectGuideLocations();
-
-  guideLocations.forEach(location => {
-    location.button.addEventListener('click', () => {
-      if (!mapLoaded) {
-        loadMapboxResources()
-          .then(() => {
-            initialiseMap();
-            if (mapInstance?.loaded?.()) {
-              addGuideMarkers(mapInstance);
-              focusMapLocation(location);
-            } else if (mapInstance) {
-              mapInstance.once('load', () => {
-                addGuideMarkers(mapInstance);
-                focusMapLocation(location);
-              });
-            }
-          })
-          .catch(() => {});
-        return;
-      }
-
-      addGuideMarkers(mapInstance);
-      focusMapLocation(location);
-    });
-  });
-}
-
 function addLocationLayers(map) {
   if (!map.getSource('medley-footprint')) {
     map.addSource('medley-footprint', {
@@ -1107,7 +1022,6 @@ function initialiseMap() {
     addTerrainAndBuildings(mapInstance);
     addLocationLayers(mapInstance);
     addWalkingRoute(mapInstance);
-    addGuideMarkers(mapInstance);
 
     if (routeBounds) {
       mapInstance.fitBounds(routeBounds, {
@@ -1149,7 +1063,6 @@ function observeMap() {
 }
 
 observeMap();
-setupGuideInteractions();
 
 function setupAccordion() {
   const buttons = document.querySelectorAll('.accordion-item button');
