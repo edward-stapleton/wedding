@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Stack+Sans+Headline:wght@200..700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -60,7 +60,6 @@
           <ul id="primary-nav" class="nav-links">
             <li><a href="#home">Home</a></li>
             <li><a href="#schedule">Schedule</a></li>
-            <li><a href="#guide">Guide</a></li>
             <li><a href="#accommodation">Accommodation</a></li>
             <li><a href="#faqs">FAQs</a></li>
           </ul>
@@ -70,12 +69,6 @@
       <main>
         <section id="home" class="section hero-section fade-section" data-section>
           <div class="hero-content">
-            <img
-              class="hero-illustration"
-              src="assets/wedding-illustration.svg"
-              alt="Illustration of a couple dancing near Oxford landmarks"
-            />
-            <p class="hero-label">THE WEDDING OF</p>
             <p class="hero-names">Edward Stapleton &amp; Laura Harford</p>
             <p class="hero-date">Saturday 22 August 2026</p>
             <p class="hero-location">The Medley Walled Garden, Oxford</p>
@@ -119,169 +112,9 @@
           </div>
         </section>
 
-        <section id="guide" class="section guide-section fade-section" data-section>
+        <section id="map-section" class="section map-section fade-section" data-section>
           <div class="section-content">
-            <h2>Guide</h2>
-            <p class="guide-intro">
-              Our Oxford favourites for the weekend. Tap a place to see it highlighted on the map.
-            </p>
-            <div class="guide-grid">
-              <article class="guide-category">
-                <h3>Accommodation</h3>
-                <ul class="guide-list">
-                  <li>
-                    <button
-                      type="button"
-                      class="guide-link"
-                      data-map-location
-                      data-map-name="The Randolph Hotel"
-                      data-lng="-1.2582"
-                      data-lat="51.7566"
-                    >
-                      <span class="guide-name">The Randolph Hotel</span>
-                      <span class="guide-note">A timeless Oxford icon for a classic stay near the museums.</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      class="guide-link"
-                      data-map-location
-                      data-map-name="The Old Parsonage"
-                      data-lng="-1.2623"
-                      data-lat="51.7654"
-                    >
-                      <span class="guide-name">The Old Parsonage</span>
-                      <span class="guide-note">Cosy townhouse charm with the loveliest fireside corners.</span>
-                    </button>
-                  </li>
-                </ul>
-              </article>
-              <article class="guide-category">
-                <h3>Caf&eacute;s</h3>
-                <ul class="guide-list">
-                  <li>
-                    <button
-                      type="button"
-                      class="guide-link"
-                      data-map-location
-                      data-map-name="The Missing Bean"
-                      data-lng="-1.2636"
-                      data-lat="51.7545"
-                    >
-                      <span class="guide-name">The Missing Bean</span>
-                      <span class="guide-note">Our go-to coffee stop for a relaxed start to the day.</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      class="guide-link"
-                      data-map-location
-                      data-map-name="Vaults &amp; Garden"
-                      data-lng="-1.2556"
-                      data-lat="51.7509"
-                    >
-                      <span class="guide-name">Vaults &amp; Garden</span>
-                      <span class="guide-note">For brunch with a view of the Radcliffe Camera.</span>
-                    </button>
-                  </li>
-                </ul>
-              </article>
-              <article class="guide-category">
-                <h3>Pubs</h3>
-                <ul class="guide-list">
-                  <li>
-                    <button
-                      type="button"
-                      class="guide-link"
-                      data-map-location
-                      data-map-name="The Turf Tavern"
-                      data-lng="-1.2579"
-                      data-lat="51.7530"
-                    >
-                      <span class="guide-name">The Turf Tavern</span>
-                      <span class="guide-note">A tucked-away Oxford institution for a celebratory pint.</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      class="guide-link"
-                      data-map-location
-                      data-map-name="The Perch"
-                      data-lng="-1.2824"
-                      data-lat="51.7795"
-                    >
-                      <span class="guide-name">The Perch</span>
-                      <span class="guide-note">A favourite for a sunny riverside stroll and garden drinks.</span>
-                    </button>
-                  </li>
-                </ul>
-              </article>
-              <article class="guide-category">
-                <h3>Restaurants</h3>
-                <ul class="guide-list">
-                  <li>
-                    <button
-                      type="button"
-                      class="guide-link"
-                      data-map-location
-                      data-map-name="Gee's"
-                      data-lng="-1.2578"
-                      data-lat="51.7594"
-                    >
-                      <span class="guide-name">Gee's</span>
-                      <span class="guide-note">A bright conservatory spot we love for seasonal plates.</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      class="guide-link"
-                      data-map-location
-                      data-map-name="The Folly"
-                      data-lng="-1.2606"
-                      data-lat="51.7492"
-                    >
-                      <span class="guide-name">The Folly</span>
-                      <span class="guide-note">Riverside dining that feels like a little escape.</span>
-                    </button>
-                  </li>
-                </ul>
-              </article>
-              <article class="guide-category">
-                <h3>Sightseeing</h3>
-                <ul class="guide-list">
-                  <li>
-                    <button
-                      type="button"
-                      class="guide-link"
-                      data-map-location
-                      data-map-name="Radcliffe Camera"
-                      data-lng="-1.2550"
-                      data-lat="51.7520"
-                    >
-                      <span class="guide-name">Radcliffe Camera</span>
-                      <span class="guide-note">We always make time for a wander around the heart of the city.</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      class="guide-link"
-                      data-map-location
-                      data-map-name="Port Meadow"
-                      data-lng="-1.2813"
-                      data-lat="51.7743"
-                    >
-                      <span class="guide-name">Port Meadow</span>
-                      <span class="guide-note">Our favourite open space for golden-hour walks by the Thames.</span>
-                    </button>
-                  </li>
-                </ul>
-              </article>
-            </div>
+            <h2>Map</h2>
           </div>
           <div class="map-container fade-section" data-map-container>
             <div
