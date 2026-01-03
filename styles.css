@@ -348,6 +348,11 @@ body.nav-open {
   .site-nav.open .nav-links {
     display: flex;
   }
+
+  .guide-intro {
+    width: min(100%, 440px);
+    padding: 0 1rem;
+  }
 }
 
 .timeline {
