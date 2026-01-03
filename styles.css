@@ -414,6 +414,7 @@ body.nav-open {
 
 .section-title--center {
   text-align: center;
+  align-self: center;
 }
 
 .guide-tabs {
