@@ -219,6 +219,14 @@ body.nav-open {
   width: min(100%, var(--content-max-width));
 }
 
+.hero-image {
+  width: min(100%, 420px);
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  object-fit: cover;
+}
+
 .hero-names {
   margin: 0;
   font-size: clamp(2.4375rem, 7.5vw, 3.75rem);
