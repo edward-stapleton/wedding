@@ -356,6 +356,14 @@ body.nav-open {
   }
 }
 
+@media (min-width: 768px) {
+  .hero-image {
+    max-height: calc(100vh - var(--header-height) - 18rem);
+    height: auto;
+    object-fit: cover;
+  }
+}
+
 .timeline {
   list-style: none;
   padding: 0;
