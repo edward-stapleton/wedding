@@ -439,28 +439,76 @@ function setupCarousel(carousel) {
     }
   });
 
-  let touchStartX = null;
+  let swipeStartX = null;
+  let swipeStartY = null;
+  let swipeHandled = false;
+  let activePointerId = null;
+  const swipeThreshold = 40;
 
-  track.addEventListener('touchstart', event => {
-    touchStartX = event.touches?.[0]?.clientX ?? null;
-  });
-
-  track.addEventListener('touchmove', event => {
-    if (touchStartX === null) return;
-    const currentX = event.touches?.[0]?.clientX;
-    if (typeof currentX !== 'number') return;
-    const delta = currentX - touchStartX;
-    if (Math.abs(delta) < 40) return;
-    moveTo(delta > 0 ? currentIndex - 1 : currentIndex + 1);
-    touchStartX = null;
-  });
-
-  const clearTouch = () => {
-    touchStartX = null;
+  const startSwipe = (x, y, pointerId = null) => {
+    swipeStartX = typeof x === 'number' ? x : null;
+    swipeStartY = typeof y === 'number' ? y : null;
+    swipeHandled = false;
+    activePointerId = pointerId;
   };
 
-  track.addEventListener('touchend', clearTouch);
-  track.addEventListener('touchcancel', clearTouch);
+  const handleSwipeMove = (event, x, y) => {
+    if (swipeHandled || swipeStartX === null || swipeStartY === null) return;
+    if (typeof x !== 'number' || typeof y !== 'number') return;
+    const deltaX = x - swipeStartX;
+    const deltaY = y - swipeStartY;
+    if (Math.abs(deltaX) < swipeThreshold || Math.abs(deltaX) < Math.abs(deltaY)) {
+      return;
+    }
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+    swipeHandled = true;
+    moveTo(deltaX > 0 ? currentIndex - 1 : currentIndex + 1);
+  };
+
+  const endSwipe = () => {
+    swipeStartX = null;
+    swipeStartY = null;
+    swipeHandled = false;
+    activePointerId = null;
+  };
+
+  if (window.PointerEvent) {
+    track.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse') return;
+      startSwipe(event.clientX, event.clientY, event.pointerId);
+    });
+
+    track.addEventListener(
+      'pointermove',
+      event => {
+        if (activePointerId !== event.pointerId) return;
+        handleSwipeMove(event, event.clientX, event.clientY);
+      },
+      { passive: false }
+    );
+
+    track.addEventListener('pointerup', endSwipe);
+    track.addEventListener('pointercancel', endSwipe);
+  } else {
+    track.addEventListener('touchstart', event => {
+      const touch = event.touches?.[0];
+      startSwipe(touch?.clientX, touch?.clientY);
+    });
+
+    track.addEventListener(
+      'touchmove',
+      event => {
+        const touch = event.touches?.[0];
+        handleSwipeMove(event, touch?.clientX, touch?.clientY);
+      },
+      { passive: false }
+    );
+
+    track.addEventListener('touchend', endSwipe);
+    track.addEventListener('touchcancel', endSwipe);
+  }
 
   carousel.setAttribute('tabindex', '0');
   update();
