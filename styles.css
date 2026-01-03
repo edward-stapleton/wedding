@@ -198,6 +198,10 @@ body.nav-open {
   text-align: center;
 }
 
+#guide .section-content {
+  width: min(100%, var(--map-container-max-width));
+}
+
 .section-content h2 {
   margin: 0;
   font-size: 1.5rem;
@@ -553,7 +557,7 @@ body.nav-open {
 
 .guide-intro {
   margin: 0 auto;
-  width: min(100%, 720px);
+  width: min(100%, 860px);
   max-width: calc(100% - 2.5rem);
   padding: 0 1.25rem;
   font-size: 1rem;
