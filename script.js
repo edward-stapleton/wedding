@@ -880,7 +880,7 @@ function getRouteBounds() {
   }, null);
 }
 
-function animateRouteFlyover(map, routeBounds) {
+function animateRouteFlyover(map, routeBounds, initialCamera) {
   const coordinates = WALKING_ROUTE.features?.[0]?.geometry?.coordinates;
   if (!Array.isArray(coordinates) || coordinates.length === 0) return;
 
@@ -930,6 +930,19 @@ function animateRouteFlyover(map, routeBounds) {
           duration: 1800,
           essential: true,
         });
+
+        if (initialCamera) {
+          map.once('moveend', () => {
+            map.easeTo({
+              center: initialCamera.center,
+              zoom: initialCamera.zoom,
+              pitch: initialCamera.pitch,
+              bearing: initialCamera.bearing,
+              duration: 2200,
+              essential: true,
+            });
+          });
+        }
       });
     }
   }
@@ -1033,7 +1046,14 @@ function initialiseMap() {
       });
     }
 
-    animateRouteFlyover(mapInstance, routeBounds);
+    const initialCamera = {
+      center: mapInstance.getCenter(),
+      zoom: mapInstance.getZoom(),
+      pitch: mapInstance.getPitch(),
+      bearing: mapInstance.getBearing(),
+    };
+
+    animateRouteFlyover(mapInstance, routeBounds, initialCamera);
   });
 
   mapLoaded = true;
