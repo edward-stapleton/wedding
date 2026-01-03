@@ -221,7 +221,7 @@ body.nav-open {
 
 .hero-names {
   margin: 0;
-  font-size: clamp(3.25rem, 10vw, 5rem);
+  font-size: clamp(2.4375rem, 7.5vw, 3.75rem);
   line-height: 1.1;
   text-align: center;
 }
