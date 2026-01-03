@@ -228,7 +228,7 @@ body.nav-open {
   width: var(--hero-image-width);
   max-width: var(--hero-image-max-width);
   height: auto;
-  border-radius: 20px;
+  border-radius: 0;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
   object-fit: cover;
   display: block;
