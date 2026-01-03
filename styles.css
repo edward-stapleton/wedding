@@ -351,6 +351,7 @@ body.nav-open {
 
   .guide-intro {
     width: min(100%, 440px);
+    max-width: calc(100% - 2rem);
     padding: 0 1rem;
   }
 }
@@ -476,6 +477,12 @@ body.nav-open {
   outline-offset: 3px;
 }
 
+.guide-panel {
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+}
+
 .guide-panel[hidden] {
   display: none;
 }
@@ -494,6 +501,7 @@ body.nav-open {
 .guide-intro {
   margin: 0 auto;
   width: min(100%, 720px);
+  max-width: calc(100% - 2.5rem);
   padding: 0 1.25rem;
   font-size: 1rem;
   line-height: 1.6;
