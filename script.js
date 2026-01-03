@@ -382,23 +382,60 @@ function setupCarousel(carousel) {
   }
 
   let currentIndex = 0;
+  let slideWidth = 0;
+  let maxIndex = slides.length - 1;
+  let dotPositions = 0;
   const dots = [];
 
-  function update() {
-    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+  const calculateMetrics = () => {
+    const trackWidth = track.getBoundingClientRect().width;
+    const slideRect = slides[0]?.getBoundingClientRect();
+    const newSlideWidth = slideRect?.width || 1;
+    const slidesPerView = Math.max(1, Math.floor(trackWidth / newSlideWidth));
+    slideWidth = newSlideWidth;
+    maxIndex = Math.max(0, slides.length - slidesPerView);
+  };
+
+  const buildDots = () => {
+    if (!dotsContainer) {
+      return;
+    }
+    dotsContainer.innerHTML = '';
+    dots.length = 0;
+    const positions = maxIndex + 1;
+    dotPositions = positions;
+    for (let index = 0; index < positions; index += 1) {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'carousel-dot';
+      dot.setAttribute('aria-label', `Go to ${carouselLabel} view ${index + 1} of ${positions}`);
+      dot.setAttribute('role', 'tab');
+      dot.addEventListener('click', () => moveTo(index));
+      dotsContainer.appendChild(dot);
+      dots.push(dot);
+    }
+  };
+
+  const update = () => {
+    calculateMetrics();
+    if (maxIndex + 1 !== dotPositions) {
+      buildDots();
+    }
+    currentIndex = Math.max(0, Math.min(currentIndex, maxIndex));
+    track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
     if (prevButton) {
       prevButton.disabled = currentIndex === 0;
     }
     if (nextButton) {
-      nextButton.disabled = currentIndex === slides.length - 1;
+      nextButton.disabled = currentIndex === maxIndex;
     }
     dots.forEach((dot, index) => {
       dot.setAttribute('aria-current', index === currentIndex ? 'true' : 'false');
     });
-  }
+  };
 
   function moveTo(index) {
-    const clamped = Math.max(0, Math.min(index, slides.length - 1));
+    const clamped = Math.max(0, Math.min(index, maxIndex));
     if (clamped === currentIndex) {
       update();
       return;
@@ -412,18 +449,9 @@ function setupCarousel(carousel) {
     slide.setAttribute('aria-roledescription', 'slide');
     slide.setAttribute('aria-label', `${index + 1} of ${slides.length}`);
 
-    if (!dotsContainer) {
-      return;
+    if (dotsContainer) {
+      dotsContainer.setAttribute('aria-label', `${carouselLabel} slides`);
     }
-
-    const dot = document.createElement('button');
-    dot.type = 'button';
-    dot.className = 'carousel-dot';
-    dot.setAttribute('aria-label', `Go to ${carouselLabel} slide ${index + 1} of ${slides.length}`);
-    dot.setAttribute('role', 'tab');
-    dot.addEventListener('click', () => moveTo(index));
-    dotsContainer.appendChild(dot);
-    dots.push(dot);
   });
 
   prevButton?.addEventListener('click', () => moveTo(currentIndex - 1));
@@ -511,6 +539,13 @@ function setupCarousel(carousel) {
 
     track.addEventListener('touchend', endSwipe);
     track.addEventListener('touchcancel', endSwipe);
+  }
+
+  if (window.ResizeObserver) {
+    const resizeObserver = new ResizeObserver(() => update());
+    resizeObserver.observe(track);
+  } else {
+    window.addEventListener('resize', update);
   }
 
   carousel.setAttribute('tabindex', '0');
