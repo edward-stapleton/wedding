@@ -412,6 +412,44 @@ body.nav-open {
   border-radius: 0;
 }
 
+.section-title--center {
+  text-align: center;
+}
+
+.guide-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin: 1.5rem 0 1.25rem;
+}
+
+.guide-tab {
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.guide-tab.is-active,
+.guide-tab[aria-selected='true'] {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.guide-tab:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+
+.guide-panel[hidden] {
+  display: none;
+}
+
 @media (min-width: 768px) {
   .map-container {
     width: min(100%, 960px);
@@ -423,13 +461,13 @@ body.nav-open {
   }
 }
 
-.accommodation-intro {
+.guide-intro {
   margin: 0;
   font-size: 1rem;
   line-height: 1.6;
 }
 
-.accommodation-carousel {
+.guide-carousel {
   position: relative;
   width: 100%;
   margin-top: 1rem;
@@ -449,7 +487,7 @@ body.nav-open {
   touch-action: pan-y;
 }
 
-.accommodation-card {
+.guide-card {
   flex: 0 0 100%;
   padding: 0 0.5rem;
   display: flex;
@@ -459,7 +497,7 @@ body.nav-open {
   text-align: center;
 }
 
-.accommodation-card__media {
+.guide-card__media {
   margin: 0;
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -468,14 +506,14 @@ body.nav-open {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
 }
 
-.accommodation-card__media img {
+.guide-card__media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.accommodation-card__body {
+.guide-card__body {
   width: min(100%, 420px);
   background: var(--card-background);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -487,18 +525,25 @@ body.nav-open {
   align-items: center;
 }
 
-.accommodation-card__body h3 {
+.guide-card__body h3 {
   margin: 0;
   font-size: 1.2rem;
 }
 
-.accommodation-card__body p {
+.guide-card__body p {
   margin: 0;
   font-size: 1rem;
   line-height: 1.6;
 }
 
-.accommodation-card__body a {
+.guide-card__links {
+  display: flex;
+  gap: 1.25rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.guide-card__links a {
   color: inherit;
   text-decoration: underline;
   font-size: 1rem;
@@ -578,7 +623,7 @@ body.nav-open {
 }
 
 @media (max-width: 480px) {
-  .accommodation-carousel {
+  .guide-carousel {
     padding: 0 1.5rem 2.5rem;
   }
 
@@ -592,7 +637,7 @@ body.nav-open {
 }
 
 @media (min-width: 768px) {
-  .accommodation-card__body {
+  .guide-card__body {
     width: min(100%, 480px);
   }
 }
