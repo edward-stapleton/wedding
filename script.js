@@ -127,9 +127,12 @@ const navToggle = document.querySelector('.nav-toggle');
 const navLinks = document.querySelectorAll('.nav-links a');
 const header = document.querySelector('.site-header');
 const mobileModalMedia = window.matchMedia('(max-width: 600px)');
+const mapReplayButton = document.querySelector('[data-map-replay]');
 
 let mapLoaded = false;
 let mapInstance;
+let routeBoundsCache = null;
+let initialCameraCache = null;
 let guestProfile = null;
 
 const ATTENDANCE_PROMPT = 'Able to come?';
@@ -1159,7 +1162,14 @@ function initialiseMap() {
       bearing: mapInstance.getBearing(),
     };
 
+    routeBoundsCache = routeBounds;
+    initialCameraCache = initialCamera;
+
     animateRouteFlyover(mapInstance, routeBounds, initialCamera);
+
+    if (mapReplayButton) {
+      mapReplayButton.disabled = false;
+    }
   });
 
   mapLoaded = true;
@@ -1189,6 +1199,18 @@ function observeMap() {
 }
 
 observeMap();
+
+if (mapReplayButton) {
+  mapReplayButton.disabled = true;
+  mapReplayButton.addEventListener('click', () => {
+    if (!mapInstance || !routeBoundsCache || !initialCameraCache) {
+      return;
+    }
+
+    mapInstance.stop();
+    animateRouteFlyover(mapInstance, routeBoundsCache, initialCameraCache);
+  });
+}
 
 function setupAccordion() {
   const buttons = document.querySelectorAll('.accordion-item button');
