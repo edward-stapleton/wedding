@@ -415,6 +415,50 @@ body.nav-open {
   gap: 1.5rem;
 }
 
+.map-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.map-replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.map-replay-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.map-replay-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+  transform: none;
+}
+
+.map-replay-button:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+
+.map-replay-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
 .map-intro {
   margin: 0;
   font-size: 1rem;
