@@ -361,6 +361,7 @@ body.nav-open {
     max-height: calc(100vh - var(--header-height) - 18rem);
     height: auto;
     object-fit: cover;
+    object-position: top center;
   }
 }
 
