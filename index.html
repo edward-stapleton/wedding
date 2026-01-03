@@ -10,6 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Stack+Sans+Headline:wght@200..700&display=swap"
       rel="stylesheet"
     />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -155,11 +156,11 @@
                 type="button"
                 role="tab"
                 aria-selected="false"
-                aria-controls="guide-panel-cafes"
-                id="guide-tab-cafes"
+                aria-controls="guide-panel-coffee"
+                id="guide-tab-coffee"
                 data-guide-tab
               >
-                Cafés
+                Coffee
               </button>
               <button
                 class="guide-tab"
@@ -205,7 +206,7 @@
               hidden
             >
               <p class="guide-intro">
-                There are plenty of lovely places to stay in and around Oxford, from heritage hotels to relaxed boutique boltholes. Here are a few favourites close to the city:
+                Aside from Airbnb and Booking.com, here are some other places that we'd suggest checking out for accommodation:
               </p>
               <div class="guide-carousel" data-carousel data-carousel-label="Accommodation">
                 <button
@@ -226,11 +227,25 @@
                       />
                     </figure>
                     <div class="guide-card__body">
-                      <h3>The Randolph Hotel</h3>
-                      <p>Historic Oxford landmark with classic rooms opposite the Ashmolean Museum.</p>
+                      <h3>University Rooms</h3>
+                      <p>Book various Oxford Uni accommmodation (like Rhodes House) through this site.</p>
                       <div class="guide-card__links">
-                        <a href="https://www.randolphhotel.co.uk/stay/" target="_blank" rel="noopener">Website</a>
-                        <a href="https://maps.google.com/?q=The+Randolph+Hotel+Oxford" target="_blank" rel="noopener">Map</a>
+                        <a
+                          href="https://www.universityrooms.com/en-GB/city/oxford/college/rhodeshouse"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="University Rooms website"
+                        >
+                          <span class="material-icons" aria-hidden="true">language</span>
+                        </a>
+                        <a
+                          href="https://maps.google.com/?q=South+Parks+Rd,+Oxford+OX1+3RG"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="University Rooms map"
+                        >
+                          <span class="material-icons" aria-hidden="true">place</span>
+                        </a>
                       </div>
                     </div>
                   </article>
@@ -244,10 +259,19 @@
                     </figure>
                     <div class="guide-card__body">
                       <h3>Malmaison Oxford</h3>
-                      <p>Bold, boutique stay in a converted prison at Oxford Castle Quarter.</p>
+                      <p>A former prison that housed inmates until 1996. Quirky and memorable.</p>
                       <div class="guide-card__links">
-                        <a href="https://www.malmaison.com/locations/oxford/" target="_blank" rel="noopener">Website</a>
-                        <a href="https://maps.google.com/?q=Malmaison+Oxford" target="_blank" rel="noopener">Map</a>
+                        <a href="https://www.malmaison.com/locations/oxford/" target="_blank" rel="noopener" aria-label="Malmaison Oxford website">
+                          <span class="material-icons" aria-hidden="true">language</span>
+                        </a>
+                        <a
+                          href="https://maps.google.com/?q=3+New+Road,+Oxford+OX1+1AY"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="Malmaison Oxford map"
+                        >
+                          <span class="material-icons" aria-hidden="true">place</span>
+                        </a>
                       </div>
                     </div>
                   </article>
@@ -260,11 +284,33 @@
                       />
                     </figure>
                     <div class="guide-card__body">
-                      <h3>The Old Parsonage</h3>
-                      <p>Intimate townhouse hotel with cosy lounges just off St Giles.</p>
+                      <h3>The Randolph Hotel</h3>
+                      <p>Iconic five-star Oxford hotel heavily featured in Morse. Part of Hilton.</p>
                       <div class="guide-card__links">
-                        <a href="https://www.oldparsonagehotel.co.uk/rooms/" target="_blank" rel="noopener">Website</a>
-                        <a href="https://maps.google.com/?q=Old+Parsonage+Hotel+Oxford" target="_blank" rel="noopener">Map</a>
+                        <a
+                          href="https://www.hilton.com/en/hotels/lonrdgu-graduate-oxford-uk/"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="The Randolph Hotel website"
+                        >
+                          <span class="material-icons" aria-hidden="true">language</span>
+                        </a>
+                        <a
+                          href="https://www.instagram.com/randolphhotel/?hl=en"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="The Randolph Hotel Instagram"
+                        >
+                          <span class="material-icons" aria-hidden="true">camera_alt</span>
+                        </a>
+                        <a
+                          href="https://maps.google.com/?q=Beaumont+Street,+Oxford+OX1+2LN"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="The Randolph Hotel map"
+                        >
+                          <span class="material-icons" aria-hidden="true">place</span>
+                        </a>
                       </div>
                     </div>
                   </article>
@@ -284,16 +330,16 @@
             <div
               class="guide-panel"
               role="tabpanel"
-              id="guide-panel-cafes"
-              aria-labelledby="guide-tab-cafes"
+              id="guide-panel-coffee"
+              aria-labelledby="guide-tab-coffee"
               data-guide-panel
               hidden
             >
               <p class="guide-intro">
-                Oxford is full of friendly cafés for a slow breakfast or mid-afternoon pick-me-up. Here are a few favourites for great coffee and cake:
+                These are the places that we tend to pick up a flat white when we're in Oxford:
               </p>
-              <div class="guide-carousel" data-carousel data-carousel-label="Cafés">
-                <button type="button" class="carousel-control carousel-control--prev" data-carousel-prev aria-label="View previous café option">
+              <div class="guide-carousel" data-carousel data-carousel-label="Coffee">
+                <button type="button" class="carousel-control carousel-control--prev" data-carousel-prev aria-label="View previous coffee option">
                   &#10094;
                 </button>
                 <div class="carousel-track" data-carousel-track aria-live="polite">
@@ -306,11 +352,25 @@
                       />
                     </figure>
                     <div class="guide-card__body">
-                      <h3>The Missing Bean</h3>
-                      <p>Independent coffee roasters with relaxed seating and brilliant brunches.</p>
+                      <h3>Broche</h3>
+                      <p>Great independent takeaway spot just down the road from the church.</p>
                       <div class="guide-card__links">
-                        <a href="https://themissingbean.co.uk/" target="_blank" rel="noopener">Website</a>
-                        <a href="https://maps.google.com/?q=The+Missing+Bean+Oxford" target="_blank" rel="noopener">Map</a>
+                        <a
+                          href="https://www.instagram.com/brochecoffee/"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="Broche Instagram"
+                        >
+                          <span class="material-icons" aria-hidden="true">camera_alt</span>
+                        </a>
+                        <a
+                          href="https://maps.google.com/?q=165+Kingston+Road,+Oxford+OX2+6EG"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="Broche map"
+                        >
+                          <span class="material-icons" aria-hidden="true">place</span>
+                        </a>
                       </div>
                     </div>
                   </article>
@@ -323,11 +383,20 @@
                       />
                     </figure>
                     <div class="guide-card__body">
-                      <h3>Society Café</h3>
-                      <p>Bright central hangout for flat whites and people-watching.</p>
+                      <h3>Gail&#39;s Jericho</h3>
+                      <p>Another North Oxford spot. Does what it says on the tin. Surprisingly good coffee.</p>
                       <div class="guide-card__links">
-                        <a href="https://societycafe.co.uk/" target="_blank" rel="noopener">Website</a>
-                        <a href="https://maps.google.com/?q=Society+Cafe+Oxford" target="_blank" rel="noopener">Map</a>
+                        <a href="https://gails.com/pages/jericho" target="_blank" rel="noopener" aria-label="Gail's Jericho website">
+                          <span class="material-icons" aria-hidden="true">language</span>
+                        </a>
+                        <a
+                          href="https://maps.google.com/?q=21-22+Little+Clarendon+Street,+Oxford+OX1+2HU"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="Gail's Jericho map"
+                        >
+                          <span class="material-icons" aria-hidden="true">place</span>
+                        </a>
                       </div>
                     </div>
                   </article>
@@ -340,19 +409,33 @@
                       />
                     </figure>
                     <div class="guide-card__body">
-                      <h3>Jericho Coffee Traders</h3>
-                      <p>Community-minded coffee spot with great pastries on Walton Street.</p>
+                      <h3>New Ground Coffee Oxford</h3>
+                      <p>Smart social enterprise with store in centre of town.</p>
                       <div class="guide-card__links">
-                        <a href="https://www.jerichocoffeetraders.com/" target="_blank" rel="noopener">Website</a>
-                        <a href="https://maps.google.com/?q=Jericho+Coffee+Traders+Oxford" target="_blank" rel="noopener">Map</a>
+                        <a
+                          href="https://www.newgroundcoffee.com/locations/ox1"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="New Ground Coffee Oxford website"
+                        >
+                          <span class="material-icons" aria-hidden="true">language</span>
+                        </a>
+                        <a
+                          href="https://maps.google.com/?q=6+St+Michael%27s+Mansion,+Ship+Street,+Oxford+OX1+3DE"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="New Ground Coffee Oxford map"
+                        >
+                          <span class="material-icons" aria-hidden="true">place</span>
+                        </a>
                       </div>
                     </div>
                   </article>
                 </div>
-                <button type="button" class="carousel-control carousel-control--next" data-carousel-next aria-label="View next café option">
+                <button type="button" class="carousel-control carousel-control--next" data-carousel-next aria-label="View next coffee option">
                   &#10095;
                 </button>
-                <div class="carousel-dots" data-carousel-dots aria-label="Cafés slides"></div>
+                <div class="carousel-dots" data-carousel-dots aria-label="Coffee slides"></div>
               </div>
             </div>
 
@@ -365,7 +448,7 @@
               hidden
             >
               <p class="guide-intro">
-                Oxford has some wonderfully atmospheric pubs for a post-ceremony pint. These spots balance history, garden seating, and great local ales:
+                There&#39;s a great mix of historic watering holes in central Oxford, with craft beer places further out of town:
               </p>
               <div class="guide-carousel" data-carousel data-carousel-label="Pubs">
                 <button type="button" class="carousel-control carousel-control--prev" data-carousel-prev aria-label="View previous pub option">
@@ -382,10 +465,21 @@
                     </figure>
                     <div class="guide-card__body">
                       <h3>The Turf Tavern</h3>
-                      <p>Legendary tucked-away pub with a sprawling courtyard near the colleges.</p>
+                      <p>
+                        Deeply historic. Rumour has it former Aussie PM Bob Hawke downed a yard in 11 seconds here. Can you beat him?
+                      </p>
                       <div class="guide-card__links">
-                        <a href="https://www.greeneking.co.uk/pubs/oxfordshire/turf-tavern" target="_blank" rel="noopener">Website</a>
-                        <a href="https://maps.google.com/?q=The+Turf+Tavern+Oxford" target="_blank" rel="noopener">Map</a>
+                        <a
+                          href="https://www.greeneking.co.uk/pubs/oxfordshire/turf-tavern"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="The Turf Tavern website"
+                        >
+                          <span class="material-icons" aria-hidden="true">language</span>
+                        </a>
+                        <a href="https://maps.google.com/?q=4+Bath+Place,+Oxford+OX1+3SU" target="_blank" rel="noopener" aria-label="The Turf Tavern map">
+                          <span class="material-icons" aria-hidden="true">place</span>
+                        </a>
                       </div>
                     </div>
                   </article>
@@ -398,11 +492,33 @@
                       />
                     </figure>
                     <div class="guide-card__body">
-                      <h3>The Bear Inn</h3>
-                      <p>Oxford&#39;s oldest pub with cosy snug seating and historic ties.</p>
+                      <h3>The Market Tap by Tap Social</h3>
+                      <p>Arguably Oxford&#39;s leading craft brewery&#39;s bar in the city&#39;s 18th century covered market.</p>
                       <div class="guide-card__links">
-                        <a href="https://www.greeneking.co.uk/pubs/oxfordshire/bear-inn" target="_blank" rel="noopener">Website</a>
-                        <a href="https://maps.google.com/?q=The+Bear+Inn+Oxford" target="_blank" rel="noopener">Map</a>
+                        <a
+                          href="https://www.tapsocialmovement.com/pages/themarkettap"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="The Market Tap by Tap Social website"
+                        >
+                          <span class="material-icons" aria-hidden="true">language</span>
+                        </a>
+                        <a
+                          href="https://www.instagram.com/tapsocialmovement/"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="Tap Social Movement Instagram"
+                        >
+                          <span class="material-icons" aria-hidden="true">camera_alt</span>
+                        </a>
+                        <a
+                          href="https://maps.google.com/?q=The+Covered+Market,+Oxford,+OX1+3EQ"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="The Market Tap by Tap Social map"
+                        >
+                          <span class="material-icons" aria-hidden="true">place</span>
+                        </a>
                       </div>
                     </div>
                   </article>
@@ -415,11 +531,33 @@
                       />
                     </figure>
                     <div class="guide-card__body">
-                      <h3>The Perch</h3>
-                      <p>Leafy riverside garden perfect for an afternoon drink.</p>
+                      <h3>The Lamb &amp; Flag</h3>
+                      <p>Ancient pub that was once the haunt of JRR Tolkien &amp; CS Lewis.</p>
                       <div class="guide-card__links">
-                        <a href="https://www.theperch.co.uk/" target="_blank" rel="noopener">Website</a>
-                        <a href="https://maps.google.com/?q=The+Perch+Oxford" target="_blank" rel="noopener">Map</a>
+                        <a
+                          href="https://en.wikipedia.org/wiki/Lamb_%26_Flag,_Oxford"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="The Lamb &amp; Flag website"
+                        >
+                          <span class="material-icons" aria-hidden="true">language</span>
+                        </a>
+                        <a
+                          href="https://www.instagram.com/lambflagoxford/"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="The Lamb &amp; Flag Instagram"
+                        >
+                          <span class="material-icons" aria-hidden="true">camera_alt</span>
+                        </a>
+                        <a
+                          href="https://maps.google.com/?q=12+St+Giles%27,+Oxford+OX1+3JS"
+                          target="_blank"
+                          rel="noopener"
+                          aria-label="The Lamb &amp; Flag map"
+                        >
+                          <span class="material-icons" aria-hidden="true">place</span>
+                        </a>
                       </div>
                     </div>
                   </article>
