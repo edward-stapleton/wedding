@@ -247,6 +247,7 @@ body.nav-open {
   cursor: pointer;
   border-radius: 999px;
   font-weight: 600;
+  font-family: 'Stack Sans Headline', system-ui, sans-serif;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
