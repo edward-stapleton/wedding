@@ -359,6 +359,7 @@ function setupCarousel(carousel) {
   const prevButton = carousel.querySelector('[data-carousel-prev]');
   const nextButton = carousel.querySelector('[data-carousel-next]');
   const dotsContainer = carousel.querySelector('[data-carousel-dots]');
+  const carouselLabel = carousel.dataset.carouselLabel || 'carousel';
 
   if (!track) {
     return;
@@ -415,7 +416,7 @@ function setupCarousel(carousel) {
     const dot = document.createElement('button');
     dot.type = 'button';
     dot.className = 'carousel-dot';
-    dot.setAttribute('aria-label', `Go to accommodation ${index + 1} of ${slides.length}`);
+    dot.setAttribute('aria-label', `Go to ${carouselLabel} slide ${index + 1} of ${slides.length}`);
     dot.setAttribute('role', 'tab');
     dot.addEventListener('click', () => moveTo(index));
     dotsContainer.appendChild(dot);
@@ -471,6 +472,63 @@ function setupCarousels() {
 }
 
 setupCarousels();
+
+function setupGuideTabs() {
+  const tabList = document.querySelector('[data-guide-tabs]');
+  if (!tabList) return;
+
+  const tabs = Array.from(tabList.querySelectorAll('[data-guide-tab]'));
+  const panels = tabs
+    .map(tab => document.getElementById(tab.getAttribute('aria-controls')))
+    .filter(Boolean);
+
+  const activateTab = tab => {
+    tabs.forEach(currentTab => {
+      const isActive = currentTab === tab;
+      currentTab.classList.toggle('is-active', isActive);
+      currentTab.setAttribute('aria-selected', String(isActive));
+      currentTab.setAttribute('tabindex', isActive ? '0' : '-1');
+
+      const panelId = currentTab.getAttribute('aria-controls');
+      const panel = panelId ? document.getElementById(panelId) : null;
+      if (!panel) return;
+      panel.hidden = !isActive;
+      panel.classList.toggle('is-active', isActive);
+    });
+  };
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => activateTab(tab));
+  });
+
+  tabList.addEventListener('keydown', event => {
+    const currentIndex = tabs.findIndex(tab => tab === document.activeElement);
+    if (currentIndex === -1) return;
+
+    let nextIndex = null;
+    if (event.key === 'ArrowRight') {
+      nextIndex = (currentIndex + 1) % tabs.length;
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = tabs.length - 1;
+    }
+
+    if (nextIndex === null) return;
+    event.preventDefault();
+    tabs[nextIndex].focus();
+    activateTab(tabs[nextIndex]);
+  });
+
+  if (tabs.length > 0 && panels.length > 0) {
+    const activeTab = tabs.find(tab => tab.classList.contains('is-active')) || tabs[0];
+    activateTab(activeTab);
+  }
+}
+
+setupGuideTabs();
 
 function setupFadeSections() {
   const sections = document.querySelectorAll('[data-section], [data-map-container]');

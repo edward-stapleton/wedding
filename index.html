@@ -60,7 +60,7 @@
           <ul id="primary-nav" class="nav-links">
             <li><a href="#home">Home</a></li>
             <li><a href="#schedule">Schedule</a></li>
-            <li><a href="#accommodation">Accommodation</a></li>
+            <li><a href="#guide">Guide</a></li>
             <li><a href="#faqs">FAQs</a></li>
           </ul>
         </nav>
@@ -121,7 +121,7 @@
 
         <section id="map-section" class="section map-section fade-section" data-section>
           <div class="section-content">
-            <h2>Meadow Walk Route</h2>
+            <h2 class="section-title--center">Meadow Walk Route</h2>
           </div>
           <div class="map-container fade-section" data-map-container>
             <div
@@ -133,130 +133,534 @@
           </div>
         </section>
 
-        <section id="accommodation" class="section alt fade-section" data-section>
+        <section id="guide" class="section alt fade-section" data-section>
           <div class="section-content">
-            <h2>Accommodation</h2>
-            <p class="accommodation-intro">
-              There's plenty of accommodation options in and around Oxford, whether you'd like to experience an historic hotel, the university accommodation or a rural retreat nearby. Here are some of our recommendations:
-            </p>
-            <div class="accommodation-carousel" data-carousel aria-label="Accommodation recommendations carousel">
+            <h2 class="section-title--center">Guide</h2>
+            <div class="guide-tabs" role="tablist" aria-label="Guide categories" data-guide-tabs>
               <button
+                class="guide-tab is-active"
                 type="button"
-                class="carousel-control carousel-control--prev"
-                data-carousel-prev
-                aria-label="View previous accommodation option"
+                role="tab"
+                aria-selected="true"
+                aria-controls="guide-panel-accommodation"
+                id="guide-tab-accommodation"
+                data-guide-tab
               >
-                &#10094;
+                Accommodation
               </button>
-              <div class="carousel-track" data-carousel-track aria-live="polite">
-                <article class="accommodation-card">
-                  <figure class="accommodation-card__media">
-                    <img
-                      src="https://www.randolphhotel.co.uk/wp-content/uploads/2021/04/Randolph-Exterior-Twilight.jpg"
-                      alt="Exterior of The Randolph Hotel in Oxford"
-                      loading="lazy"
-                    />
-                  </figure>
-                  <div class="accommodation-card__body">
-                    <h3>The Randolph Hotel</h3>
-                    <p>Elegant city landmark with classic rooms opposite the Ashmolean.</p>
-                    <a href="https://www.randolphhotel.co.uk/stay/" target="_blank" rel="noopener">Visit website</a>
-                  </div>
-                </article>
-                <article class="accommodation-card">
-                  <figure class="accommodation-card__media">
-                    <img
-                      src="https://www.malmaison.com/media/16858/malmaison-oxford-exterior.jpg"
-                      alt="Courtyard of Malmaison Oxford hotel"
-                      loading="lazy"
-                    />
-                  </figure>
-                  <div class="accommodation-card__body">
-                    <h3>Malmaison Oxford</h3>
-                    <p>Boutique bolthole in a converted prison within Oxford Castle Quarter.</p>
-                    <a href="https://www.malmaison.com/locations/oxford/" target="_blank" rel="noopener">Visit website</a>
-                  </div>
-                </article>
-                <article class="accommodation-card">
-                  <figure class="accommodation-card__media">
-                    <img
-                      src="https://www.oldparsonagehotel.co.uk/wp-content/uploads/2022/04/Old-Parsonage-Hotel-Exterior.jpg"
-                      alt="Garden entrance to The Old Parsonage Hotel"
-                      loading="lazy"
-                    />
-                  </figure>
-                  <div class="accommodation-card__body">
-                    <h3>The Old Parsonage</h3>
-                    <p>Intimate townhouse hotel with cosy lounges near St Giles.</p>
-                    <a href="https://www.oldparsonagehotel.co.uk/rooms/" target="_blank" rel="noopener">Visit website</a>
-                  </div>
-                </article>
-                <article class="accommodation-card">
-                  <figure class="accommodation-card__media">
-                    <img
-                      src="https://www.premierinn.com/content/dam/pi/websites/hotel-photos/2413/2070694351.jpg"
-                      alt="Premier Inn Oxford Botley exterior"
-                      loading="lazy"
-                    />
-                  </figure>
-                  <div class="accommodation-card__body">
-                    <h3>Premier Inn Oxford Botley</h3>
-                    <p>Comfortable value option with easy access to the A34 and city centre.</p>
-                    <a
-                      href="https://www.premierinn.com/gb/en/hotels/england/oxfordshire/oxford/oxford-botley.html"
-                      target="_blank"
-                      rel="noopener"
-                      >Visit website</a
-                    >
-                  </div>
-                </article>
-                <article class="accommodation-card">
-                  <figure class="accommodation-card__media">
-                    <img
-                      src="https://www.easyhotel.com/wp-content/uploads/2021/12/Easy-Hotel-Oxford-Exterior.jpg"
-                      alt="easyHotel Oxford exterior"
-                      loading="lazy"
-                    />
-                  </figure>
-                  <div class="accommodation-card__body">
-                    <h3>easyHotel Oxford</h3>
-                    <p>Simple, great-value stay close to Summertown and transport links.</p>
-                    <a href="https://www.easyhotel.com/hotels/united-kingdom/oxford" target="_blank" rel="noopener">Visit website</a>
-                  </div>
-                </article>
-                <article class="accommodation-card">
-                  <figure class="accommodation-card__media">
-                    <img
-                      src="https://www.leonardohotels.co.uk/files/images/jeremy-routhwaite/leonardo-royal-hotel-oxford-exterior-2.jpg"
-                      alt="Entrance to the Leonardo Royal Hotel Oxford"
-                      loading="lazy"
-                    />
-                  </figure>
-                  <div class="accommodation-card__body">
-                    <h3>Leonardo Royal Hotel Oxford</h3>
-                    <p>Spacious modern hotel with pool and parking on Godstow Road.</p>
-                    <a href="https://www.leonardohotels.co.uk/hotels/leonardo-royal-hotel-oxford" target="_blank" rel="noopener"
-                      >Visit website</a
-                    >
-                  </div>
-                </article>
+              <button
+                class="guide-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="guide-panel-cafes"
+                id="guide-tab-cafes"
+                data-guide-tab
+              >
+                Cafés
+              </button>
+              <button
+                class="guide-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="guide-panel-pubs"
+                id="guide-tab-pubs"
+                data-guide-tab
+              >
+                Pubs
+              </button>
+              <button
+                class="guide-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="guide-panel-restaurants"
+                id="guide-tab-restaurants"
+                data-guide-tab
+              >
+                Restaurants
+              </button>
+              <button
+                class="guide-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="guide-panel-sightseeing"
+                id="guide-tab-sightseeing"
+                data-guide-tab
+              >
+                Sightseeing
+              </button>
+            </div>
+
+            <div
+              class="guide-panel is-active"
+              role="tabpanel"
+              id="guide-panel-accommodation"
+              aria-labelledby="guide-tab-accommodation"
+              data-guide-panel
+            >
+              <p class="guide-intro">
+                There's plenty of accommodation options in and around Oxford, whether you'd like to experience an historic hotel, the university accommodation or a rural retreat nearby. Here are some of our recommendations:
+              </p>
+              <div class="guide-carousel" data-carousel data-carousel-label="Accommodation">
+                <button
+                  type="button"
+                  class="carousel-control carousel-control--prev"
+                  data-carousel-prev
+                  aria-label="View previous accommodation option"
+                >
+                  &#10094;
+                </button>
+                <div class="carousel-track" data-carousel-track aria-live="polite">
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://www.randolphhotel.co.uk/wp-content/uploads/2021/04/Randolph-Exterior-Twilight.jpg"
+                        alt="Exterior of The Randolph Hotel in Oxford"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>The Randolph Hotel</h3>
+                      <p>Elegant city landmark with classic rooms opposite the Ashmolean.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.randolphhotel.co.uk/stay/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=The+Randolph+Hotel+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://www.malmaison.com/media/16858/malmaison-oxford-exterior.jpg"
+                        alt="Courtyard of Malmaison Oxford hotel"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Malmaison Oxford</h3>
+                      <p>Boutique bolthole in a converted prison within Oxford Castle Quarter.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.malmaison.com/locations/oxford/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=Malmaison+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://www.oldparsonagehotel.co.uk/wp-content/uploads/2022/04/Old-Parsonage-Hotel-Exterior.jpg"
+                        alt="Garden entrance to The Old Parsonage Hotel"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>The Old Parsonage</h3>
+                      <p>Intimate townhouse hotel with cosy lounges near St Giles.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.oldparsonagehotel.co.uk/rooms/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=Old+Parsonage+Hotel+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://www.premierinn.com/content/dam/pi/websites/hotel-photos/2413/2070694351.jpg"
+                        alt="Premier Inn Oxford Botley exterior"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Premier Inn Oxford Botley</h3>
+                      <p>Comfortable value option with easy access to the A34 and city centre.</p>
+                      <div class="guide-card__links">
+                        <a
+                          href="https://www.premierinn.com/gb/en/hotels/england/oxfordshire/oxford/oxford-botley.html"
+                          target="_blank"
+                          rel="noopener"
+                          >Website</a
+                        >
+                        <a href="https://maps.google.com/?q=Premier+Inn+Oxford+Botley" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://www.easyhotel.com/wp-content/uploads/2021/12/Easy-Hotel-Oxford-Exterior.jpg"
+                        alt="easyHotel Oxford exterior"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>easyHotel Oxford</h3>
+                      <p>Simple, great-value stay close to Summertown and transport links.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.easyhotel.com/hotels/united-kingdom/oxford" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=easyHotel+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://www.leonardohotels.co.uk/files/images/jeremy-routhwaite/leonardo-royal-hotel-oxford-exterior-2.jpg"
+                        alt="Entrance to the Leonardo Royal Hotel Oxford"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Leonardo Royal Hotel Oxford</h3>
+                      <p>Spacious modern hotel with pool and parking on Godstow Road.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.leonardohotels.co.uk/hotels/leonardo-royal-hotel-oxford" target="_blank" rel="noopener"
+                          >Website</a
+                        >
+                        <a href="https://maps.google.com/?q=Leonardo+Royal+Hotel+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+                <button
+                  type="button"
+                  class="carousel-control carousel-control--next"
+                  data-carousel-next
+                  aria-label="View next accommodation option"
+                >
+                  &#10095;
+                </button>
+                <div class="carousel-dots" data-carousel-dots aria-label="Accommodation slides"></div>
               </div>
-              <button
-                type="button"
-                class="carousel-control carousel-control--next"
-                data-carousel-next
-                aria-label="View next accommodation option"
-              >
-                &#10095;
-              </button>
-              <div class="carousel-dots" data-carousel-dots aria-label="Accommodation slides"></div>
+            </div>
+
+            <div
+              class="guide-panel"
+              role="tabpanel"
+              id="guide-panel-cafes"
+              aria-labelledby="guide-tab-cafes"
+              data-guide-panel
+              hidden
+            >
+              <p class="guide-intro">
+                Oxford is full of friendly cafés for a slow breakfast or mid-afternoon pick-me-up. Here are a few favourites for great coffee and cake:
+              </p>
+              <div class="guide-carousel" data-carousel data-carousel-label="Cafés">
+                <button type="button" class="carousel-control carousel-control--prev" data-carousel-prev aria-label="View previous café option">
+                  &#10094;
+                </button>
+                <div class="carousel-track" data-carousel-track aria-live="polite">
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=1200&q=80"
+                        alt="Coffee being poured in a cosy cafe"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>The Missing Bean</h3>
+                      <p>Independent coffee roasters with relaxed seating and brilliant brunches.</p>
+                      <div class="guide-card__links">
+                        <a href="https://themissingbean.co.uk/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=The+Missing+Bean+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=80"
+                        alt="Latte and pastry on a cafe table"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Society Café</h3>
+                      <p>Bright central hangout for flat whites and people-watching.</p>
+                      <div class="guide-card__links">
+                        <a href="https://societycafe.co.uk/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=Society+Cafe+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1461988320302-91bde64fc8e4?auto=format&fit=crop&w=1200&q=80"
+                        alt="Coffee cup and laptop on a wooden table"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Jericho Coffee Traders</h3>
+                      <p>Community-minded coffee spot with great pastries on Walton Street.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.jerichocoffeetraders.com/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=Jericho+Coffee+Traders+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+                <button type="button" class="carousel-control carousel-control--next" data-carousel-next aria-label="View next café option">
+                  &#10095;
+                </button>
+                <div class="carousel-dots" data-carousel-dots aria-label="Cafés slides"></div>
+              </div>
+            </div>
+
+            <div
+              class="guide-panel"
+              role="tabpanel"
+              id="guide-panel-pubs"
+              aria-labelledby="guide-tab-pubs"
+              data-guide-panel
+              hidden
+            >
+              <p class="guide-intro">
+                Oxford has some wonderfully atmospheric pubs for a post-ceremony pint. These spots balance history, garden seating, and great local ales:
+              </p>
+              <div class="guide-carousel" data-carousel data-carousel-label="Pubs">
+                <button type="button" class="carousel-control carousel-control--prev" data-carousel-prev aria-label="View previous pub option">
+                  &#10094;
+                </button>
+                <div class="carousel-track" data-carousel-track aria-live="polite">
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&q=80"
+                        alt="Wooden pub interior with warm lighting"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>The Turf Tavern</h3>
+                      <p>Legendary tucked-away pub with a sprawling courtyard near the colleges.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.greeneking.co.uk/pubs/oxfordshire/turf-tavern" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=The+Turf+Tavern+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80"
+                        alt="Pub table with glasses and snacks"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>The Bear Inn</h3>
+                      <p>Oxford&#39;s oldest pub with cosy snug seating and historic ties.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.greeneking.co.uk/pubs/oxfordshire/bear-inn" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=The+Bear+Inn+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80"
+                        alt="Outdoor pub garden seating"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>The Perch</h3>
+                      <p>Leafy riverside garden perfect for an afternoon drink.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.theperch.co.uk/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=The+Perch+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+                <button type="button" class="carousel-control carousel-control--next" data-carousel-next aria-label="View next pub option">
+                  &#10095;
+                </button>
+                <div class="carousel-dots" data-carousel-dots aria-label="Pubs slides"></div>
+              </div>
+            </div>
+
+            <div
+              class="guide-panel"
+              role="tabpanel"
+              id="guide-panel-restaurants"
+              aria-labelledby="guide-tab-restaurants"
+              data-guide-panel
+              hidden
+            >
+              <p class="guide-intro">
+                From riverside lunches to modern small plates, there is no shortage of wonderful dining in Oxford. Here are a few of our favourite tables:
+              </p>
+              <div class="guide-carousel" data-carousel data-carousel-label="Restaurants">
+                <button
+                  type="button"
+                  class="carousel-control carousel-control--prev"
+                  data-carousel-prev
+                  aria-label="View previous restaurant option"
+                >
+                  &#10094;
+                </button>
+                <div class="carousel-track" data-carousel-track aria-live="polite">
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?auto=format&fit=crop&w=1200&q=80"
+                        alt="Riverfront dining setup"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Cherwell Boathouse</h3>
+                      <p>Riverside restaurant with elegant British menus and punt views.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.cherwellboathouse.co.uk/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=Cherwell+Boathouse+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80"
+                        alt="Small plates dining with shared dishes"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Arbequina</h3>
+                      <p>Creative small plates and Spanish-inspired cocktails in Jericho.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.arbequina.co.uk/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=Arbequina+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=80"
+                        alt="Restaurant table with flowers"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Gee&#39;s</h3>
+                      <p>Stylish Victorian glasshouse dining with a sunny terrace.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.geesrestaurant.co.uk/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=Gee%27s+Restaurant+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+                <button
+                  type="button"
+                  class="carousel-control carousel-control--next"
+                  data-carousel-next
+                  aria-label="View next restaurant option"
+                >
+                  &#10095;
+                </button>
+                <div class="carousel-dots" data-carousel-dots aria-label="Restaurants slides"></div>
+              </div>
+            </div>
+
+            <div
+              class="guide-panel"
+              role="tabpanel"
+              id="guide-panel-sightseeing"
+              aria-labelledby="guide-tab-sightseeing"
+              data-guide-panel
+              hidden
+            >
+              <p class="guide-intro">
+                If you have time to explore, Oxford is packed with architecture, museums, and iconic views. These are a few must-see stops:
+              </p>
+              <div class="guide-carousel" data-carousel data-carousel-label="Sightseeing">
+                <button
+                  type="button"
+                  class="carousel-control carousel-control--prev"
+                  data-carousel-prev
+                  aria-label="View previous sightseeing option"
+                >
+                  &#10094;
+                </button>
+                <div class="carousel-track" data-carousel-track aria-live="polite">
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1200&q=80"
+                        alt="Bodleian Library architecture"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Bodleian Library</h3>
+                      <p>Historic library tours through the heart of the university.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.bodleian.ox.ac.uk/visit" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=Bodleian+Library+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=1200&q=80"
+                        alt="Radcliffe Camera dome in Oxford"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Radcliffe Camera</h3>
+                      <p>One of Oxford&#39;s most famous landmarks in the Radcliffe Square.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.bodleian.ox.ac.uk/visit/radcliffe-camera" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=Radcliffe+Camera+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="guide-card">
+                    <figure class="guide-card__media">
+                      <img
+                        src="https://images.unsplash.com/photo-1473181488821-2d23949a045a?auto=format&fit=crop&w=1200&q=80"
+                        alt="Exterior of the Ashmolean Museum"
+                        loading="lazy"
+                      />
+                    </figure>
+                    <div class="guide-card__body">
+                      <h3>Ashmolean Museum</h3>
+                      <p>Britain&#39;s oldest public museum with world-class collections.</p>
+                      <div class="guide-card__links">
+                        <a href="https://www.ashmolean.org/" target="_blank" rel="noopener">Website</a>
+                        <a href="https://maps.google.com/?q=Ashmolean+Museum+Oxford" target="_blank" rel="noopener">Map</a>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+                <button
+                  type="button"
+                  class="carousel-control carousel-control--next"
+                  data-carousel-next
+                  aria-label="View next sightseeing option"
+                >
+                  &#10095;
+                </button>
+                <div class="carousel-dots" data-carousel-dots aria-label="Sightseeing slides"></div>
+              </div>
             </div>
           </div>
         </section>
 
         <section id="faqs" class="section fade-section" data-section>
           <div class="section-content">
-            <h2>FAQs</h2>
+            <h2 class="section-title--center">FAQs</h2>
             <div class="accordion" id="faq-accordion">
               <div class="accordion-item">
                 <button type="button" aria-expanded="false">Can I bring a plus one?</button>
