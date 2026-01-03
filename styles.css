@@ -572,9 +572,17 @@ body.nav-open {
 }
 
 .guide-card__links a {
-  color: inherit;
-  text-decoration: underline;
+  color: #fff;
+  text-decoration: none;
   font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.guide-card__links .material-icons {
+  font-size: 1.35rem;
 }
 
 .carousel-control {
