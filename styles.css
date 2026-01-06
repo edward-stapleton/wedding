@@ -307,89 +307,6 @@ body.nav-open {
   }
 }
 
-@media (max-width: 767px) {
-  .site-header {
-    padding: 0;
-  }
-
-  .site-nav {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    border-bottom: none;
-  }
-
-  .nav-toggle {
-    position: fixed;
-    top: 1.25rem;
-    right: 1.25rem;
-    z-index: 1100;
-  }
-
-  .hero-section {
-    padding-top: 6rem;
-    --hero-image-width: 100vw;
-    --hero-image-max-width: 100vw;
-    --hero-image-margin-left: calc(50% - 50vw);
-    --hero-image-margin-right: calc(50% - 50vw);
-  }
-
-  .nav-links {
-    position: fixed;
-    inset: 0;
-    padding: 5.5rem 1.5rem 2.5rem;
-    background: var(--overlay-background);
-    display: none;
-    flex-direction: column;
-    gap: 1.75rem;
-    align-items: flex-end;
-    text-align: right;
-    font-size: 1.25rem;
-    overflow-y: auto;
-    justify-content: flex-start;
-  }
-
-  .site-nav.open .nav-links {
-    display: flex;
-  }
-
-  .guide-intro {
-    width: 100%;
-    max-width: 100%;
-    padding: 0 1.5rem;
-  }
-
-  .guide-carousel {
-    width: 100vw;
-    margin: 1rem calc(50% - 50vw) 0;
-    padding: 3.5rem 0 3.25rem;
-    --carousel-media-height: min(70vh, 380px);
-  }
-
-  .guide-card {
-    flex: 0 0 100%;
-    max-width: 100%;
-    padding: 0;
-  }
-
-  .guide-card__media {
-    width: 100%;
-    height: var(--carousel-media-height);
-    border-radius: 0;
-  }
-
-  .guide-card__body {
-    width: 100%;
-    border-radius: 0;
-    padding: 1.25rem 1.5rem;
-  }
-
-  .carousel-control {
-    top: calc(3.5rem + (var(--carousel-media-height) / 2));
-    transform: translateY(-50%);
-  }
-}
-
 @media (min-width: 768px) {
   .hero-image {
     max-height: calc(100vh - var(--header-height) - 18rem);
@@ -761,6 +678,89 @@ body.nav-open {
 .carousel-dot:focus-visible {
   outline: 3px solid rgba(255, 255, 255, 0.85);
   outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .site-header {
+    padding: 0;
+  }
+
+  .site-nav {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-bottom: none;
+  }
+
+  .nav-toggle {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 1100;
+  }
+
+  .hero-section {
+    padding-top: 6rem;
+    --hero-image-width: 100vw;
+    --hero-image-max-width: 100vw;
+    --hero-image-margin-left: calc(50% - 50vw);
+    --hero-image-margin-right: calc(50% - 50vw);
+  }
+
+  .nav-links {
+    position: fixed;
+    inset: 0;
+    padding: 5.5rem 1.5rem 2.5rem;
+    background: var(--overlay-background);
+    display: none;
+    flex-direction: column;
+    gap: 1.75rem;
+    align-items: flex-end;
+    text-align: right;
+    font-size: 1.25rem;
+    overflow-y: auto;
+    justify-content: flex-start;
+  }
+
+  .site-nav.open .nav-links {
+    display: flex;
+  }
+
+  .guide-intro {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 1.5rem;
+  }
+
+  .guide-carousel {
+    width: 100vw;
+    margin: 1rem calc(50% - 50vw) 0;
+    padding: 3.5rem 0 3.25rem;
+    --carousel-media-height: min(70vh, 380px);
+  }
+
+  .guide-card {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .guide-card__media {
+    width: 100%;
+    height: var(--carousel-media-height);
+    border-radius: 0;
+  }
+
+  .guide-card__body {
+    width: 100%;
+    border-radius: 0;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .carousel-control {
+    top: calc(3.5rem + (var(--carousel-media-height) / 2));
+    transform: translateY(-50%);
+  }
 }
 
 @media (max-width: 480px) {
