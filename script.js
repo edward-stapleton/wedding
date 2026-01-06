@@ -384,8 +384,7 @@ function setupGuideCarousel() {
   carousel.setAttribute('tabindex', '0');
 
   const categoryIntros = {
-    accommodation:
-      "Aside from Airbnb and Booking.com, here are some other places that we'd suggest checking out for accommodation:",
+    accommodation: 'Aside from Airbnb and Booking.com, here are some tips for accommodation:',
     coffee: "These are the places that we tend to pick up a flat white when we're in Oxford:",
     pubs:
       "There's a great mix of historic watering holes in central Oxford, with craft beer places further out of town:",
@@ -412,6 +411,7 @@ function setupGuideCarousel() {
   let activePointerId = null;
 
   const getSlidesPerView = () => (window.matchMedia('(min-width: 768px)').matches ? 3 : 1);
+  const isInteractiveElement = target => target instanceof Element && target.closest('a, button');
 
   const calculateStride = () => {
     const first = slides[0];
@@ -594,6 +594,7 @@ function setupGuideCarousel() {
   if (window.PointerEvent) {
     track.addEventListener('pointerdown', event => {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
+      if (isInteractiveElement(event.target)) return;
       startDrag(event.clientX, event.pointerId);
       track.setPointerCapture(event.pointerId);
     });
@@ -611,6 +612,7 @@ function setupGuideCarousel() {
     track.addEventListener('pointercancel', endDrag);
   } else {
     track.addEventListener('touchstart', event => {
+      if (isInteractiveElement(event.target)) return;
       const touch = event.touches?.[0];
       if (!touch) return;
       startDrag(touch.clientX);
