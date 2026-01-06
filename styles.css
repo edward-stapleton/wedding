@@ -566,6 +566,7 @@ body.nav-open {
   border-radius: 0;
   overflow: hidden;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  touch-action: pan-y;
 }
 
 .guide-card__media img {
@@ -573,6 +574,9 @@ body.nav-open {
   height: 100%;
   object-fit: cover;
   display: block;
+  touch-action: pan-y;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .guide-card__body {
@@ -802,12 +806,12 @@ body.nav-open {
 
 @media (min-width: 768px) {
   .guide-card__body {
-    width: auto;
-    left: 1.25rem;
-    right: 1.25rem;
-    bottom: 1.25rem;
-    border-radius: 14px;
-    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 }
 
