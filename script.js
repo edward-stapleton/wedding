@@ -368,6 +368,7 @@ function setupGuideCarousel() {
   const tabList = document.querySelector('[data-guide-tabs]');
   const guidePanel = document.querySelector('[data-guide-panel]');
   const tabs = tabList ? Array.from(tabList.querySelectorAll('[data-guide-tab]')) : [];
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (!track) {
     return;
@@ -447,8 +448,30 @@ function setupGuideCarousel() {
     });
   };
 
+  const scrollTabIntoView = tab => {
+    if (!tabList || !tab) return;
+    const containerRect = tabList.getBoundingClientRect();
+    const tabRect = tab.getBoundingClientRect();
+    const inset = 16;
+    let targetScroll = tabList.scrollLeft;
+
+    if (tabRect.left < containerRect.left + inset) {
+      targetScroll -= containerRect.left + inset - tabRect.left;
+    } else if (tabRect.right > containerRect.right - inset) {
+      targetScroll += tabRect.right - (containerRect.right - inset);
+    } else {
+      return;
+    }
+
+    tabList.scrollTo({
+      left: targetScroll,
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    });
+  };
+
   const setActiveCategory = (category, activeIndex) => {
     if (!category) return;
+    let activeTab = null;
     tabs.forEach(tab => {
       const isActive = tab.dataset.guideCategory === category;
       tab.classList.toggle('is-active', isActive);
@@ -457,7 +480,14 @@ function setupGuideCarousel() {
       if (isActive && guidePanel && tab.id) {
         guidePanel.setAttribute('aria-labelledby', tab.id);
       }
+      if (isActive) {
+        activeTab = tab;
+      }
     });
+
+    if (activeTab) {
+      scrollTabIntoView(activeTab);
+    }
 
     if (guideIntro && categoryIntros[category]) {
       guideIntro.textContent = categoryIntros[category];
