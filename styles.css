@@ -458,6 +458,11 @@ body.nav-open {
   text-align: center;
   width: 100%;
   margin: 0.75rem 0 0.625rem;
+  scroll-snap-type: x mandatory;
+}
+
+.guide-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .guide-tab {
@@ -471,6 +476,8 @@ body.nav-open {
   font-family: 'Stack Sans Headline', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     sans-serif;
   transition: background 0.3s ease, border-color 0.3s ease;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
 }
 
 .guide-tab.is-active,
@@ -519,13 +526,14 @@ body.nav-open {
   position: relative;
   width: 100%;
   margin-top: 1rem;
-  padding: 0 2.5rem 2.75rem;
+  padding: 0 0 2.75rem;
   display: flex;
   align-items: center;
   gap: 1rem;
   overflow: hidden;
   --carousel-gap: 1.5rem;
   --carousel-media-height: 360px;
+  --carousel-control-inset: 1rem;
 }
 
 .carousel-track {
@@ -544,9 +552,10 @@ body.nav-open {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0;
   align-items: center;
   text-align: center;
+  position: relative;
 }
 
 .guide-card__media {
@@ -568,14 +577,19 @@ body.nav-open {
 
 .guide-card__body {
   width: 100%;
-  background: var(--card-background);
+  background: rgba(31, 52, 20, 0.68);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0;
-  padding: 1.5rem 1.75rem;
+  padding: 1.125rem 1.3rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   align-items: center;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(6px);
 }
 
 .guide-card__body h3 {
@@ -585,8 +599,8 @@ body.nav-open {
 
 .guide-card__body p {
   margin: 0;
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .guide-card__links {
@@ -640,11 +654,11 @@ body.nav-open {
 }
 
 .carousel-control--prev {
-  left: 0.75rem;
+  left: var(--carousel-control-inset);
 }
 
 .carousel-control--next {
-  right: 0.75rem;
+  right: var(--carousel-control-inset);
 }
 
 .carousel-control[disabled] {
@@ -735,11 +749,24 @@ body.nav-open {
     padding: 0 1.5rem;
   }
 
+  .guide-tabs {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    width: 100vw;
+    margin: 0.75rem calc(50% - 50vw) 0.625rem;
+    padding: 0 1.5rem;
+    gap: 0.5rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
   .guide-carousel {
     width: 100vw;
     margin: 1rem calc(50% - 50vw) 0;
     padding: 3.5rem 0 3.25rem;
     --carousel-media-height: min(70vh, 420px);
+    --carousel-control-inset: 0.75rem;
   }
 
   .guide-card {
@@ -757,7 +784,7 @@ body.nav-open {
   .guide-card__body {
     width: 100%;
     border-radius: 0;
-    padding: 1.25rem 1.5rem;
+    padding: 0.95rem 1.125rem;
   }
 
   .carousel-control {
@@ -768,21 +795,14 @@ body.nav-open {
 
 @media (max-width: 480px) {
   .guide-carousel {
-    padding: 0 1.5rem 2.5rem;
-  }
-
-  .carousel-control--prev {
-    left: 0.25rem;
-  }
-
-  .carousel-control--next {
-    right: 0.25rem;
+    padding: 0 0 2.5rem;
+    --carousel-control-inset: 0.5rem;
   }
 }
 
 @media (min-width: 768px) {
   .guide-card__body {
-    width: min(100%, 480px);
+    width: 100%;
   }
 }
 
