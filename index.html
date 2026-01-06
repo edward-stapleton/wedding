@@ -165,9 +165,10 @@
                 type="button"
                 role="tab"
                 aria-selected="true"
-                aria-controls="guide-panel-accommodation"
+                aria-controls="guide-panel"
                 id="guide-tab-accommodation"
                 data-guide-tab
+                data-guide-category="accommodation"
               >
                 Accommodation
               </button>
@@ -176,9 +177,10 @@
                 type="button"
                 role="tab"
                 aria-selected="false"
-                aria-controls="guide-panel-coffee"
+                aria-controls="guide-panel"
                 id="guide-tab-coffee"
                 data-guide-tab
+                data-guide-category="coffee"
               >
                 Coffee
               </button>
@@ -187,9 +189,10 @@
                 type="button"
                 role="tab"
                 aria-selected="false"
-                aria-controls="guide-panel-pubs"
+                aria-controls="guide-panel"
                 id="guide-tab-pubs"
                 data-guide-tab
+                data-guide-category="pubs"
               >
                 Pubs
               </button>
@@ -198,9 +201,10 @@
                 type="button"
                 role="tab"
                 aria-selected="false"
-                aria-controls="guide-panel-restaurants"
+                aria-controls="guide-panel"
                 id="guide-tab-restaurants"
                 data-guide-tab
+                data-guide-category="restaurants"
               >
                 Restaurants
               </button>
@@ -209,36 +213,36 @@
                 type="button"
                 role="tab"
                 aria-selected="false"
-                aria-controls="guide-panel-sightseeing"
+                aria-controls="guide-panel"
                 id="guide-tab-sightseeing"
                 data-guide-tab
+                data-guide-category="sightseeing"
               >
                 Sightseeing
               </button>
             </div>
 
             <div
-              class="guide-panel"
+              class="guide-panel is-active"
               role="tabpanel"
-              id="guide-panel-accommodation"
+              id="guide-panel"
               aria-labelledby="guide-tab-accommodation"
               data-guide-panel
-              hidden
             >
-              <p class="guide-intro">
+              <p class="guide-intro" data-guide-intro>
                 Aside from Airbnb and Booking.com, here are some other places that we'd suggest checking out for accommodation:
               </p>
-              <div class="guide-carousel" data-carousel data-carousel-label="Accommodation">
+              <div class="guide-carousel" data-guide-carousel data-carousel data-carousel-label="Guide recommendations">
                 <button
                   type="button"
                   class="carousel-control carousel-control--prev"
                   data-carousel-prev
-                  aria-label="View previous accommodation option"
+                  aria-label="View previous guide recommendation"
                 >
                   &#10094;
                 </button>
                 <div class="carousel-track" data-carousel-track aria-live="polite">
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="accommodation">
                     <figure class="guide-card__media">
                       <img
                         src="assets/university-rooms.webp"
@@ -269,7 +273,7 @@
                       </div>
                     </div>
                   </article>
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="accommodation">
                     <figure class="guide-card__media">
                       <img
                         src="https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80"
@@ -295,7 +299,7 @@
                       </div>
                     </div>
                   </article>
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="accommodation">
                     <figure class="guide-card__media">
                       <img
                         src="https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=1200&q=80"
@@ -334,36 +338,7 @@
                       </div>
                     </div>
                   </article>
-                </div>
-                <button
-                  type="button"
-                  class="carousel-control carousel-control--next"
-                  data-carousel-next
-                  aria-label="View next accommodation option"
-                >
-                  &#10095;
-                </button>
-                <div class="carousel-dots" data-carousel-dots aria-label="Accommodation slides"></div>
-              </div>
-            </div>
-
-            <div
-              class="guide-panel"
-              role="tabpanel"
-              id="guide-panel-coffee"
-              aria-labelledby="guide-tab-coffee"
-              data-guide-panel
-              hidden
-            >
-              <p class="guide-intro">
-                These are the places that we tend to pick up a flat white when we're in Oxford:
-              </p>
-              <div class="guide-carousel" data-carousel data-carousel-label="Coffee">
-                <button type="button" class="carousel-control carousel-control--prev" data-carousel-prev aria-label="View previous coffee option">
-                  &#10094;
-                </button>
-                <div class="carousel-track" data-carousel-track aria-live="polite">
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="coffee">
                     <figure class="guide-card__media">
                       <img
                         src="assets/broche.jpg"
@@ -394,7 +369,7 @@
                       </div>
                     </div>
                   </article>
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="coffee">
                     <figure class="guide-card__media">
                       <img
                         src="assets/gails-jericho.jpg"
@@ -420,7 +395,7 @@
                       </div>
                     </div>
                   </article>
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="coffee">
                     <figure class="guide-card__media">
                       <img
                         src="https://images.unsplash.com/photo-1461988320302-91bde64fc8e4?auto=format&fit=crop&w=1200&q=80"
@@ -451,31 +426,7 @@
                       </div>
                     </div>
                   </article>
-                </div>
-                <button type="button" class="carousel-control carousel-control--next" data-carousel-next aria-label="View next coffee option">
-                  &#10095;
-                </button>
-                <div class="carousel-dots" data-carousel-dots aria-label="Coffee slides"></div>
-              </div>
-            </div>
-
-            <div
-              class="guide-panel"
-              role="tabpanel"
-              id="guide-panel-pubs"
-              aria-labelledby="guide-tab-pubs"
-              data-guide-panel
-              hidden
-            >
-              <p class="guide-intro">
-                There&#39;s a great mix of historic watering holes in central Oxford, with craft beer places further out of town:
-              </p>
-              <div class="guide-carousel" data-carousel data-carousel-label="Pubs">
-                <button type="button" class="carousel-control carousel-control--prev" data-carousel-prev aria-label="View previous pub option">
-                  &#10094;
-                </button>
-                <div class="carousel-track" data-carousel-track aria-live="polite">
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="pubs">
                     <figure class="guide-card__media">
                       <img
                         src="assets/turf-tavern.jpg"
@@ -503,7 +454,7 @@
                       </div>
                     </div>
                   </article>
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="pubs">
                     <figure class="guide-card__media">
                       <img
                         src="assets/market-tap.jpg"
@@ -542,7 +493,7 @@
                       </div>
                     </div>
                   </article>
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="pubs">
                     <figure class="guide-card__media">
                       <img
                         src="assets/the-lamb-and-flag.jpg"
@@ -581,36 +532,7 @@
                       </div>
                     </div>
                   </article>
-                </div>
-                <button type="button" class="carousel-control carousel-control--next" data-carousel-next aria-label="View next pub option">
-                  &#10095;
-                </button>
-                <div class="carousel-dots" data-carousel-dots aria-label="Pubs slides"></div>
-              </div>
-            </div>
-
-            <div
-              class="guide-panel"
-              role="tabpanel"
-              id="guide-panel-restaurants"
-              aria-labelledby="guide-tab-restaurants"
-              data-guide-panel
-              hidden
-            >
-              <p class="guide-intro">
-                From riverside lunches to modern small plates, there is no shortage of wonderful dining in Oxford. Here are a few of our favourite tables:
-              </p>
-              <div class="guide-carousel" data-carousel data-carousel-label="Restaurants">
-                <button
-                  type="button"
-                  class="carousel-control carousel-control--prev"
-                  data-carousel-prev
-                  aria-label="View previous restaurant option"
-                >
-                  &#10094;
-                </button>
-                <div class="carousel-track" data-carousel-track aria-live="polite">
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="restaurants">
                     <figure class="guide-card__media">
                       <img
                         src="https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?auto=format&fit=crop&w=1200&q=80"
@@ -641,7 +563,7 @@
                       </div>
                     </div>
                   </article>
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="restaurants">
                     <figure class="guide-card__media">
                       <img
                         src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80"
@@ -662,7 +584,7 @@
                       </div>
                     </div>
                   </article>
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="restaurants">
                     <figure class="guide-card__media">
                       <img
                         src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=80"
@@ -683,41 +605,7 @@
                       </div>
                     </div>
                   </article>
-                </div>
-                <button
-                  type="button"
-                  class="carousel-control carousel-control--next"
-                  data-carousel-next
-                  aria-label="View next restaurant option"
-                >
-                  &#10095;
-                </button>
-                <div class="carousel-dots" data-carousel-dots aria-label="Restaurants slides"></div>
-              </div>
-            </div>
-
-            <div
-              class="guide-panel"
-              role="tabpanel"
-              id="guide-panel-sightseeing"
-              aria-labelledby="guide-tab-sightseeing"
-              data-guide-panel
-              hidden
-            >
-              <p class="guide-intro">
-                If you have time to explore, Oxford is packed with architecture, museums, and iconic views. These are a few must-see stops:
-              </p>
-              <div class="guide-carousel" data-carousel data-carousel-label="Sightseeing">
-                <button
-                  type="button"
-                  class="carousel-control carousel-control--prev"
-                  data-carousel-prev
-                  aria-label="View previous sightseeing option"
-                >
-                  &#10094;
-                </button>
-                <div class="carousel-track" data-carousel-track aria-live="polite">
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="sightseeing">
                     <figure class="guide-card__media">
                       <img
                         src="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1200&q=80"
@@ -743,7 +631,7 @@
                       </div>
                     </div>
                   </article>
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="sightseeing">
                     <figure class="guide-card__media">
                       <img
                         src="https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=1200&q=80"
@@ -774,7 +662,7 @@
                       </div>
                     </div>
                   </article>
-                  <article class="guide-card">
+                  <article class="guide-card" data-guide-category="sightseeing">
                     <figure class="guide-card__media">
                       <img
                         src="https://images.unsplash.com/photo-1473181488821-2d23949a045a?auto=format&fit=crop&w=1200&q=80"
@@ -805,14 +693,14 @@
                   type="button"
                   class="carousel-control carousel-control--next"
                   data-carousel-next
-                  aria-label="View next sightseeing option"
+                  aria-label="View next guide recommendation"
                 >
                   &#10095;
                 </button>
-                <div class="carousel-dots" data-carousel-dots aria-label="Sightseeing slides"></div>
+                <div class="carousel-dots" data-carousel-dots aria-label="Guide slides"></div>
               </div>
             </div>
-          </div>
+        </div>
         </section>
 
         <section id="faqs" class="section fade-section" data-section>
