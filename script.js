@@ -389,9 +389,9 @@ function setupGuideCarousel() {
     pubs:
       "There's a great mix of historic watering holes in central Oxford, with craft beer places further out of town:",
     restaurants:
-      'From riverside lunches to modern small plates, there is no shortage of wonderful dining in Oxford. Here are a few of our favourite tables:',
+      "If you're looking for a nice spot for a meal, consider these places:",
     sightseeing:
-      'If you have time to explore, Oxford is packed with architecture, museums, and iconic views. These are a few must-see stops:',
+      "If you're out for a stroll or jog, try to swing past these places:",
   };
 
   if (dotsContainer) {
