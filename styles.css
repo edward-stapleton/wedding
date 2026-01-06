@@ -524,6 +524,8 @@ body.nav-open {
   align-items: center;
   gap: 1rem;
   overflow: hidden;
+  --carousel-gap: 1.5rem;
+  --carousel-media-height: 360px;
 }
 
 .carousel-track {
@@ -533,12 +535,13 @@ body.nav-open {
   transition: transform 0.45s ease;
   will-change: transform;
   touch-action: pan-y;
+  gap: var(--carousel-gap);
 }
 
 .guide-card {
-  flex: 0 0 min(100%, 320px);
-  max-width: min(100%, 320px);
-  padding: 0 0.5rem;
+  flex: 0 0 calc((100% - (var(--carousel-gap) * 2)) / 3);
+  max-width: calc((100% - (var(--carousel-gap) * 2)) / 3);
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -549,9 +552,9 @@ body.nav-open {
 .guide-card__media {
   margin: 0;
   width: 100%;
-  height: 350px;
+  height: var(--carousel-media-height);
   aspect-ratio: auto;
-  border-radius: 16px;
+  border-radius: 0;
   overflow: hidden;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
 }
@@ -564,10 +567,10 @@ body.nav-open {
 }
 
 .guide-card__body {
-  width: min(100%, 420px);
+  width: 100%;
   background: var(--card-background);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 1.5rem 1.75rem;
   display: flex;
   flex-direction: column;
@@ -609,7 +612,7 @@ body.nav-open {
 
 .carousel-control {
   position: absolute;
-  top: 50%;
+  top: calc(var(--carousel-media-height) / 2);
   transform: translateY(-50%);
   width: 2.5rem;
   height: 2.5rem;
@@ -736,7 +739,7 @@ body.nav-open {
     width: 100vw;
     margin: 1rem calc(50% - 50vw) 0;
     padding: 3.5rem 0 3.25rem;
-    --carousel-media-height: min(70vh, 380px);
+    --carousel-media-height: min(70vh, 420px);
   }
 
   .guide-card {

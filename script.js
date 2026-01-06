@@ -353,7 +353,8 @@ if (localStorage.getItem(STORAGE_KEY) === 'true') {
 
 passwordForm?.addEventListener('submit', handlePasswordSubmit);
 
-function setupCarousel(carousel) {
+function setupGuideCarousel() {
+  const carousel = document.querySelector('[data-guide-carousel]');
   if (!carousel || carousel.dataset.carouselInitialised === 'true') {
     return;
   }
@@ -363,104 +364,247 @@ function setupCarousel(carousel) {
   const nextButton = carousel.querySelector('[data-carousel-next]');
   const dotsContainer = carousel.querySelector('[data-carousel-dots]');
   const carouselLabel = carousel.dataset.carouselLabel || 'carousel';
+  const guideIntro = document.querySelector('[data-guide-intro]');
+  const tabList = document.querySelector('[data-guide-tabs]');
+  const guidePanel = document.querySelector('[data-guide-panel]');
+  const tabs = tabList ? Array.from(tabList.querySelectorAll('[data-guide-tab]')) : [];
 
   if (!track) {
     return;
   }
 
-  const slides = Array.from(track.children).filter(child => child instanceof HTMLElement);
-  if (slides.length === 0) {
+  const originalSlides = Array.from(track.children).filter(child => child instanceof HTMLElement);
+  if (originalSlides.length === 0) {
     return;
   }
 
   carousel.setAttribute('role', carousel.getAttribute('role') || 'region');
   carousel.dataset.carouselInitialised = 'true';
+  carousel.setAttribute('tabindex', '0');
+
+  const categoryIntros = {
+    accommodation:
+      "Aside from Airbnb and Booking.com, here are some other places that we'd suggest checking out for accommodation:",
+    coffee: "These are the places that we tend to pick up a flat white when we're in Oxford:",
+    pubs:
+      "There's a great mix of historic watering holes in central Oxford, with craft beer places further out of town:",
+    restaurants:
+      'From riverside lunches to modern small plates, there is no shortage of wonderful dining in Oxford. Here are a few of our favourite tables:',
+    sightseeing:
+      'If you have time to explore, Oxford is packed with architecture, museums, and iconic views. These are a few must-see stops:',
+  };
 
   if (dotsContainer) {
     dotsContainer.innerHTML = '';
     dotsContainer.setAttribute('role', 'tablist');
   }
 
+  let slides = [];
   let currentIndex = 0;
-  let slideWidth = 0;
-  let maxIndex = slides.length - 1;
-  let dotPositions = 0;
-  const dots = [];
+  let slideStride = 1;
+  let slidesPerView = 1;
+  let dots = [];
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartTranslate = 0;
+  let currentTranslate = 0;
+  let activePointerId = null;
 
-  const calculateMetrics = () => {
-    const trackWidth = track.getBoundingClientRect().width;
-    const slideRect = slides[0]?.getBoundingClientRect();
-    const newSlideWidth = slideRect?.width || 1;
-    const slidesPerView = Math.max(1, Math.floor(trackWidth / newSlideWidth));
-    slideWidth = newSlideWidth;
-    maxIndex = Math.max(0, slides.length - slidesPerView);
+  const getSlidesPerView = () => (window.matchMedia('(min-width: 768px)').matches ? 3 : 1);
+
+  const calculateStride = () => {
+    const first = slides[0];
+    const second = slides[1];
+    if (!first) {
+      slideStride = 1;
+      return slideStride;
+    }
+    const firstRect = first.getBoundingClientRect();
+    const stride = second ? second.offsetLeft - first.offsetLeft : firstRect.width;
+    slideStride = stride || firstRect.width || 1;
+    return slideStride;
   };
 
   const buildDots = () => {
-    if (!dotsContainer) {
-      return;
-    }
+    if (!dotsContainer) return;
     dotsContainer.innerHTML = '';
-    dots.length = 0;
-    const positions = maxIndex + 1;
-    dotPositions = positions;
-    for (let index = 0; index < positions; index += 1) {
+    dots = [];
+    originalSlides.forEach((_, index) => {
       const dot = document.createElement('button');
       dot.type = 'button';
       dot.className = 'carousel-dot';
-      dot.setAttribute('aria-label', `Go to ${carouselLabel} view ${index + 1} of ${positions}`);
+      dot.setAttribute('aria-label', `Go to ${carouselLabel} slide ${index + 1} of ${originalSlides.length}`);
       dot.setAttribute('role', 'tab');
-      dot.addEventListener('click', () => moveTo(index));
+      dot.addEventListener('click', () => moveTo(slidesPerView + index));
       dotsContainer.appendChild(dot);
       dots.push(dot);
-    }
-  };
-
-  const update = () => {
-    calculateMetrics();
-    if (maxIndex + 1 !== dotPositions) {
-      buildDots();
-    }
-    currentIndex = Math.max(0, Math.min(currentIndex, maxIndex));
-    track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-    if (prevButton) {
-      prevButton.disabled = currentIndex === 0;
-    }
-    if (nextButton) {
-      nextButton.disabled = currentIndex === maxIndex;
-    }
-    dots.forEach((dot, index) => {
-      dot.setAttribute('aria-current', index === currentIndex ? 'true' : 'false');
     });
   };
 
-  function moveTo(index) {
-    const clamped = Math.max(0, Math.min(index, maxIndex));
-    if (clamped === currentIndex) {
-      update();
-      return;
+  const updateDots = index => {
+    dots.forEach((dot, dotIndex) => {
+      dot.setAttribute('aria-current', dotIndex === index ? 'true' : 'false');
+    });
+  };
+
+  const setActiveCategory = (category, activeIndex) => {
+    if (!category) return;
+    tabs.forEach(tab => {
+      const isActive = tab.dataset.guideCategory === category;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', String(isActive));
+      tab.setAttribute('tabindex', isActive ? '0' : '-1');
+      if (isActive && guidePanel && tab.id) {
+        guidePanel.setAttribute('aria-labelledby', tab.id);
+      }
+    });
+
+    if (guideIntro && categoryIntros[category]) {
+      guideIntro.textContent = categoryIntros[category];
     }
-    currentIndex = clamped;
-    update();
+
+    if (typeof activeIndex === 'number') {
+      updateDots(activeIndex);
+    }
+  };
+
+  const updateActiveFromTranslate = () => {
+    const stride = slideStride || calculateStride();
+    const rawIndex = Math.floor((currentTranslate + stride * 0.5) / stride);
+    const total = originalSlides.length;
+    const normalized = ((rawIndex - slidesPerView) % total + total) % total;
+    const activeSlide = originalSlides[normalized];
+    const category = activeSlide?.dataset.guideCategory;
+    setActiveCategory(category, normalized);
+  };
+
+  const applyTranslate = animate => {
+    calculateStride();
+    currentTranslate = currentIndex * slideStride;
+    track.style.transition = animate ? 'transform 0.45s ease' : 'none';
+    track.style.transform = `translateX(-${currentTranslate}px)`;
+    updateActiveFromTranslate();
+  };
+
+  const normalizeIndex = () => {
+    const total = originalSlides.length;
+    if (currentIndex >= total + slidesPerView) {
+      currentIndex = slidesPerView;
+      applyTranslate(false);
+    } else if (currentIndex < slidesPerView) {
+      currentIndex = total + slidesPerView - 1;
+      applyTranslate(false);
+    }
+  };
+
+  function moveTo(index) {
+    currentIndex = index;
+    applyTranslate(true);
   }
 
-  slides.forEach((slide, index) => {
-    slide.setAttribute('role', 'group');
-    slide.setAttribute('aria-roledescription', 'slide');
-    slide.setAttribute('aria-label', `${index + 1} of ${slides.length}`);
+  const buildSlides = () => {
+    slidesPerView = getSlidesPerView();
+    track.innerHTML = '';
+    const headClones = originalSlides.slice(-slidesPerView).map(slide => slide.cloneNode(true));
+    const tailClones = originalSlides.slice(0, slidesPerView).map(slide => slide.cloneNode(true));
 
-    if (dotsContainer) {
-      dotsContainer.setAttribute('aria-label', `${carouselLabel} slides`);
+    headClones.forEach(clone => {
+      clone.setAttribute('data-carousel-clone', 'true');
+      track.appendChild(clone);
+    });
+    originalSlides.forEach(slide => {
+      track.appendChild(slide);
+    });
+    tailClones.forEach(clone => {
+      clone.setAttribute('data-carousel-clone', 'true');
+      track.appendChild(clone);
+    });
+
+    slides = Array.from(track.children).filter(child => child instanceof HTMLElement);
+    slides.forEach((slide, index) => {
+      slide.setAttribute('role', 'group');
+      slide.setAttribute('aria-roledescription', 'slide');
+      const labelIndex = ((index - slidesPerView + originalSlides.length) % originalSlides.length) + 1;
+      slide.setAttribute('aria-label', `${labelIndex} of ${originalSlides.length}`);
+    });
+
+    currentIndex = slidesPerView;
+    buildDots();
+    applyTranslate(false);
+  };
+
+  const startDrag = (x, pointerId = null) => {
+    isDragging = true;
+    dragStartX = x;
+    dragStartTranslate = currentTranslate;
+    activePointerId = pointerId;
+    track.style.transition = 'none';
+  };
+
+  const handleDrag = (event, x) => {
+    if (!isDragging) return;
+    const delta = x - dragStartX;
+    currentTranslate = dragStartTranslate - delta;
+    track.style.transform = `translateX(-${currentTranslate}px)`;
+    updateActiveFromTranslate();
+    if (event.cancelable) {
+      event.preventDefault();
     }
-  });
+  };
 
+  const endDrag = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    activePointerId = null;
+    const targetIndex = Math.round(currentTranslate / slideStride);
+    currentIndex = targetIndex;
+    applyTranslate(true);
+  };
+
+  if (window.PointerEvent) {
+    track.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      startDrag(event.clientX, event.pointerId);
+      track.setPointerCapture(event.pointerId);
+    });
+
+    track.addEventListener(
+      'pointermove',
+      event => {
+        if (!isDragging || (activePointerId !== null && activePointerId !== event.pointerId)) return;
+        handleDrag(event, event.clientX);
+      },
+      { passive: false }
+    );
+
+    track.addEventListener('pointerup', endDrag);
+    track.addEventListener('pointercancel', endDrag);
+  } else {
+    track.addEventListener('touchstart', event => {
+      const touch = event.touches?.[0];
+      if (!touch) return;
+      startDrag(touch.clientX);
+    });
+
+    track.addEventListener(
+      'touchmove',
+      event => {
+        const touch = event.touches?.[0];
+        if (!touch) return;
+        handleDrag(event, touch.clientX);
+      },
+      { passive: false }
+    );
+
+    track.addEventListener('touchend', endDrag);
+    track.addEventListener('touchcancel', endDrag);
+  }
+
+  track.addEventListener('transitionend', normalizeIndex);
   prevButton?.addEventListener('click', () => moveTo(currentIndex - 1));
   nextButton?.addEventListener('click', () => moveTo(currentIndex + 1));
 
   carousel.addEventListener('keydown', event => {
-    if (event.target !== carousel) {
-      return;
-    }
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
       moveTo(currentIndex - 1);
@@ -470,151 +614,58 @@ function setupCarousel(carousel) {
     }
   });
 
-  let swipeStartX = null;
-  let swipeStartY = null;
-  let swipeHandled = false;
-  let activePointerId = null;
-  const swipeThreshold = 40;
+  if (tabList) {
+    const setCategoryByTab = tab => {
+      const category = tab.dataset.guideCategory;
+      if (!category) return;
+      const targetIndex = originalSlides.findIndex(
+        slide => slide.dataset.guideCategory === category
+      );
+      if (targetIndex >= 0) {
+        moveTo(slidesPerView + targetIndex);
+      }
+    };
 
-  const startSwipe = (x, y, pointerId = null) => {
-    swipeStartX = typeof x === 'number' ? x : null;
-    swipeStartY = typeof y === 'number' ? y : null;
-    swipeHandled = false;
-    activePointerId = pointerId;
-  };
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => setCategoryByTab(tab));
+    });
 
-  const handleSwipeMove = (event, x, y) => {
-    if (swipeHandled || swipeStartX === null || swipeStartY === null) return;
-    if (typeof x !== 'number' || typeof y !== 'number') return;
-    const deltaX = x - swipeStartX;
-    const deltaY = y - swipeStartY;
-    if (Math.abs(deltaX) < swipeThreshold || Math.abs(deltaX) < Math.abs(deltaY)) {
-      return;
-    }
-    if (event.cancelable) {
+    tabList.addEventListener('keydown', event => {
+      const currentIndex = tabs.findIndex(tab => tab === document.activeElement);
+      if (currentIndex === -1) return;
+
+      let nextIndex = null;
+      if (event.key === 'ArrowRight') {
+        nextIndex = (currentIndex + 1) % tabs.length;
+      } else if (event.key === 'ArrowLeft') {
+        nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+      } else if (event.key === 'Home') {
+        nextIndex = 0;
+      } else if (event.key === 'End') {
+        nextIndex = tabs.length - 1;
+      }
+
+      if (nextIndex === null) return;
       event.preventDefault();
-    }
-    swipeHandled = true;
-    moveTo(deltaX > 0 ? currentIndex - 1 : currentIndex + 1);
-  };
-
-  const endSwipe = () => {
-    swipeStartX = null;
-    swipeStartY = null;
-    swipeHandled = false;
-    activePointerId = null;
-  };
-
-  if (window.PointerEvent) {
-    track.addEventListener('pointerdown', event => {
-      if (event.pointerType === 'mouse') return;
-      startSwipe(event.clientX, event.clientY, event.pointerId);
+      tabs[nextIndex].focus();
+      setCategoryByTab(tabs[nextIndex]);
     });
-
-    track.addEventListener(
-      'pointermove',
-      event => {
-        if (activePointerId !== event.pointerId) return;
-        handleSwipeMove(event, event.clientX, event.clientY);
-      },
-      { passive: false }
-    );
-
-    track.addEventListener('pointerup', endSwipe);
-    track.addEventListener('pointercancel', endSwipe);
-  } else {
-    track.addEventListener('touchstart', event => {
-      const touch = event.touches?.[0];
-      startSwipe(touch?.clientX, touch?.clientY);
-    });
-
-    track.addEventListener(
-      'touchmove',
-      event => {
-        const touch = event.touches?.[0];
-        handleSwipeMove(event, touch?.clientX, touch?.clientY);
-      },
-      { passive: false }
-    );
-
-    track.addEventListener('touchend', endSwipe);
-    track.addEventListener('touchcancel', endSwipe);
   }
 
   if (window.ResizeObserver) {
-    const resizeObserver = new ResizeObserver(() => update());
+    const resizeObserver = new ResizeObserver(() => {
+      buildSlides();
+    });
     resizeObserver.observe(track);
   } else {
-    window.addEventListener('resize', update);
+    window.addEventListener('resize', buildSlides);
   }
 
-  carousel.setAttribute('tabindex', '0');
-  update();
+  buildSlides();
+  setActiveCategory(originalSlides[0]?.dataset.guideCategory, 0);
 }
 
-function setupCarousels() {
-  const carousels = document.querySelectorAll('[data-carousel]');
-  carousels.forEach(setupCarousel);
-}
-
-setupCarousels();
-
-function setupGuideTabs() {
-  const tabList = document.querySelector('[data-guide-tabs]');
-  if (!tabList) return;
-
-  const tabs = Array.from(tabList.querySelectorAll('[data-guide-tab]'));
-  const panels = tabs
-    .map(tab => document.getElementById(tab.getAttribute('aria-controls')))
-    .filter(Boolean);
-
-  const activateTab = tab => {
-    tabs.forEach(currentTab => {
-      const isActive = currentTab === tab;
-      currentTab.classList.toggle('is-active', isActive);
-      currentTab.setAttribute('aria-selected', String(isActive));
-      currentTab.setAttribute('tabindex', isActive ? '0' : '-1');
-
-      const panelId = currentTab.getAttribute('aria-controls');
-      const panel = panelId ? document.getElementById(panelId) : null;
-      if (!panel) return;
-      panel.hidden = !isActive;
-      panel.classList.toggle('is-active', isActive);
-    });
-  };
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => activateTab(tab));
-  });
-
-  tabList.addEventListener('keydown', event => {
-    const currentIndex = tabs.findIndex(tab => tab === document.activeElement);
-    if (currentIndex === -1) return;
-
-    let nextIndex = null;
-    if (event.key === 'ArrowRight') {
-      nextIndex = (currentIndex + 1) % tabs.length;
-    } else if (event.key === 'ArrowLeft') {
-      nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-    } else if (event.key === 'Home') {
-      nextIndex = 0;
-    } else if (event.key === 'End') {
-      nextIndex = tabs.length - 1;
-    }
-
-    if (nextIndex === null) return;
-    event.preventDefault();
-    tabs[nextIndex].focus();
-    activateTab(tabs[nextIndex]);
-  });
-
-  if (tabs.length > 0 && panels.length > 0) {
-    const activeTab = tabs.find(tab => tab.classList.contains('is-active')) || tabs[0];
-    activateTab(activeTab);
-  }
-}
-
-setupGuideTabs();
+setupGuideCarousel();
 
 function setupFadeSections() {
   const sections = document.querySelectorAll('[data-section], [data-map-container]');
