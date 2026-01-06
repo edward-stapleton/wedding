@@ -363,6 +363,7 @@ body.nav-open {
     width: 100vw;
     margin: 1rem calc(50% - 50vw) 0;
     padding: 3.5rem 0 3.25rem;
+    --carousel-media-height: min(70vh, 380px);
   }
 
   .guide-card {
@@ -373,19 +374,19 @@ body.nav-open {
 
   .guide-card__media {
     width: 100%;
-    height: min(70vh, 380px);
+    height: var(--carousel-media-height);
     border-radius: 0;
   }
 
   .guide-card__body {
     width: 100%;
-    border-radius: 999px;
+    border-radius: 0;
     padding: 1.25rem 1.5rem;
   }
 
   .carousel-control {
-    top: 1rem;
-    transform: none;
+    top: calc(3.5rem + (var(--carousel-media-height) / 2));
+    transform: translateY(-50%);
   }
 }
 
