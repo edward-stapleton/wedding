@@ -746,7 +746,7 @@ body.nav-open {
   .guide-intro {
     width: 100%;
     max-width: 100%;
-    padding: 0 1.5rem;
+    padding: 0 1rem;
   }
 
   .guide-tabs {
@@ -802,7 +802,12 @@ body.nav-open {
 
 @media (min-width: 768px) {
   .guide-card__body {
-    width: 100%;
+    width: auto;
+    left: 1.25rem;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    border-radius: 14px;
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.25);
   }
 }
 
