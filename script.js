@@ -1268,6 +1268,13 @@ async function submitRsvp(event) {
   }
 
   const email = (formData.get('guest-email') || profile.email || authenticatedEmail || '').trim();
+  if (authenticatedEmail && email && authenticatedEmail !== email) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent =
+        'Please use the same email you signed in with so we can keep your RSVP linked correctly.';
+    }
+    return;
+  }
   const now = new Date().toISOString();
   const inviteType = inviteDetails?.invite_type || (isPlusOneActive(profile) ? 'plusone' : 'single');
   const includesPlusOne = inviteType === 'plusone';
