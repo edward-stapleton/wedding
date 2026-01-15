@@ -1,6 +1,7 @@
-const ACCESS_CODE = 'STARFORD';
-const STORAGE_KEY = 'weddingSiteUnlocked';
+const SUPABASE_URL = 'https://ipxbndockmhkfuwjyevi.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
+const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
@@ -102,25 +103,33 @@ const GARDEN_FOOTPRINT = {
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
 const emailInput = document.getElementById('guest-email');
-const passwordInput = document.getElementById('access-code');
 const passwordError = document.getElementById('password-error');
 const rsvpModal = document.getElementById('rsvp-modal');
 const rsvpForm = document.getElementById('rsvp-form');
 const rsvpFeedback = document.getElementById('rsvp-feedback');
-const rsvpEmailDisplay = document.querySelector('[data-guest-email]');
 const primaryNameEl = document.querySelector('[data-guest-name="primary"]');
 const plusOneNameEl = document.querySelector('[data-guest-name="plusOne"]');
-const plusOneSection = document.querySelector('[data-guest-section="plusOne"]');
+const plusOneSections = document.querySelectorAll('[data-guest-section="plusOne"]');
 const primaryLegend = document.querySelector('[data-attendance-legend="primary"]');
 const plusOneLegend = document.querySelector('[data-attendance-legend="plusOne"]');
 const primaryDietaryLabel = document.querySelector('[data-dietary-label="primary"]');
 const plusOneDietaryLabel = document.querySelector('[data-dietary-label="plusOne"]');
+const primaryFirstNameInput = document.getElementById('primary-first-name');
+const primaryLastNameInput = document.getElementById('primary-last-name');
 const primaryDietaryInput = document.getElementById('primary-dietary');
 const plusOneDietaryInput = document.getElementById('plusone-dietary');
+const plusOneFirstNameInput = document.getElementById('plusone-first-name');
+const plusOneLastNameInput = document.getElementById('plusone-last-name');
 const rsvpEmailField = document.getElementById('rsvp-email');
+const inviteTokenField = document.getElementById('invite-token');
 const openRsvpButton = document.getElementById('open-rsvp');
 const closeModalEls = document.querySelectorAll('[data-close-modal]');
 const guestSections = document.querySelectorAll('.guest-response');
+const stepIndicators = document.querySelectorAll('[data-step-indicator]');
+const stepSections = document.querySelectorAll('[data-rsvp-step]');
+const stepPrevButton = document.querySelector('[data-step-prev]');
+const stepNextButton = document.querySelector('[data-step-next]');
+const stepSubmitButton = document.querySelector('[data-step-submit]');
 const mapContainer = document.querySelector('[data-map-container]');
 const siteNav = document.querySelector('.site-nav');
 const navToggle = document.querySelector('.nav-toggle');
@@ -134,6 +143,14 @@ let mapInstance;
 let routeBoundsCache = null;
 let initialCameraCache = null;
 let guestProfile = null;
+let inviteToken = null;
+let inviteDetails = null;
+let authenticatedEmail = '';
+let currentStep = 1;
+let invitationGroupId = '';
+let inviteLookupFailed = false;
+
+const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const ATTENDANCE_PROMPT = 'Able to come?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
@@ -142,9 +159,84 @@ const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergie
 function createGuestProfile(email) {
   return {
     email,
-    primary: { name: 'Joe Bloggs' },
-    plusOne: { name: 'Jill Bloggs' },
+    primary: { name: 'Guest 1', firstName: '', lastName: '' },
+    plusOne: { name: 'Guest 2', firstName: '', lastName: '' },
   };
+}
+
+function formatGuestName(firstName, lastName, fallback) {
+  const trimmedFirst = firstName?.trim() || '';
+  const trimmedLast = lastName?.trim() || '';
+  if (trimmedFirst || trimmedLast) {
+    return `${trimmedFirst} ${trimmedLast}`.trim();
+  }
+  return fallback;
+}
+
+function setInputValueIfEmpty(input, value) {
+  if (!input) return;
+  if (!input.value && value) {
+    input.value = value;
+  }
+}
+
+function setInputValue(input, value) {
+  if (!input) return;
+  input.value = value ?? '';
+}
+
+function applyInviteDetailsToProfile(invite, emailFallback) {
+  if (!invite) {
+    setGuestProfile(createGuestProfile(emailFallback));
+    inviteDetails = null;
+    return;
+  }
+
+  const primaryFirst = invite.primary_first_name || '';
+  const primaryLast = invite.primary_last_name || '';
+  const primaryName = formatGuestName(primaryFirst, primaryLast, 'Guest 1');
+  const hasPlusOne = invite.invite_type === 'plusone';
+
+  inviteDetails = invite;
+  invitationGroupId = invite.id || invitationGroupId;
+  setGuestProfile({
+    email: invite.primary_email || emailFallback,
+    primary: {
+      name: primaryName,
+      firstName: primaryFirst,
+      lastName: primaryLast,
+    },
+    plusOne: hasPlusOne
+      ? {
+          name: 'Guest 2',
+          firstName: '',
+          lastName: '',
+        }
+      : null,
+  });
+}
+
+async function fetchInviteDetails(token) {
+  if (!supabaseClient || !token) {
+    inviteDetails = null;
+    return null;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('invites')
+    .select('id, token, invite_type, primary_email, primary_first_name, primary_last_name')
+    .eq('token', token)
+    .maybeSingle();
+
+  if (error || !data) {
+    inviteDetails = null;
+    inviteLookupFailed = true;
+    return null;
+  }
+
+  inviteDetails = data;
+  inviteLookupFailed = false;
+  return data;
 }
 
 function setGuestSectionState(section, expanded) {
@@ -192,11 +284,48 @@ function resetGuestSectionStateForModal() {
   applyGuestSectionResponsiveState(mobileModalMedia.matches);
 }
 
+function setStepIndicator(step) {
+  stepIndicators.forEach(indicator => {
+    const indicatorStep = Number(indicator.dataset.stepIndicator);
+    indicator.classList.toggle('is-active', indicatorStep === step);
+  });
+}
+
+function showStep(step) {
+  currentStep = step;
+  stepSections.forEach(section => {
+    const sectionStep = Number(section.dataset.rsvpStep);
+    section.hidden = sectionStep !== step;
+  });
+
+  setStepIndicator(step);
+
+  if (stepPrevButton) {
+    stepPrevButton.hidden = step === 1;
+  }
+
+  if (stepNextButton) {
+    stepNextButton.hidden = step !== 1;
+  }
+
+  if (stepSubmitButton) {
+    stepSubmitButton.hidden = step !== 2;
+  }
+
+  const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === step);
+  const focusTarget = activeSection?.querySelector(
+    'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled])'
+  );
+  if (focusTarget) {
+    setTimeout(() => focusTarget.focus(), 50);
+  }
+}
+
 function updateGuestUi(profile) {
   if (!profile) return;
 
-  const primaryName = profile.primary?.name || 'Joe Bloggs';
-  const plusOneName = profile.plusOne?.name || 'Jill Bloggs';
+  const primaryName = profile.primary?.name || 'Guest 1';
+  const plusOneName = profile.plusOne?.name || 'Guest 2';
   const hasPlusOne = Boolean(profile.plusOne && profile.plusOne.name);
 
   if (primaryNameEl) {
@@ -215,11 +344,16 @@ function updateGuestUi(profile) {
     primaryDietaryInput.placeholder = DIETARY_PLACEHOLDER;
   }
 
-  if (plusOneSection) {
-    plusOneSection.hidden = !hasPlusOne;
-    if (!hasPlusOne) {
-      setGuestSectionState(plusOneSection, false);
-    }
+  setInputValueIfEmpty(primaryFirstNameInput, profile.primary?.firstName);
+  setInputValueIfEmpty(primaryLastNameInput, profile.primary?.lastName);
+
+  if (plusOneSections.length > 0) {
+    plusOneSections.forEach(section => {
+      section.hidden = !hasPlusOne;
+      if (!hasPlusOne) {
+        setGuestSectionState(section, false);
+      }
+    });
   }
 
   if (hasPlusOne) {
@@ -239,12 +373,25 @@ function updateGuestUi(profile) {
       plusOneDietaryInput.placeholder = DIETARY_PLACEHOLDER;
     }
 
+    setInputValueIfEmpty(plusOneFirstNameInput, profile.plusOne?.firstName);
+    setInputValueIfEmpty(plusOneLastNameInput, profile.plusOne?.lastName);
+
     if (rsvpForm) {
       const plusOneRadios = rsvpForm.querySelectorAll('[name="plusone-attendance"]');
       plusOneRadios.forEach(input => {
         input.disabled = false;
         input.required = true;
       });
+    }
+
+    if (plusOneFirstNameInput) {
+      plusOneFirstNameInput.disabled = false;
+      plusOneFirstNameInput.required = true;
+    }
+
+    if (plusOneLastNameInput) {
+      plusOneLastNameInput.disabled = false;
+      plusOneLastNameInput.required = true;
     }
   } else {
     if (rsvpForm) {
@@ -259,13 +406,21 @@ function updateGuestUi(profile) {
     if (plusOneDietaryInput) {
       plusOneDietaryInput.value = '';
     }
+
+    if (plusOneFirstNameInput) {
+      plusOneFirstNameInput.value = '';
+      plusOneFirstNameInput.disabled = true;
+      plusOneFirstNameInput.required = false;
+    }
+
+    if (plusOneLastNameInput) {
+      plusOneLastNameInput.value = '';
+      plusOneLastNameInput.disabled = true;
+      plusOneLastNameInput.required = false;
+    }
   }
 
   const emailValue = profile.email || '';
-
-  if (rsvpEmailDisplay) {
-    rsvpEmailDisplay.textContent = emailValue || 'Not provided yet';
-  }
 
   if (rsvpEmailField) {
     rsvpEmailField.value = emailValue;
@@ -281,8 +436,124 @@ function setGuestProfile(profile) {
   updateGuestUi(profile);
 }
 
+function isPlusOneActive(profile) {
+  if (profile?.plusOne && profile.plusOne.name) {
+    return true;
+  }
+  return Array.from(plusOneSections).some(section => !section.hidden);
+}
+
+function resolveInviteToken() {
+  const params = new URLSearchParams(window.location.search);
+  const tokenFromUrl = params.get('i');
+  const storedToken = localStorage.getItem(INVITE_TOKEN_STORAGE_KEY);
+  const activeToken = tokenFromUrl || storedToken || '';
+
+  if (tokenFromUrl) {
+    localStorage.setItem(INVITE_TOKEN_STORAGE_KEY, tokenFromUrl);
+  }
+
+  inviteToken = activeToken;
+
+  if (inviteTokenField) {
+    inviteTokenField.value = inviteToken;
+  }
+}
+
+function setAttendanceValue(name, attendance) {
+  if (!rsvpForm) return;
+  const normalized = attendance?.toString().toLowerCase();
+  const value = normalized === 'yes' ? 'Yes' : normalized === 'no' ? 'No' : '';
+  if (!value) return;
+  const input = rsvpForm.querySelector(`input[name="${name}"][value="${value}"]`);
+  if (input) {
+    input.checked = true;
+  }
+}
+
+function populateRsvpFromGuests(guestRows, email) {
+  if (!guestRows || guestRows.length === 0) return;
+
+  const primary = guestRows.find(row => row.role === 'primary') || guestRows[0];
+  const plusOne = guestRows.find(row => row.role === 'plusone') || null;
+
+  invitationGroupId = primary?.invitation_group_id || invitationGroupId;
+
+  setInputValue(primaryFirstNameInput, primary?.first_name);
+  setInputValue(primaryLastNameInput, primary?.last_name);
+  setAttendanceValue('primary-attendance', primary?.attendance);
+  if (primaryDietaryInput) {
+    primaryDietaryInput.value = primary?.dietary ?? '';
+  }
+
+  if (rsvpEmailField) {
+    rsvpEmailField.value = email || primary?.email || '';
+  }
+
+  setInputValue(document.getElementById('address-line-1'), primary?.address_line_1);
+  setInputValue(document.getElementById('address-line-2'), primary?.address_line_2);
+  setInputValue(document.getElementById('address-city'), primary?.city);
+  setInputValue(document.getElementById('address-postcode'), primary?.postcode);
+  setInputValue(document.getElementById('address-country'), primary?.country);
+
+  if (plusOne) {
+    setInputValue(plusOneFirstNameInput, plusOne.first_name);
+    setInputValue(plusOneLastNameInput, plusOne.last_name);
+    setAttendanceValue('plusone-attendance', plusOne.attendance);
+    if (plusOneDietaryInput) {
+      plusOneDietaryInput.value = plusOne.dietary ?? '';
+    }
+  }
+
+  setGuestProfile({
+    email: email || primary?.email || '',
+    primary: {
+      name: formatGuestName(primary?.first_name, primary?.last_name, 'Guest 1'),
+      firstName: primary?.first_name || '',
+      lastName: primary?.last_name || '',
+    },
+    plusOne: plusOne
+      ? {
+          name: formatGuestName(plusOne?.first_name, plusOne?.last_name, 'Guest 2'),
+          firstName: plusOne?.first_name || '',
+          lastName: plusOne?.last_name || '',
+        }
+      : null,
+  });
+
+  inviteDetails =
+    inviteDetails ||
+    (invitationGroupId
+      ? {
+          id: invitationGroupId,
+          invite_type: plusOne ? 'plusone' : 'single',
+          primary_email: email || primary?.email || '',
+          primary_first_name: primary?.first_name || '',
+          primary_last_name: primary?.last_name || '',
+        }
+      : null);
+}
+
+async function loadGuestRowsByEmail(email) {
+  if (!supabaseClient || !email) return [];
+  const { data, error } = await supabaseClient
+    .from('guests')
+    .select(
+      'invitation_group_id, role, first_name, last_name, email, attendance, dietary, address_line_1, address_line_2, city, postcode, country'
+    )
+    .eq('email', email);
+
+  if (error) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = 'We could not load your saved RSVP yet. Please try again soon.';
+    }
+    return [];
+  }
+
+  return data || [];
+}
+
 function unlockSite() {
-  passwordInput?.removeAttribute('aria-invalid');
   emailInput?.removeAttribute('aria-invalid');
   if (!passwordScreen) return;
   passwordScreen.classList.add('hidden');
@@ -297,16 +568,34 @@ function lockSite() {
   passwordScreen.classList.remove('hidden');
 }
 
-function handlePasswordSubmit(event) {
+function setAuthEmail(email) {
+  authenticatedEmail = email;
+  if (email) {
+    localStorage.setItem(EMAIL_STORAGE_KEY, email);
+  }
+  if (inviteDetails) {
+    const updatedInvite = {
+      ...inviteDetails,
+      primary_email: email || inviteDetails.primary_email,
+    };
+    applyInviteDetailsToProfile(updatedInvite, email);
+  } else {
+    setGuestProfile(createGuestProfile(email));
+  }
+}
+
+async function handleMagicLinkSubmit(event) {
   event.preventDefault();
-  if (!emailInput || !passwordInput) return;
+  if (!emailInput) return;
+  if (!supabaseClient) {
+    passwordError.textContent = 'Email login is unavailable right now. Please try again later.';
+    return;
+  }
 
   passwordError.textContent = '';
   emailInput.removeAttribute('aria-invalid');
-  passwordInput.removeAttribute('aria-invalid');
 
   const emailValue = emailInput.value.trim();
-  const entered = passwordInput.value.trim().toUpperCase();
 
   if (!emailValue || !emailValue.includes('@')) {
     passwordError.textContent = 'Please enter a valid email address to continue.';
@@ -315,43 +604,99 @@ function handlePasswordSubmit(event) {
     return;
   }
 
-  if (entered !== ACCESS_CODE) {
-    passwordError.textContent = 'That code is not quite right.';
-    passwordInput.setAttribute('aria-invalid', 'true');
-    passwordInput.focus();
+  passwordError.textContent = 'Sending your magic link...';
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: emailValue,
+    options: {
+      emailRedirectTo: `${window.location.origin}${window.location.pathname}`,
+    },
+  });
+
+  if (error) {
+    passwordError.textContent =
+      error.message || 'We could not send that link. Please try again in a moment.';
     return;
   }
 
-  localStorage.setItem(STORAGE_KEY, 'true');
-  localStorage.setItem(EMAIL_STORAGE_KEY, emailValue);
-  passwordError.textContent = '';
-  setGuestProfile(createGuestProfile(emailValue));
-  unlockSite();
+  passwordError.textContent = 'Check your inbox for your magic link.';
 }
-
-passwordInput?.addEventListener('input', () => {
-  passwordInput.removeAttribute('aria-invalid');
-  passwordError.textContent = '';
-});
 
 emailInput?.addEventListener('input', () => {
   emailInput.removeAttribute('aria-invalid');
   passwordError.textContent = '';
 });
 
-const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
-setGuestProfile(createGuestProfile(storedEmail));
+async function initAuth() {
+  resolveInviteToken();
+  const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
 
-if (localStorage.getItem(STORAGE_KEY) === 'true') {
-  unlockSite();
-} else {
   if (emailInput && storedEmail) {
     emailInput.value = storedEmail;
   }
-  lockSite();
+
+  if (!supabaseClient) {
+    applyInviteDetailsToProfile(null, storedEmail);
+    lockSite();
+    return;
+  }
+
+  if (inviteToken) {
+    const invite = await fetchInviteDetails(inviteToken);
+    if (invite) {
+      applyInviteDetailsToProfile(invite, storedEmail);
+    } else {
+      applyInviteDetailsToProfile(null, storedEmail);
+      if (passwordError) {
+        passwordError.textContent =
+          'This invite link looks invalid or has expired. Please contact us for a fresh link.';
+      }
+    }
+  } else {
+    applyInviteDetailsToProfile(null, storedEmail);
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+
+  if (code) {
+    const { error } = await supabaseClient.auth.exchangeCodeForSession(code);
+    if (!error) {
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    } else if (passwordError) {
+      passwordError.textContent =
+        'We could not verify that login link. Please request a new magic link.';
+    }
+  }
+
+  const { data } = await supabaseClient.auth.getSession();
+  if (data?.session?.user?.email) {
+    setAuthEmail(data.session.user.email);
+    const guestRows = await loadGuestRowsByEmail(data.session.user.email);
+    populateRsvpFromGuests(guestRows, data.session.user.email);
+    unlockSite();
+  } else {
+    applyInviteDetailsToProfile(inviteDetails, storedEmail);
+    lockSite();
+  }
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    const email = session?.user?.email || '';
+    if (email) {
+      setAuthEmail(email);
+      loadGuestRowsByEmail(email).then(guestRows => {
+        populateRsvpFromGuests(guestRows, email);
+      });
+      unlockSite();
+      return;
+    }
+    setAuthEmail('');
+    lockSite();
+  });
 }
 
-passwordForm?.addEventListener('submit', handlePasswordSubmit);
+initAuth();
+
+passwordForm?.addEventListener('submit', handleMagicLinkSubmit);
 
 function setupGuideCarousel() {
   const carousel = document.querySelector('[data-guide-carousel]');
@@ -781,10 +1126,8 @@ function openModal() {
     updateGuestUi(guestProfile);
   }
 
+  showStep(1);
   resetGuestSectionStateForModal();
-
-  const initialFocusControl = rsvpForm?.querySelector('[data-initial-focus]');
-  setTimeout(() => initialFocusControl?.focus(), 50);
 }
 
 function closeModal() {
@@ -810,31 +1153,94 @@ document.addEventListener('keydown', event => {
   }
 });
 
-function validateForm(formData, profile) {
+function validateStep(step, formData, profile) {
   const errors = [];
   if (!profile) {
-    errors.push('Please unlock the site with your email before responding.');
+    errors.push('Please sign in with your email before responding.');
     return errors;
   }
 
-  const primaryName = profile.primary?.name || 'Joe Bloggs';
-  const plusOneName = profile.plusOne?.name || 'Jill Bloggs';
-  const hasPlusOne = Boolean(profile.plusOne && profile.plusOne.name);
+  const primaryName = profile.primary?.name || 'Guest 1';
+  const plusOneName = profile.plusOne?.name || 'Guest 2';
+  const hasPlusOne = isPlusOneActive(profile);
 
-  if (!formData.get('guest-email')) {
-    errors.push('We could not detect your email. Please reload the page and try again.');
+  if (step === 1) {
+    if (!formData.get('primary-first-name') || !formData.get('primary-last-name')) {
+      errors.push(`Please enter ${primaryName}'s first name and surname.`);
+    }
+
+    if (!formData.get('primary-attendance')) {
+      errors.push(`Please let us know if ${primaryName} can make it.`);
+    }
+
+    if (hasPlusOne) {
+      if (!formData.get('plusone-first-name') || !formData.get('plusone-last-name')) {
+        errors.push(`Please enter ${plusOneName}'s first name and surname.`);
+      }
+
+      if (!formData.get('plusone-attendance')) {
+        errors.push(`Please let us know if ${plusOneName} can make it.`);
+      }
+    }
   }
 
-  if (!formData.get('primary-attendance')) {
-    errors.push(`Please let us know if ${primaryName} can make it.`);
-  }
+  if (step === 2) {
+    const emailValue = formData.get('guest-email')?.toString().trim() || '';
+    if (!emailValue || !emailValue.includes('@')) {
+      errors.push('Please enter a valid email address so we can keep in touch.');
+    }
 
-  if (hasPlusOne && !formData.get('plusone-attendance')) {
-    errors.push(`Please let us know if ${plusOneName} can make it.`);
+    if (!formData.get('address-line-1')) {
+      errors.push('Please enter the primary guest address line 1.');
+    }
+
+    if (!formData.get('address-city')) {
+      errors.push('Please enter the primary guest city.');
+    }
+
+    if (!formData.get('address-postcode')) {
+      errors.push('Please enter the primary guest postcode.');
+    }
   }
 
   return errors;
 }
+
+function validateForm(formData, profile) {
+  const stepOneErrors = validateStep(1, formData, profile);
+  const stepTwoErrors = validateStep(2, formData, profile);
+  return [...stepOneErrors, ...stepTwoErrors];
+}
+
+function normalizeAttendance(value) {
+  const trimmed = value?.toString().trim().toLowerCase();
+  if (trimmed === 'yes' || trimmed === 'y') return 'yes';
+  if (trimmed === 'no' || trimmed === 'n') return 'no';
+  return '';
+}
+
+stepNextButton?.addEventListener('click', () => {
+  if (!rsvpForm) return;
+  const formData = new FormData(rsvpForm);
+  const errors = validateStep(1, formData, guestProfile);
+  if (errors.length > 0) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = errors.join(' ');
+    }
+    return;
+  }
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+  showStep(2);
+});
+
+stepPrevButton?.addEventListener('click', () => {
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+  showStep(1);
+});
 
 async function submitRsvp(event) {
   event.preventDefault();
@@ -855,42 +1261,109 @@ async function submitRsvp(event) {
     return;
   }
 
-  const payload = {
-    email: (formData.get('guest-email') || profile.email || '').trim(),
-    guests: [
-      {
-        name: profile.primary?.name || 'Joe Bloggs',
-        attendance: formData.get('primary-attendance'),
-        dietary: formData.get('primary-dietary')?.trim() ?? '',
-      },
-    ],
-    submittedAt: new Date().toISOString(),
-  };
+  if (!supabaseClient) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = 'We could not connect to the RSVP service. Please try again later.';
+    }
+    return;
+  }
 
-  if (profile.plusOne && profile.plusOne.name) {
-    payload.guests.push({
-      name: profile.plusOne.name,
-      attendance: formData.get('plusone-attendance'),
+  const token = (formData.get('invite-token') || inviteToken || '').trim();
+  if (token && (!inviteDetails || inviteDetails.token !== token)) {
+    await fetchInviteDetails(token);
+  }
+
+  if (!inviteDetails && !invitationGroupId) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent =
+        inviteLookupFailed
+          ? 'This invite link looks invalid or expired. Please contact us for a fresh link.'
+          : 'We could not detect your invite details. Please use your invite link or contact us for help.';
+    }
+    return;
+  }
+
+  const email = (formData.get('guest-email') || profile.email || authenticatedEmail || '').trim();
+  if (authenticatedEmail && email && authenticatedEmail !== email) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent =
+        'Please use the same email you signed in with so we can keep your RSVP linked correctly.';
+    }
+    return;
+  }
+  const now = new Date().toISOString();
+  const inviteType = inviteDetails?.invite_type || (isPlusOneActive(profile) ? 'plusone' : 'single');
+  const includesPlusOne = inviteType === 'plusone';
+  const primaryAttendance = normalizeAttendance(formData.get('primary-attendance'));
+  const plusOneAttendance = normalizeAttendance(formData.get('plusone-attendance'));
+  const groupId = inviteDetails?.id || invitationGroupId;
+
+  const guestRows = [
+    {
+      invitation_group_id: groupId,
+      role: 'primary',
+      first_name: formData.get('primary-first-name')?.trim() ?? '',
+      last_name: formData.get('primary-last-name')?.trim() ?? '',
+      email,
+      attendance: primaryAttendance,
+      dietary: formData.get('primary-dietary')?.trim() ?? '',
+      address_line_1: formData.get('address-line-1')?.trim() ?? '',
+      address_line_2: formData.get('address-line-2')?.trim() ?? '',
+      city: formData.get('address-city')?.trim() ?? '',
+      postcode: formData.get('address-postcode')?.trim() ?? '',
+      country: formData.get('address-country')?.trim() ?? '',
+      updated_at: now,
+    },
+  ];
+
+  if (includesPlusOne) {
+    guestRows.push({
+      invitation_group_id: groupId,
+      role: 'plusone',
+      first_name: formData.get('plusone-first-name')?.trim() ?? '',
+      last_name: formData.get('plusone-last-name')?.trim() ?? '',
+      email,
+      attendance: plusOneAttendance,
       dietary: formData.get('plusone-dietary')?.trim() ?? '',
+      address_line_1: null,
+      address_line_2: null,
+      city: null,
+      postcode: null,
+      country: null,
+      updated_at: now,
     });
   }
 
   try {
-    const response = await fetch(RSVP_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    const { error } = await supabaseClient
+      .from('guests')
+      .upsert(guestRows, { onConflict: 'invitation_group_id,role' });
 
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
+    if (error) {
+      throw error;
+    }
+
+    if (inviteDetails?.id) {
+      const { error: inviteError } = await supabaseClient
+        .from('invites')
+        .update({
+          redeemed_at: now,
+          primary_email: inviteDetails.primary_email || email,
+        })
+        .eq('id', inviteDetails.id);
+
+      if (inviteError) {
+        throw inviteError;
+      }
     }
 
     rsvpForm.reset();
     updateGuestUi(profile);
-    rsvpForm.innerHTML = '<p class="thank-you">Thank you for letting us know. We will be in touch soon.</p>';
+    const thankYouMessage =
+      primaryAttendance === 'yes'
+        ? "Thank you for your RSVP — we can't wait to celebrate with you!"
+        : "Thank you for letting us know. We're sure we'll see you soon.";
+    rsvpForm.innerHTML = `<p class="thank-you">${thankYouMessage}</p>`;
   } catch (error) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent =
