@@ -148,6 +148,7 @@ let inviteDetails = null;
 let authenticatedEmail = '';
 let currentStep = 1;
 let invitationGroupId = '';
+let inviteLookupFailed = false;
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -227,12 +228,14 @@ async function fetchInviteDetails(token) {
     .eq('token', token)
     .maybeSingle();
 
-  if (error) {
+  if (error || !data) {
     inviteDetails = null;
+    inviteLookupFailed = true;
     return null;
   }
 
   inviteDetails = data;
+  inviteLookupFailed = false;
   return data;
 }
 
@@ -541,6 +544,9 @@ async function loadGuestRowsByEmail(email) {
     .eq('email', email);
 
   if (error) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = 'We could not load your saved RSVP yet. Please try again soon.';
+    }
     return [];
   }
 
@@ -607,7 +613,8 @@ async function handleMagicLinkSubmit(event) {
   });
 
   if (error) {
-    passwordError.textContent = 'We could not send that link. Please try again in a moment.';
+    passwordError.textContent =
+      error.message || 'We could not send that link. Please try again in a moment.';
     return;
   }
 
@@ -639,6 +646,10 @@ async function initAuth() {
       applyInviteDetailsToProfile(invite, storedEmail);
     } else {
       applyInviteDetailsToProfile(null, storedEmail);
+      if (passwordError) {
+        passwordError.textContent =
+          'This invite link looks invalid or has expired. Please contact us for a fresh link.';
+      }
     }
   } else {
     applyInviteDetailsToProfile(null, storedEmail);
@@ -651,6 +662,9 @@ async function initAuth() {
     const { error } = await supabaseClient.auth.exchangeCodeForSession(code);
     if (!error) {
       window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    } else if (passwordError) {
+      passwordError.textContent =
+        'We could not verify that login link. Please request a new magic link.';
     }
   }
 
@@ -1262,7 +1276,9 @@ async function submitRsvp(event) {
   if (!inviteDetails && !invitationGroupId) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent =
-        'We could not detect your invite details. Please use your invite link or contact us for help.';
+        inviteLookupFailed
+          ? 'This invite link looks invalid or expired. Please contact us for a fresh link.'
+          : 'We could not detect your invite details. Please use your invite link or contact us for help.';
     }
     return;
   }
