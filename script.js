@@ -147,6 +147,7 @@ let inviteToken = null;
 let inviteDetails = null;
 let authenticatedEmail = '';
 let currentStep = 1;
+let invitationGroupId = '';
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -178,6 +179,11 @@ function setInputValueIfEmpty(input, value) {
   }
 }
 
+function setInputValue(input, value) {
+  if (!input) return;
+  input.value = value ?? '';
+}
+
 function applyInviteDetailsToProfile(invite, emailFallback) {
   if (!invite) {
     setGuestProfile(createGuestProfile(emailFallback));
@@ -191,6 +197,7 @@ function applyInviteDetailsToProfile(invite, emailFallback) {
   const hasPlusOne = invite.invite_type === 'plusone';
 
   inviteDetails = invite;
+  invitationGroupId = invite.id || invitationGroupId;
   setGuestProfile({
     email: invite.primary_email || emailFallback,
     primary: {
@@ -450,6 +457,96 @@ function resolveInviteToken() {
   }
 }
 
+function setAttendanceValue(name, attendance) {
+  if (!rsvpForm) return;
+  const normalized = attendance?.toString().toLowerCase();
+  const value = normalized === 'yes' ? 'Yes' : normalized === 'no' ? 'No' : '';
+  if (!value) return;
+  const input = rsvpForm.querySelector(`input[name="${name}"][value="${value}"]`);
+  if (input) {
+    input.checked = true;
+  }
+}
+
+function populateRsvpFromGuests(guestRows, email) {
+  if (!guestRows || guestRows.length === 0) return;
+
+  const primary = guestRows.find(row => row.role === 'primary') || guestRows[0];
+  const plusOne = guestRows.find(row => row.role === 'plusone') || null;
+
+  invitationGroupId = primary?.invitation_group_id || invitationGroupId;
+
+  setInputValue(primaryFirstNameInput, primary?.first_name);
+  setInputValue(primaryLastNameInput, primary?.last_name);
+  setAttendanceValue('primary-attendance', primary?.attendance);
+  if (primaryDietaryInput) {
+    primaryDietaryInput.value = primary?.dietary ?? '';
+  }
+
+  if (rsvpEmailField) {
+    rsvpEmailField.value = email || primary?.email || '';
+  }
+
+  setInputValue(document.getElementById('address-line-1'), primary?.address_line_1);
+  setInputValue(document.getElementById('address-line-2'), primary?.address_line_2);
+  setInputValue(document.getElementById('address-city'), primary?.city);
+  setInputValue(document.getElementById('address-postcode'), primary?.postcode);
+  setInputValue(document.getElementById('address-country'), primary?.country);
+
+  if (plusOne) {
+    setInputValue(plusOneFirstNameInput, plusOne.first_name);
+    setInputValue(plusOneLastNameInput, plusOne.last_name);
+    setAttendanceValue('plusone-attendance', plusOne.attendance);
+    if (plusOneDietaryInput) {
+      plusOneDietaryInput.value = plusOne.dietary ?? '';
+    }
+  }
+
+  setGuestProfile({
+    email: email || primary?.email || '',
+    primary: {
+      name: formatGuestName(primary?.first_name, primary?.last_name, 'Guest 1'),
+      firstName: primary?.first_name || '',
+      lastName: primary?.last_name || '',
+    },
+    plusOne: plusOne
+      ? {
+          name: formatGuestName(plusOne?.first_name, plusOne?.last_name, 'Guest 2'),
+          firstName: plusOne?.first_name || '',
+          lastName: plusOne?.last_name || '',
+        }
+      : null,
+  });
+
+  inviteDetails =
+    inviteDetails ||
+    (invitationGroupId
+      ? {
+          id: invitationGroupId,
+          invite_type: plusOne ? 'plusone' : 'single',
+          primary_email: email || primary?.email || '',
+          primary_first_name: primary?.first_name || '',
+          primary_last_name: primary?.last_name || '',
+        }
+      : null);
+}
+
+async function loadGuestRowsByEmail(email) {
+  if (!supabaseClient || !email) return [];
+  const { data, error } = await supabaseClient
+    .from('guests')
+    .select(
+      'invitation_group_id, role, first_name, last_name, email, attendance, dietary, address_line_1, address_line_2, city, postcode, country'
+    )
+    .eq('email', email);
+
+  if (error) {
+    return [];
+  }
+
+  return data || [];
+}
+
 function unlockSite() {
   emailInput?.removeAttribute('aria-invalid');
   if (!passwordScreen) return;
@@ -560,6 +657,8 @@ async function initAuth() {
   const { data } = await supabaseClient.auth.getSession();
   if (data?.session?.user?.email) {
     setAuthEmail(data.session.user.email);
+    const guestRows = await loadGuestRowsByEmail(data.session.user.email);
+    populateRsvpFromGuests(guestRows, data.session.user.email);
     unlockSite();
   } else {
     applyInviteDetailsToProfile(inviteDetails, storedEmail);
@@ -570,6 +669,9 @@ async function initAuth() {
     const email = session?.user?.email || '';
     if (email) {
       setAuthEmail(email);
+      loadGuestRowsByEmail(email).then(guestRows => {
+        populateRsvpFromGuests(guestRows, email);
+      });
       unlockSite();
       return;
     }
@@ -1153,34 +1255,29 @@ async function submitRsvp(event) {
   }
 
   const token = (formData.get('invite-token') || inviteToken || '').trim();
-  if (!token) {
-    if (rsvpFeedback) {
-      rsvpFeedback.textContent = 'We could not detect your invite link. Please check the link and try again.';
-    }
-    return;
-  }
-
-  if (!inviteDetails || inviteDetails.token !== token) {
+  if (token && (!inviteDetails || inviteDetails.token !== token)) {
     await fetchInviteDetails(token);
   }
 
-  if (!inviteDetails) {
+  if (!inviteDetails && !invitationGroupId) {
     if (rsvpFeedback) {
-      rsvpFeedback.textContent = 'We could not find your invite details. Please contact us for help.';
+      rsvpFeedback.textContent =
+        'We could not detect your invite details. Please use your invite link or contact us for help.';
     }
     return;
   }
 
   const email = (formData.get('guest-email') || profile.email || authenticatedEmail || '').trim();
   const now = new Date().toISOString();
-  const inviteType = inviteDetails.invite_type;
+  const inviteType = inviteDetails?.invite_type || (isPlusOneActive(profile) ? 'plusone' : 'single');
   const includesPlusOne = inviteType === 'plusone';
   const primaryAttendance = normalizeAttendance(formData.get('primary-attendance'));
   const plusOneAttendance = normalizeAttendance(formData.get('plusone-attendance'));
+  const groupId = inviteDetails?.id || invitationGroupId;
 
   const guestRows = [
     {
-      invitation_group_id: inviteDetails.id,
+      invitation_group_id: groupId,
       role: 'primary',
       first_name: formData.get('primary-first-name')?.trim() ?? '',
       last_name: formData.get('primary-last-name')?.trim() ?? '',
@@ -1198,7 +1295,7 @@ async function submitRsvp(event) {
 
   if (includesPlusOne) {
     guestRows.push({
-      invitation_group_id: inviteDetails.id,
+      invitation_group_id: groupId,
       role: 'plusone',
       first_name: formData.get('plusone-first-name')?.trim() ?? '',
       last_name: formData.get('plusone-last-name')?.trim() ?? '',
@@ -1223,13 +1320,18 @@ async function submitRsvp(event) {
       throw error;
     }
 
-    const { error: inviteError } = await supabaseClient
-      .from('invites')
-      .update({ redeemed_at: now })
-      .eq('id', inviteDetails.id);
+    if (inviteDetails?.id) {
+      const { error: inviteError } = await supabaseClient
+        .from('invites')
+        .update({
+          redeemed_at: now,
+          primary_email: inviteDetails.primary_email || email,
+        })
+        .eq('id', inviteDetails.id);
 
-    if (inviteError) {
-      throw inviteError;
+      if (inviteError) {
+        throw inviteError;
+      }
     }
 
     rsvpForm.reset();
