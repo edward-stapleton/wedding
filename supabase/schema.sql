@@ -44,6 +44,11 @@ create unique index if not exists guests_group_role_unique on public.guests (inv
 alter table public.invites enable row level security;
 alter table public.guests enable row level security;
 
+create policy invites_read_token
+  on public.invites
+  for select
+  using (true);
+
 create policy guests_read_own
   on public.guests
   for select
