@@ -17,7 +17,7 @@
     <div id="password-screen" class="overlay">
       <form id="password-form" class="password-form" autocomplete="off">
         <h1 class="wedding-title">Edward &amp; Laura</h1>
-        <p class="password-intro">Please enter your email address and the access password to continue.</p>
+        <p class="password-intro">Enter your email address to receive a secure magic link.</p>
         <label for="guest-email" class="visually-hidden">Email address</label>
         <input
           id="guest-email"
@@ -29,18 +29,7 @@
           required
           class="form-control"
         />
-        <label for="access-code" class="visually-hidden">Access password</label>
-        <input
-          id="access-code"
-          name="access-code"
-          type="password"
-          inputmode="text"
-          aria-label="Access password"
-          placeholder="Password"
-          required
-          class="form-control"
-        />
-        <button type="submit">Enter</button>
+        <button type="submit">Send magic link</button>
         <p id="password-error" role="alert" aria-live="polite"></p>
       </form>
     </div>
@@ -814,6 +803,7 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="script.js" defer></script>
   </body>
 </html>
