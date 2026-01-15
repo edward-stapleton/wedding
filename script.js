@@ -114,6 +114,8 @@ const primaryLegend = document.querySelector('[data-attendance-legend="primary"]
 const plusOneLegend = document.querySelector('[data-attendance-legend="plusOne"]');
 const primaryDietaryLabel = document.querySelector('[data-dietary-label="primary"]');
 const plusOneDietaryLabel = document.querySelector('[data-dietary-label="plusOne"]');
+const primaryFirstNameInput = document.getElementById('primary-first-name');
+const primaryLastNameInput = document.getElementById('primary-last-name');
 const primaryDietaryInput = document.getElementById('primary-dietary');
 const plusOneDietaryInput = document.getElementById('plusone-dietary');
 const plusOneFirstNameInput = document.getElementById('plusone-first-name');
@@ -142,6 +144,7 @@ let routeBoundsCache = null;
 let initialCameraCache = null;
 let guestProfile = null;
 let inviteToken = null;
+let inviteDetails = null;
 let authenticatedEmail = '';
 let currentStep = 1;
 
@@ -154,9 +157,76 @@ const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergie
 function createGuestProfile(email) {
   return {
     email,
-    primary: { name: 'Guest 1' },
-    plusOne: { name: 'Guest 2' },
+    primary: { name: 'Guest 1', firstName: '', lastName: '' },
+    plusOne: { name: 'Guest 2', firstName: '', lastName: '' },
   };
+}
+
+function formatGuestName(firstName, lastName, fallback) {
+  const trimmedFirst = firstName?.trim() || '';
+  const trimmedLast = lastName?.trim() || '';
+  if (trimmedFirst || trimmedLast) {
+    return `${trimmedFirst} ${trimmedLast}`.trim();
+  }
+  return fallback;
+}
+
+function setInputValueIfEmpty(input, value) {
+  if (!input) return;
+  if (!input.value && value) {
+    input.value = value;
+  }
+}
+
+function applyInviteDetailsToProfile(invite, emailFallback) {
+  if (!invite) {
+    setGuestProfile(createGuestProfile(emailFallback));
+    inviteDetails = null;
+    return;
+  }
+
+  const primaryFirst = invite.primary_first_name || '';
+  const primaryLast = invite.primary_last_name || '';
+  const primaryName = formatGuestName(primaryFirst, primaryLast, 'Guest 1');
+  const hasPlusOne = invite.invite_type === 'plusone';
+
+  inviteDetails = invite;
+  setGuestProfile({
+    email: invite.primary_email || emailFallback,
+    primary: {
+      name: primaryName,
+      firstName: primaryFirst,
+      lastName: primaryLast,
+    },
+    plusOne: hasPlusOne
+      ? {
+          name: 'Guest 2',
+          firstName: '',
+          lastName: '',
+        }
+      : null,
+  });
+}
+
+async function fetchInviteDetails(token) {
+  if (!supabaseClient || !token) {
+    inviteDetails = null;
+    return null;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('invites')
+    .select('id, token, invite_type, primary_email, primary_first_name, primary_last_name')
+    .eq('token', token)
+    .maybeSingle();
+
+  if (error) {
+    inviteDetails = null;
+    return null;
+  }
+
+  inviteDetails = data;
+  return data;
 }
 
 function setGuestSectionState(section, expanded) {
@@ -264,6 +334,9 @@ function updateGuestUi(profile) {
     primaryDietaryInput.placeholder = DIETARY_PLACEHOLDER;
   }
 
+  setInputValueIfEmpty(primaryFirstNameInput, profile.primary?.firstName);
+  setInputValueIfEmpty(primaryLastNameInput, profile.primary?.lastName);
+
   if (plusOneSections.length > 0) {
     plusOneSections.forEach(section => {
       section.hidden = !hasPlusOne;
@@ -289,6 +362,9 @@ function updateGuestUi(profile) {
     if (plusOneDietaryInput) {
       plusOneDietaryInput.placeholder = DIETARY_PLACEHOLDER;
     }
+
+    setInputValueIfEmpty(plusOneFirstNameInput, profile.plusOne?.firstName);
+    setInputValueIfEmpty(plusOneLastNameInput, profile.plusOne?.lastName);
 
     if (rsvpForm) {
       const plusOneRadios = rsvpForm.querySelectorAll('[name="plusone-attendance"]');
@@ -394,7 +470,15 @@ function setAuthEmail(email) {
   if (email) {
     localStorage.setItem(EMAIL_STORAGE_KEY, email);
   }
-  setGuestProfile(createGuestProfile(email));
+  if (inviteDetails) {
+    const updatedInvite = {
+      ...inviteDetails,
+      primary_email: email || inviteDetails.primary_email,
+    };
+    applyInviteDetailsToProfile(updatedInvite, email);
+  } else {
+    setGuestProfile(createGuestProfile(email));
+  }
 }
 
 async function handleMagicLinkSubmit(event) {
@@ -447,9 +531,20 @@ async function initAuth() {
   }
 
   if (!supabaseClient) {
-    setGuestProfile(createGuestProfile(storedEmail));
+    applyInviteDetailsToProfile(null, storedEmail);
     lockSite();
     return;
+  }
+
+  if (inviteToken) {
+    const invite = await fetchInviteDetails(inviteToken);
+    if (invite) {
+      applyInviteDetailsToProfile(invite, storedEmail);
+    } else {
+      applyInviteDetailsToProfile(null, storedEmail);
+    }
+  } else {
+    applyInviteDetailsToProfile(null, storedEmail);
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -467,7 +562,7 @@ async function initAuth() {
     setAuthEmail(data.session.user.email);
     unlockSite();
   } else {
-    setGuestProfile(createGuestProfile(storedEmail));
+    applyInviteDetailsToProfile(inviteDetails, storedEmail);
     lockSite();
   }
 
@@ -1001,6 +1096,13 @@ function validateForm(formData, profile) {
   return [...stepOneErrors, ...stepTwoErrors];
 }
 
+function normalizeAttendance(value) {
+  const trimmed = value?.toString().trim().toLowerCase();
+  if (trimmed === 'yes' || trimmed === 'y') return 'yes';
+  if (trimmed === 'no' || trimmed === 'n') return 'no';
+  return '';
+}
+
 stepNextButton?.addEventListener('click', () => {
   if (!rsvpForm) return;
   const formData = new FormData(rsvpForm);
@@ -1043,44 +1145,82 @@ async function submitRsvp(event) {
     return;
   }
 
-  const payload = {
-    email: (formData.get('guest-email') || profile.email || '').trim(),
-    inviteToken: (formData.get('invite-token') || inviteToken || '').trim(),
-    primaryGuest: {
-      firstName: formData.get('primary-first-name')?.trim() ?? '',
-      lastName: formData.get('primary-last-name')?.trim() ?? '',
-      attendance: formData.get('primary-attendance'),
+  if (!supabaseClient) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = 'We could not connect to the RSVP service. Please try again later.';
+    }
+    return;
+  }
+
+  const token = (formData.get('invite-token') || inviteToken || '').trim();
+  if (!token) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = 'We could not detect your invite link. Please check the link and try again.';
+    }
+    return;
+  }
+
+  if (!inviteDetails || inviteDetails.token !== token) {
+    await fetchInviteDetails(token);
+  }
+
+  if (!inviteDetails) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = 'We could not find your invite details. Please contact us for help.';
+    }
+    return;
+  }
+
+  const email = (formData.get('guest-email') || profile.email || authenticatedEmail || '').trim();
+  const now = new Date().toISOString();
+  const inviteType = inviteDetails.invite_type;
+  const includesPlusOne = inviteType === 'plusone';
+  const primaryAttendance = normalizeAttendance(formData.get('primary-attendance'));
+  const plusOneAttendance = normalizeAttendance(formData.get('plusone-attendance'));
+
+  const guestRows = [
+    {
+      invitation_group_id: inviteDetails.id,
+      role: 'primary',
+      first_name: formData.get('primary-first-name')?.trim() ?? '',
+      last_name: formData.get('primary-last-name')?.trim() ?? '',
+      email,
+      attendance: primaryAttendance,
       dietary: formData.get('primary-dietary')?.trim() ?? '',
-    },
-    plusOneGuest: isPlusOneActive(profile)
-      ? {
-          firstName: formData.get('plusone-first-name')?.trim() ?? '',
-          lastName: formData.get('plusone-last-name')?.trim() ?? '',
-          attendance: formData.get('plusone-attendance'),
-          dietary: formData.get('plusone-dietary')?.trim() ?? '',
-        }
-      : null,
-    address: {
-      line1: formData.get('address-line-1')?.trim() ?? '',
-      line2: formData.get('address-line-2')?.trim() ?? '',
+      address_line_1: formData.get('address-line-1')?.trim() ?? '',
+      address_line_2: formData.get('address-line-2')?.trim() ?? '',
       city: formData.get('address-city')?.trim() ?? '',
       postcode: formData.get('address-postcode')?.trim() ?? '',
       country: formData.get('address-country')?.trim() ?? '',
+      updated_at: now,
     },
-    submittedAt: new Date().toISOString(),
-  };
+  ];
+
+  if (includesPlusOne) {
+    guestRows.push({
+      invitation_group_id: inviteDetails.id,
+      role: 'plusone',
+      first_name: formData.get('plusone-first-name')?.trim() ?? '',
+      last_name: formData.get('plusone-last-name')?.trim() ?? '',
+      email,
+      attendance: plusOneAttendance,
+      dietary: formData.get('plusone-dietary')?.trim() ?? '',
+      address_line_1: null,
+      address_line_2: null,
+      city: null,
+      postcode: null,
+      country: null,
+      updated_at: now,
+    });
+  }
 
   try {
-    const response = await fetch(RSVP_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    const { error } = await supabaseClient
+      .from('guests')
+      .upsert(guestRows, { onConflict: 'invitation_group_id,role' });
 
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
+    if (error) {
+      throw error;
     }
 
     rsvpForm.reset();
