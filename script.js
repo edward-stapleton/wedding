@@ -734,8 +734,9 @@ if (navToggle) {
 
 navLinks.forEach(link => {
   link.addEventListener('click', () => {
-    if (window.matchMedia('(min-width: 768px)').matches) return;
-    toggleNavigation(false);
+    if (siteNav?.classList.contains('open')) {
+      toggleNavigation(false);
+    }
   });
 });
 
