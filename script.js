@@ -1223,9 +1223,22 @@ async function submitRsvp(event) {
       throw error;
     }
 
+    const { error: inviteError } = await supabaseClient
+      .from('invites')
+      .update({ redeemed_at: now })
+      .eq('id', inviteDetails.id);
+
+    if (inviteError) {
+      throw inviteError;
+    }
+
     rsvpForm.reset();
     updateGuestUi(profile);
-    rsvpForm.innerHTML = '<p class="thank-you">Thank you for letting us know. We will be in touch soon.</p>';
+    const thankYouMessage =
+      primaryAttendance === 'yes'
+        ? "Thank you for your RSVP — we can't wait to celebrate with you!"
+        : "Thank you for letting us know. We're sure we'll see you soon.";
+    rsvpForm.innerHTML = `<p class="thank-you">${thankYouMessage}</p>`;
   } catch (error) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent =
