@@ -107,21 +107,27 @@ const passwordError = document.getElementById('password-error');
 const rsvpModal = document.getElementById('rsvp-modal');
 const rsvpForm = document.getElementById('rsvp-form');
 const rsvpFeedback = document.getElementById('rsvp-feedback');
-const rsvpEmailDisplay = document.querySelector('[data-guest-email]');
 const primaryNameEl = document.querySelector('[data-guest-name="primary"]');
 const plusOneNameEl = document.querySelector('[data-guest-name="plusOne"]');
-const plusOneSection = document.querySelector('[data-guest-section="plusOne"]');
+const plusOneSections = document.querySelectorAll('[data-guest-section="plusOne"]');
 const primaryLegend = document.querySelector('[data-attendance-legend="primary"]');
 const plusOneLegend = document.querySelector('[data-attendance-legend="plusOne"]');
 const primaryDietaryLabel = document.querySelector('[data-dietary-label="primary"]');
 const plusOneDietaryLabel = document.querySelector('[data-dietary-label="plusOne"]');
 const primaryDietaryInput = document.getElementById('primary-dietary');
 const plusOneDietaryInput = document.getElementById('plusone-dietary');
+const plusOneFirstNameInput = document.getElementById('plusone-first-name');
+const plusOneLastNameInput = document.getElementById('plusone-last-name');
 const rsvpEmailField = document.getElementById('rsvp-email');
 const inviteTokenField = document.getElementById('invite-token');
 const openRsvpButton = document.getElementById('open-rsvp');
 const closeModalEls = document.querySelectorAll('[data-close-modal]');
 const guestSections = document.querySelectorAll('.guest-response');
+const stepIndicators = document.querySelectorAll('[data-step-indicator]');
+const stepSections = document.querySelectorAll('[data-rsvp-step]');
+const stepPrevButton = document.querySelector('[data-step-prev]');
+const stepNextButton = document.querySelector('[data-step-next]');
+const stepSubmitButton = document.querySelector('[data-step-submit]');
 const mapContainer = document.querySelector('[data-map-container]');
 const siteNav = document.querySelector('.site-nav');
 const navToggle = document.querySelector('.nav-toggle');
@@ -137,6 +143,7 @@ let initialCameraCache = null;
 let guestProfile = null;
 let inviteToken = null;
 let authenticatedEmail = '';
+let currentStep = 1;
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -147,8 +154,8 @@ const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergie
 function createGuestProfile(email) {
   return {
     email,
-    primary: { name: 'Joe Bloggs' },
-    plusOne: { name: 'Jill Bloggs' },
+    primary: { name: 'Guest 1' },
+    plusOne: { name: 'Guest 2' },
   };
 }
 
@@ -197,11 +204,48 @@ function resetGuestSectionStateForModal() {
   applyGuestSectionResponsiveState(mobileModalMedia.matches);
 }
 
+function setStepIndicator(step) {
+  stepIndicators.forEach(indicator => {
+    const indicatorStep = Number(indicator.dataset.stepIndicator);
+    indicator.classList.toggle('is-active', indicatorStep === step);
+  });
+}
+
+function showStep(step) {
+  currentStep = step;
+  stepSections.forEach(section => {
+    const sectionStep = Number(section.dataset.rsvpStep);
+    section.hidden = sectionStep !== step;
+  });
+
+  setStepIndicator(step);
+
+  if (stepPrevButton) {
+    stepPrevButton.hidden = step === 1;
+  }
+
+  if (stepNextButton) {
+    stepNextButton.hidden = step !== 1;
+  }
+
+  if (stepSubmitButton) {
+    stepSubmitButton.hidden = step !== 2;
+  }
+
+  const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === step);
+  const focusTarget = activeSection?.querySelector(
+    'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled])'
+  );
+  if (focusTarget) {
+    setTimeout(() => focusTarget.focus(), 50);
+  }
+}
+
 function updateGuestUi(profile) {
   if (!profile) return;
 
-  const primaryName = profile.primary?.name || 'Joe Bloggs';
-  const plusOneName = profile.plusOne?.name || 'Jill Bloggs';
+  const primaryName = profile.primary?.name || 'Guest 1';
+  const plusOneName = profile.plusOne?.name || 'Guest 2';
   const hasPlusOne = Boolean(profile.plusOne && profile.plusOne.name);
 
   if (primaryNameEl) {
@@ -220,11 +264,13 @@ function updateGuestUi(profile) {
     primaryDietaryInput.placeholder = DIETARY_PLACEHOLDER;
   }
 
-  if (plusOneSection) {
-    plusOneSection.hidden = !hasPlusOne;
-    if (!hasPlusOne) {
-      setGuestSectionState(plusOneSection, false);
-    }
+  if (plusOneSections.length > 0) {
+    plusOneSections.forEach(section => {
+      section.hidden = !hasPlusOne;
+      if (!hasPlusOne) {
+        setGuestSectionState(section, false);
+      }
+    });
   }
 
   if (hasPlusOne) {
@@ -251,6 +297,16 @@ function updateGuestUi(profile) {
         input.required = true;
       });
     }
+
+    if (plusOneFirstNameInput) {
+      plusOneFirstNameInput.disabled = false;
+      plusOneFirstNameInput.required = true;
+    }
+
+    if (plusOneLastNameInput) {
+      plusOneLastNameInput.disabled = false;
+      plusOneLastNameInput.required = true;
+    }
   } else {
     if (rsvpForm) {
       const plusOneRadios = rsvpForm.querySelectorAll('[name="plusone-attendance"]');
@@ -264,13 +320,21 @@ function updateGuestUi(profile) {
     if (plusOneDietaryInput) {
       plusOneDietaryInput.value = '';
     }
+
+    if (plusOneFirstNameInput) {
+      plusOneFirstNameInput.value = '';
+      plusOneFirstNameInput.disabled = true;
+      plusOneFirstNameInput.required = false;
+    }
+
+    if (plusOneLastNameInput) {
+      plusOneLastNameInput.value = '';
+      plusOneLastNameInput.disabled = true;
+      plusOneLastNameInput.required = false;
+    }
   }
 
   const emailValue = profile.email || '';
-
-  if (rsvpEmailDisplay) {
-    rsvpEmailDisplay.textContent = emailValue || 'Not provided yet';
-  }
 
   if (rsvpEmailField) {
     rsvpEmailField.value = emailValue;
@@ -284,6 +348,13 @@ function updateGuestUi(profile) {
 function setGuestProfile(profile) {
   guestProfile = profile;
   updateGuestUi(profile);
+}
+
+function isPlusOneActive(profile) {
+  if (profile?.plusOne && profile.plusOne.name) {
+    return true;
+  }
+  return Array.from(plusOneSections).some(section => !section.hidden);
 }
 
 function resolveInviteToken() {
@@ -844,10 +915,8 @@ function openModal() {
     updateGuestUi(guestProfile);
   }
 
+  showStep(1);
   resetGuestSectionStateForModal();
-
-  const initialFocusControl = rsvpForm?.querySelector('[data-initial-focus]');
-  setTimeout(() => initialFocusControl?.focus(), 50);
 }
 
 function closeModal() {
@@ -873,31 +942,87 @@ document.addEventListener('keydown', event => {
   }
 });
 
-function validateForm(formData, profile) {
+function validateStep(step, formData, profile) {
   const errors = [];
   if (!profile) {
     errors.push('Please sign in with your email before responding.');
     return errors;
   }
 
-  const primaryName = profile.primary?.name || 'Joe Bloggs';
-  const plusOneName = profile.plusOne?.name || 'Jill Bloggs';
-  const hasPlusOne = Boolean(profile.plusOne && profile.plusOne.name);
+  const primaryName = profile.primary?.name || 'Guest 1';
+  const plusOneName = profile.plusOne?.name || 'Guest 2';
+  const hasPlusOne = isPlusOneActive(profile);
 
-  if (!formData.get('guest-email')) {
-    errors.push('We could not detect your email. Please reload the page and try again.');
+  if (step === 1) {
+    if (!formData.get('primary-first-name') || !formData.get('primary-last-name')) {
+      errors.push(`Please enter ${primaryName}'s first name and surname.`);
+    }
+
+    if (!formData.get('primary-attendance')) {
+      errors.push(`Please let us know if ${primaryName} can make it.`);
+    }
+
+    if (hasPlusOne) {
+      if (!formData.get('plusone-first-name') || !formData.get('plusone-last-name')) {
+        errors.push(`Please enter ${plusOneName}'s first name and surname.`);
+      }
+
+      if (!formData.get('plusone-attendance')) {
+        errors.push(`Please let us know if ${plusOneName} can make it.`);
+      }
+    }
   }
 
-  if (!formData.get('primary-attendance')) {
-    errors.push(`Please let us know if ${primaryName} can make it.`);
-  }
+  if (step === 2) {
+    const emailValue = formData.get('guest-email')?.toString().trim() || '';
+    if (!emailValue || !emailValue.includes('@')) {
+      errors.push('Please enter a valid email address so we can keep in touch.');
+    }
 
-  if (hasPlusOne && !formData.get('plusone-attendance')) {
-    errors.push(`Please let us know if ${plusOneName} can make it.`);
+    if (!formData.get('address-line-1')) {
+      errors.push('Please enter the primary guest address line 1.');
+    }
+
+    if (!formData.get('address-city')) {
+      errors.push('Please enter the primary guest city.');
+    }
+
+    if (!formData.get('address-postcode')) {
+      errors.push('Please enter the primary guest postcode.');
+    }
   }
 
   return errors;
 }
+
+function validateForm(formData, profile) {
+  const stepOneErrors = validateStep(1, formData, profile);
+  const stepTwoErrors = validateStep(2, formData, profile);
+  return [...stepOneErrors, ...stepTwoErrors];
+}
+
+stepNextButton?.addEventListener('click', () => {
+  if (!rsvpForm) return;
+  const formData = new FormData(rsvpForm);
+  const errors = validateStep(1, formData, guestProfile);
+  if (errors.length > 0) {
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = errors.join(' ');
+    }
+    return;
+  }
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+  showStep(2);
+});
+
+stepPrevButton?.addEventListener('click', () => {
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+  showStep(1);
+});
 
 async function submitRsvp(event) {
   event.preventDefault();
@@ -921,23 +1046,29 @@ async function submitRsvp(event) {
   const payload = {
     email: (formData.get('guest-email') || profile.email || '').trim(),
     inviteToken: (formData.get('invite-token') || inviteToken || '').trim(),
-    guests: [
-      {
-        name: profile.primary?.name || 'Joe Bloggs',
-        attendance: formData.get('primary-attendance'),
-        dietary: formData.get('primary-dietary')?.trim() ?? '',
-      },
-    ],
+    primaryGuest: {
+      firstName: formData.get('primary-first-name')?.trim() ?? '',
+      lastName: formData.get('primary-last-name')?.trim() ?? '',
+      attendance: formData.get('primary-attendance'),
+      dietary: formData.get('primary-dietary')?.trim() ?? '',
+    },
+    plusOneGuest: isPlusOneActive(profile)
+      ? {
+          firstName: formData.get('plusone-first-name')?.trim() ?? '',
+          lastName: formData.get('plusone-last-name')?.trim() ?? '',
+          attendance: formData.get('plusone-attendance'),
+          dietary: formData.get('plusone-dietary')?.trim() ?? '',
+        }
+      : null,
+    address: {
+      line1: formData.get('address-line-1')?.trim() ?? '',
+      line2: formData.get('address-line-2')?.trim() ?? '',
+      city: formData.get('address-city')?.trim() ?? '',
+      postcode: formData.get('address-postcode')?.trim() ?? '',
+      country: formData.get('address-country')?.trim() ?? '',
+    },
     submittedAt: new Date().toISOString(),
   };
-
-  if (profile.plusOne && profile.plusOne.name) {
-    payload.guests.push({
-      name: profile.plusOne.name,
-      attendance: formData.get('plusone-attendance'),
-      dietary: formData.get('plusone-dietary')?.trim() ?? '',
-    });
-  }
 
   try {
     const response = await fetch(RSVP_ENDPOINT, {

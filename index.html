@@ -711,34 +711,48 @@
         <div class="modal-body">
           <h2 id="rsvp-title">RSVP</h2>
           <form id="rsvp-form" novalidate>
-            <p class="rsvp-email">Linked email: <span data-guest-email></span></p>
+            <ol class="rsvp-steps" aria-label="RSVP steps">
+              <li class="rsvp-step-indicator is-active" data-step-indicator="1">Names &amp; RSVP</li>
+              <li class="rsvp-step-indicator" data-step-indicator="2">
+                Contact Details &amp; Dietary Requirements
+              </li>
+            </ol>
 
-            <section class="guest-response" data-guest-section="primary">
-              <header class="guest-response__header">
-                <h3 class="guest-title">
-                  <button
-                    type="button"
-                    class="guest-toggle"
-                    aria-expanded="true"
-                    aria-controls="primary-response"
-                  >
-                    <span class="guest-heading" data-guest-name="primary">Joe Bloggs</span>
-                    <span class="guest-toggle-icon" aria-hidden="true"></span>
-                  </button>
-                </h3>
-              </header>
-              <div class="guest-response__body" id="primary-response" data-guest-body>
-                <fieldset>
-                  <legend data-attendance-legend="primary">Able to come?</legend>
-                  <label>
+            <section class="rsvp-step" data-rsvp-step="1">
+              <h3 class="rsvp-step-title">Names &amp; RSVP</h3>
+              <p class="rsvp-step-intro">Please let us know who you are and whether you can attend.</p>
+
+              <section class="guest-response" data-guest-section="primary">
+                <h4 class="guest-title"><span data-guest-name="primary">Guest 1</span></h4>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label for="primary-first-name">First name</label>
                     <input
-                      id="primary-attending"
-                      type="radio"
-                      name="primary-attendance"
-                      value="Yes"
+                      id="primary-first-name"
+                      name="primary-first-name"
+                      type="text"
+                      autocomplete="given-name"
+                      class="form-control"
                       required
                       data-initial-focus
                     />
+                  </div>
+                  <div class="form-field">
+                    <label for="primary-last-name">Surname</label>
+                    <input
+                      id="primary-last-name"
+                      name="primary-last-name"
+                      type="text"
+                      autocomplete="family-name"
+                      class="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+                <fieldset>
+                  <legend data-attendance-legend="primary">Able to come?</legend>
+                  <label>
+                    <input id="primary-attending" type="radio" name="primary-attendance" value="Yes" required />
                     Yes
                   </label>
                   <label>
@@ -746,32 +760,34 @@
                     No
                   </label>
                 </fieldset>
-                <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
-                <textarea
-                  id="primary-dietary"
-                  name="primary-dietary"
-                  class="form-control"
-                  rows="3"
-                  placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
-                ></textarea>
-              </div>
-            </section>
+              </section>
 
-            <section class="guest-response" data-guest-section="plusOne">
-              <header class="guest-response__header">
-                <h3 class="guest-title">
-                  <button
-                    type="button"
-                    class="guest-toggle"
-                    aria-expanded="true"
-                    aria-controls="plusone-response"
-                  >
-                    <span class="guest-heading" data-guest-name="plusOne">Jill Bloggs</span>
-                    <span class="guest-toggle-icon" aria-hidden="true"></span>
-                  </button>
-                </h3>
-              </header>
-              <div class="guest-response__body" id="plusone-response" data-guest-body>
+              <section class="guest-response" data-guest-section="plusOne">
+                <h4 class="guest-title"><span data-guest-name="plusOne">Guest 2</span></h4>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label for="plusone-first-name">First name</label>
+                    <input
+                      id="plusone-first-name"
+                      name="plusone-first-name"
+                      type="text"
+                      autocomplete="given-name"
+                      class="form-control"
+                      required
+                    />
+                  </div>
+                  <div class="form-field">
+                    <label for="plusone-last-name">Surname</label>
+                    <input
+                      id="plusone-last-name"
+                      name="plusone-last-name"
+                      type="text"
+                      autocomplete="family-name"
+                      class="form-control"
+                      required
+                    />
+                  </div>
+                </div>
                 <fieldset>
                   <legend data-attendance-legend="plusOne">Able to come?</legend>
                   <label>
@@ -783,6 +799,103 @@
                     No
                   </label>
                 </fieldset>
+              </section>
+            </section>
+
+            <section class="rsvp-step" data-rsvp-step="2" hidden>
+              <h3 class="rsvp-step-title">Contact Details &amp; Dietary Requirements</h3>
+              <p class="rsvp-step-intro">
+                We&rsquo;ll use this to send confirmations and stay in touch. Address details are only needed for the
+                primary guest.
+              </p>
+
+              <div class="form-field">
+                <label for="rsvp-email">Email address</label>
+                <input
+                  id="rsvp-email"
+                  name="guest-email"
+                  type="email"
+                  inputmode="email"
+                  autocomplete="email"
+                  class="form-control"
+                  required
+                />
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="address-line-1">Address line 1</label>
+                  <input
+                    id="address-line-1"
+                    name="address-line-1"
+                    type="text"
+                    autocomplete="address-line1"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="address-line-2">Address line 2</label>
+                  <input
+                    id="address-line-2"
+                    name="address-line-2"
+                    type="text"
+                    autocomplete="address-line2"
+                    class="form-control"
+                  />
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="address-city">City</label>
+                  <input
+                    id="address-city"
+                    name="address-city"
+                    type="text"
+                    autocomplete="address-level2"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="address-postcode">Postcode</label>
+                  <input
+                    id="address-postcode"
+                    name="address-postcode"
+                    type="text"
+                    autocomplete="postal-code"
+                    class="form-control"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="address-country">Country</label>
+                <input
+                  id="address-country"
+                  name="address-country"
+                  type="text"
+                  autocomplete="country-name"
+                  class="form-control"
+                />
+              </div>
+
+              <section class="guest-response">
+                <h4 class="guest-title">Guest 1 dietary requirements</h4>
+                <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
+                <textarea
+                  id="primary-dietary"
+                  name="primary-dietary"
+                  class="form-control"
+                  rows="3"
+                  placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
+                ></textarea>
+              </section>
+
+              <section class="guest-response" data-guest-section="plusOne">
+                <h4 class="guest-title">Guest 2 dietary requirements</h4>
                 <label for="plusone-dietary" data-dietary-label="plusOne">Any dietary requirements?</label>
                 <textarea
                   id="plusone-dietary"
@@ -791,12 +904,15 @@
                   rows="3"
                   placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
                 ></textarea>
-              </div>
+              </section>
             </section>
 
-            <input type="hidden" name="guest-email" id="rsvp-email" />
             <input type="hidden" name="invite-token" id="invite-token" />
-            <button type="submit" class="primary">Submit</button>
+            <div class="rsvp-actions">
+              <button type="button" class="secondary" data-step-prev hidden>Back</button>
+              <button type="button" class="primary" data-step-next>Next</button>
+              <button type="submit" class="primary" data-step-submit hidden>Submit</button>
+            </div>
             <p id="rsvp-feedback" role="status" aria-live="polite"></p>
           </form>
         </div>
