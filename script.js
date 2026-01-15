@@ -1,6 +1,7 @@
 const ACCESS_CODE = 'STARFORD';
 const STORAGE_KEY = 'weddingSiteUnlocked';
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
+const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
@@ -118,6 +119,7 @@ const plusOneDietaryLabel = document.querySelector('[data-dietary-label="plusOne
 const primaryDietaryInput = document.getElementById('primary-dietary');
 const plusOneDietaryInput = document.getElementById('plusone-dietary');
 const rsvpEmailField = document.getElementById('rsvp-email');
+const inviteTokenField = document.getElementById('invite-token');
 const openRsvpButton = document.getElementById('open-rsvp');
 const closeModalEls = document.querySelectorAll('[data-close-modal]');
 const guestSections = document.querySelectorAll('.guest-response');
@@ -134,6 +136,7 @@ let mapInstance;
 let routeBoundsCache = null;
 let initialCameraCache = null;
 let guestProfile = null;
+let inviteToken = null;
 
 const ATTENDANCE_PROMPT = 'Able to come?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
@@ -281,6 +284,23 @@ function setGuestProfile(profile) {
   updateGuestUi(profile);
 }
 
+function resolveInviteToken() {
+  const params = new URLSearchParams(window.location.search);
+  const tokenFromUrl = params.get('i');
+  const storedToken = localStorage.getItem(INVITE_TOKEN_STORAGE_KEY);
+  const activeToken = tokenFromUrl || storedToken || '';
+
+  if (tokenFromUrl) {
+    localStorage.setItem(INVITE_TOKEN_STORAGE_KEY, tokenFromUrl);
+  }
+
+  inviteToken = activeToken;
+
+  if (inviteTokenField) {
+    inviteTokenField.value = inviteToken;
+  }
+}
+
 function unlockSite() {
   passwordInput?.removeAttribute('aria-invalid');
   emailInput?.removeAttribute('aria-invalid');
@@ -340,6 +360,7 @@ emailInput?.addEventListener('input', () => {
 });
 
 const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
+resolveInviteToken();
 setGuestProfile(createGuestProfile(storedEmail));
 
 if (localStorage.getItem(STORAGE_KEY) === 'true') {
@@ -857,6 +878,7 @@ async function submitRsvp(event) {
 
   const payload = {
     email: (formData.get('guest-email') || profile.email || '').trim(),
+    inviteToken: (formData.get('invite-token') || inviteToken || '').trim(),
     guests: [
       {
         name: profile.primary?.name || 'Joe Bloggs',
