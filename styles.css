@@ -291,6 +291,25 @@ body.nav-open {
   transform: translateY(-1px);
 }
 
+.secondary {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  padding: 0.85rem 2.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 999px;
+  font-weight: 600;
+  font-family: 'Stack Sans Headline', system-ui, sans-serif;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.secondary:focus,
+.secondary:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
 .scroll-invite {
   margin-top: 2.5rem;
   font-size: 2.25rem;
@@ -1006,6 +1025,69 @@ body.nav-open {
   gap: 1rem;
 }
 
+.rsvp-steps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0;
+}
+
+.rsvp-step-indicator {
+  padding: 0.65rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  text-align: center;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.rsvp-step-indicator.is-active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+}
+
+.rsvp-step-title {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.rsvp-step-intro {
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.rsvp-step {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-field label {
+  font-size: 0.95rem;
+}
+
+.rsvp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
 #rsvp-form .form-control,
 .password-form .form-control {
   width: 100%;
@@ -1215,6 +1297,16 @@ textarea.form-control {
   .guest-toggle {
     font-size: 1rem;
     padding: 0.5rem 0.25rem 0.25rem;
+  }
+}
+
+@media (min-width: 600px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rsvp-actions {
+    justify-content: flex-end;
   }
 }
 
