@@ -21,7 +21,7 @@ create table if not exists public.guests (
   first_name text not null,
   last_name text not null,
   email text not null,
-  attendance text check (attendance in ('yes', 'no')),
+  attendance text not null check (attendance in ('yes', 'no')),
   dietary text,
   address_line_1 text,
   address_line_2 text,
@@ -29,8 +29,14 @@ create table if not exists public.guests (
   postcode text,
   country text,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint guests_primary_address_required
+    check (
+      role <> 'primary'
+      or (address_line_1 is not null and city is not null and postcode is not null)
+    )
 );
 
 create index if not exists guests_email_idx on public.guests (email);
 create index if not exists guests_invitation_group_idx on public.guests (invitation_group_id);
+create unique index if not exists guests_group_role_unique on public.guests (invitation_group_id, role);
