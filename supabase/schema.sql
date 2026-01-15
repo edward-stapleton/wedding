@@ -40,3 +40,21 @@ create table if not exists public.guests (
 create index if not exists guests_email_idx on public.guests (email);
 create index if not exists guests_invitation_group_idx on public.guests (invitation_group_id);
 create unique index if not exists guests_group_role_unique on public.guests (invitation_group_id, role);
+
+alter table public.invites enable row level security;
+alter table public.guests enable row level security;
+
+create policy guests_read_own
+  on public.guests
+  for select
+  using (auth.email() = email);
+
+create policy guests_update_own
+  on public.guests
+  for update
+  using (auth.email() = email);
+
+create policy guests_insert_own
+  on public.guests
+  for insert
+  with check (auth.email() = email);
