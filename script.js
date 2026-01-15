@@ -1,6 +1,7 @@
-const ACCESS_CODE = 'STARFORD';
-const STORAGE_KEY = 'weddingSiteUnlocked';
+const SUPABASE_URL = 'https://ipxbndockmhkfuwjyevi.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
+const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
@@ -102,7 +103,6 @@ const GARDEN_FOOTPRINT = {
 const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
 const emailInput = document.getElementById('guest-email');
-const passwordInput = document.getElementById('access-code');
 const passwordError = document.getElementById('password-error');
 const rsvpModal = document.getElementById('rsvp-modal');
 const rsvpForm = document.getElementById('rsvp-form');
@@ -118,6 +118,7 @@ const plusOneDietaryLabel = document.querySelector('[data-dietary-label="plusOne
 const primaryDietaryInput = document.getElementById('primary-dietary');
 const plusOneDietaryInput = document.getElementById('plusone-dietary');
 const rsvpEmailField = document.getElementById('rsvp-email');
+const inviteTokenField = document.getElementById('invite-token');
 const openRsvpButton = document.getElementById('open-rsvp');
 const closeModalEls = document.querySelectorAll('[data-close-modal]');
 const guestSections = document.querySelectorAll('.guest-response');
@@ -134,6 +135,10 @@ let mapInstance;
 let routeBoundsCache = null;
 let initialCameraCache = null;
 let guestProfile = null;
+let inviteToken = null;
+let authenticatedEmail = '';
+
+const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const ATTENDANCE_PROMPT = 'Able to come?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
@@ -281,8 +286,24 @@ function setGuestProfile(profile) {
   updateGuestUi(profile);
 }
 
+function resolveInviteToken() {
+  const params = new URLSearchParams(window.location.search);
+  const tokenFromUrl = params.get('i');
+  const storedToken = localStorage.getItem(INVITE_TOKEN_STORAGE_KEY);
+  const activeToken = tokenFromUrl || storedToken || '';
+
+  if (tokenFromUrl) {
+    localStorage.setItem(INVITE_TOKEN_STORAGE_KEY, tokenFromUrl);
+  }
+
+  inviteToken = activeToken;
+
+  if (inviteTokenField) {
+    inviteTokenField.value = inviteToken;
+  }
+}
+
 function unlockSite() {
-  passwordInput?.removeAttribute('aria-invalid');
   emailInput?.removeAttribute('aria-invalid');
   if (!passwordScreen) return;
   passwordScreen.classList.add('hidden');
@@ -297,16 +318,26 @@ function lockSite() {
   passwordScreen.classList.remove('hidden');
 }
 
-function handlePasswordSubmit(event) {
+function setAuthEmail(email) {
+  authenticatedEmail = email;
+  if (email) {
+    localStorage.setItem(EMAIL_STORAGE_KEY, email);
+  }
+  setGuestProfile(createGuestProfile(email));
+}
+
+async function handleMagicLinkSubmit(event) {
   event.preventDefault();
-  if (!emailInput || !passwordInput) return;
+  if (!emailInput) return;
+  if (!supabaseClient) {
+    passwordError.textContent = 'Email login is unavailable right now. Please try again later.';
+    return;
+  }
 
   passwordError.textContent = '';
   emailInput.removeAttribute('aria-invalid');
-  passwordInput.removeAttribute('aria-invalid');
 
   const emailValue = emailInput.value.trim();
-  const entered = passwordInput.value.trim().toUpperCase();
 
   if (!emailValue || !emailValue.includes('@')) {
     passwordError.textContent = 'Please enter a valid email address to continue.';
@@ -315,43 +346,75 @@ function handlePasswordSubmit(event) {
     return;
   }
 
-  if (entered !== ACCESS_CODE) {
-    passwordError.textContent = 'That code is not quite right.';
-    passwordInput.setAttribute('aria-invalid', 'true');
-    passwordInput.focus();
+  passwordError.textContent = 'Sending your magic link...';
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: emailValue,
+    options: {
+      emailRedirectTo: `${window.location.origin}${window.location.pathname}`,
+    },
+  });
+
+  if (error) {
+    passwordError.textContent = 'We could not send that link. Please try again in a moment.';
     return;
   }
 
-  localStorage.setItem(STORAGE_KEY, 'true');
-  localStorage.setItem(EMAIL_STORAGE_KEY, emailValue);
-  passwordError.textContent = '';
-  setGuestProfile(createGuestProfile(emailValue));
-  unlockSite();
+  passwordError.textContent = 'Check your inbox for your magic link.';
 }
-
-passwordInput?.addEventListener('input', () => {
-  passwordInput.removeAttribute('aria-invalid');
-  passwordError.textContent = '';
-});
 
 emailInput?.addEventListener('input', () => {
   emailInput.removeAttribute('aria-invalid');
   passwordError.textContent = '';
 });
 
-const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
-setGuestProfile(createGuestProfile(storedEmail));
+async function initAuth() {
+  resolveInviteToken();
+  const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
 
-if (localStorage.getItem(STORAGE_KEY) === 'true') {
-  unlockSite();
-} else {
   if (emailInput && storedEmail) {
     emailInput.value = storedEmail;
   }
-  lockSite();
+
+  if (!supabaseClient) {
+    setGuestProfile(createGuestProfile(storedEmail));
+    lockSite();
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+
+  if (code) {
+    const { error } = await supabaseClient.auth.exchangeCodeForSession(code);
+    if (!error) {
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    }
+  }
+
+  const { data } = await supabaseClient.auth.getSession();
+  if (data?.session?.user?.email) {
+    setAuthEmail(data.session.user.email);
+    unlockSite();
+  } else {
+    setGuestProfile(createGuestProfile(storedEmail));
+    lockSite();
+  }
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    const email = session?.user?.email || '';
+    if (email) {
+      setAuthEmail(email);
+      unlockSite();
+      return;
+    }
+    setAuthEmail('');
+    lockSite();
+  });
 }
 
-passwordForm?.addEventListener('submit', handlePasswordSubmit);
+initAuth();
+
+passwordForm?.addEventListener('submit', handleMagicLinkSubmit);
 
 function setupGuideCarousel() {
   const carousel = document.querySelector('[data-guide-carousel]');
@@ -813,7 +876,7 @@ document.addEventListener('keydown', event => {
 function validateForm(formData, profile) {
   const errors = [];
   if (!profile) {
-    errors.push('Please unlock the site with your email before responding.');
+    errors.push('Please sign in with your email before responding.');
     return errors;
   }
 
@@ -857,6 +920,7 @@ async function submitRsvp(event) {
 
   const payload = {
     email: (formData.get('guest-email') || profile.email || '').trim(),
+    inviteToken: (formData.get('invite-token') || inviteToken || '').trim(),
     guests: [
       {
         name: profile.primary?.name || 'Joe Bloggs',
