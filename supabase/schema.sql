@@ -49,6 +49,12 @@ create policy invites_read_token
   for select
   using (true);
 
+create policy invites_update_own
+  on public.invites
+  for update
+  using (auth.email() = primary_email or primary_email is null)
+  with check (auth.email() = primary_email or primary_email is null);
+
 create policy guests_read_own
   on public.guests
   for select
