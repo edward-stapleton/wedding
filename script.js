@@ -1472,19 +1472,27 @@ async function submitRsvp(event) {
 
     rsvpForm.reset();
     updateGuestUi(profile);
+    const primaryFirstName = formData.get('primary-first-name')?.trim() ?? '';
+    const plusOneFirstName = formData.get('plusone-first-name')?.trim() ?? '';
     const formattedName = formatGuestName(
-      formData.get('primary-first-name'),
+      primaryFirstName,
       formData.get('primary-last-name'),
       profile.primary?.name || 'there'
     );
+    const nameParts = [primaryFirstName || formattedName].filter(Boolean);
+    if (includesPlusOne && plusOneFirstName) {
+      nameParts.push(plusOneFirstName);
+    }
+    const greetingName = nameParts.join(' and ');
+    const thankYouNameSegment = greetingName ? `, ${greetingName}` : '';
     const thankYouMessage =
       primaryAttendance === 'yes'
-        ? "Thank you for your RSVP — we can't wait to celebrate with you!"
+        ? `Thank you for your RSVP${thankYouNameSegment} — we can't wait to celebrate with you!`
         : "Thank you for letting us know. We're sure we'll see you soon.";
     const personalMessage =
       primaryAttendance === 'yes'
-        ? `We’re so excited to celebrate with you, ${formattedName}.`
-        : `We’ll miss you, ${formattedName}.`;
+        ? `We’re so excited to celebrate with you${thankYouNameSegment}.`
+        : `We’ll miss you${thankYouNameSegment}.`;
     if (thankYouMessageEl) {
       thankYouMessageEl.textContent = thankYouMessage;
     }
