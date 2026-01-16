@@ -1019,6 +1019,27 @@ body.nav-open {
   scrollbar-gutter: stable both-edges;
 }
 
+.rsvp-page .section-content {
+  gap: 2rem;
+}
+
+.rsvp-panel {
+  width: min(100%, 640px);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  color: var(--text-color);
+  text-align: left;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.rsvp-body {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 #rsvp-form {
   display: flex;
   flex-direction: column;
@@ -1280,6 +1301,14 @@ textarea.form-control {
   .modal-close {
     top: 1rem;
     right: 1rem;
+  }
+
+  .rsvp-panel {
+    border-radius: 20px;
+  }
+
+  .rsvp-body {
+    padding: 1.5rem 1.25rem;
   }
 
   #rsvp-form {
