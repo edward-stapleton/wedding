@@ -77,16 +77,37 @@
                 <h2 id="rsvp-title">RSVP</h2>
                 <form id="rsvp-form" novalidate>
                   <ol class="rsvp-steps rsvp-progress" aria-label="RSVP progress">
-                    <li class="rsvp-step-indicator is-active" data-step-indicator="1">Step 1</li>
-                    <li class="rsvp-step-indicator" data-step-indicator="2">Step 2</li>
-                    <li class="rsvp-step-indicator" data-step-indicator="3">Step 3</li>
-                    <li class="rsvp-step-indicator" data-step-indicator="4">Step 4</li>
-                    <li class="rsvp-step-indicator" data-step-indicator="5">Step 5</li>
+                    <li class="rsvp-step-indicator is-active" data-step-indicator="1">Welcome</li>
+                    <li class="rsvp-step-indicator" data-step-indicator="2">Guest 1</li>
+                    <li class="rsvp-step-indicator" data-step-indicator="3">Guest 2</li>
+                    <li class="rsvp-step-indicator" data-step-indicator="4">Contact</li>
+                    <li class="rsvp-step-indicator" data-step-indicator="5">Thank you</li>
                   </ol>
 
                   <section class="rsvp-step" data-rsvp-step="1">
-                    <h3 class="rsvp-step-title">Names &amp; RSVP</h3>
-                    <p class="rsvp-step-intro">Please let us know who you are and whether you can attend.</p>
+                    <h3 class="rsvp-step-title">Welcome</h3>
+                    <p class="rsvp-step-intro">
+                      Saturday 22 August 2026 &middot; Oxford. Please enter the password from your invitation to begin your
+                      RSVP.
+                    </p>
+                    <div class="form-field">
+                      <label for="rsvp-password">Password</label>
+                      <input
+                        id="rsvp-password"
+                        name="rsvp-password"
+                        type="password"
+                        autocomplete="off"
+                        class="form-control"
+                        placeholder="STARFORD"
+                        required
+                        data-initial-focus
+                      />
+                    </div>
+                  </section>
+
+                  <section class="rsvp-step" data-rsvp-step="2" hidden>
+                    <h3 class="rsvp-step-title">Guest 1</h3>
+                    <p class="rsvp-step-intro">Please share the primary guest details and attendance.</p>
 
                     <section class="guest-response" data-guest-section="primary">
                       <h4 class="guest-title"><span data-guest-name="primary">Guest 1</span></h4>
@@ -100,7 +121,6 @@
                             autocomplete="given-name"
                             class="form-control"
                             required
-                            data-initial-focus
                           />
                         </div>
                         <div class="form-field">
@@ -126,7 +146,22 @@
                           No
                         </label>
                       </fieldset>
+                      <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
+                      <textarea
+                        id="primary-dietary"
+                        name="primary-dietary"
+                        class="form-control"
+                        rows="3"
+                        placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
+                      ></textarea>
                     </section>
+                  </section>
+
+                  <section class="rsvp-step" data-rsvp-step="3" hidden>
+                    <h3 class="rsvp-step-title">Guest 2</h3>
+                    <p class="rsvp-step-intro">
+                      If your invite includes a second guest, please confirm their details and dietary needs.
+                    </p>
 
                     <section class="guest-response" data-guest-section="plusOne">
                       <h4 class="guest-title"><span data-guest-name="plusOne">Guest 2</span></h4>
@@ -165,11 +200,19 @@
                           No
                         </label>
                       </fieldset>
+                      <label for="plusone-dietary" data-dietary-label="plusOne">Any dietary requirements?</label>
+                      <textarea
+                        id="plusone-dietary"
+                        name="plusone-dietary"
+                        class="form-control"
+                        rows="3"
+                        placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
+                      ></textarea>
                     </section>
                   </section>
 
-                  <section class="rsvp-step" data-rsvp-step="2" hidden>
-                    <h3 class="rsvp-step-title">Contact Details &amp; Dietary Requirements</h3>
+                  <section class="rsvp-step" data-rsvp-step="4" hidden>
+                    <h3 class="rsvp-step-title">Contact Details</h3>
                     <p class="rsvp-step-intro">
                       We&rsquo;ll use this to send confirmations and stay in touch. Address details are only needed for the
                       primary guest.
@@ -247,30 +290,13 @@
                         class="form-control"
                       />
                     </div>
+                  </section>
 
-                    <section class="guest-response">
-                      <h4 class="guest-title">Guest 1 dietary requirements</h4>
-                      <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
-                      <textarea
-                        id="primary-dietary"
-                        name="primary-dietary"
-                        class="form-control"
-                        rows="3"
-                        placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
-                      ></textarea>
-                    </section>
-
-                    <section class="guest-response" data-guest-section="plusOne">
-                      <h4 class="guest-title">Guest 2 dietary requirements</h4>
-                      <label for="plusone-dietary" data-dietary-label="plusOne">Any dietary requirements?</label>
-                      <textarea
-                        id="plusone-dietary"
-                        name="plusone-dietary"
-                        class="form-control"
-                        rows="3"
-                        placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
-                      ></textarea>
-                    </section>
+                  <section class="rsvp-step" data-rsvp-step="5" hidden>
+                    <h3 class="rsvp-step-title">Thank you</h3>
+                    <p class="rsvp-step-intro">Your RSVP has been sent.</p>
+                    <p id="rsvp-thank-you-message" class="thank-you"></p>
+                    <p id="rsvp-thank-you-personal"></p>
                   </section>
 
                   <input type="hidden" name="invite-token" id="invite-token" />
