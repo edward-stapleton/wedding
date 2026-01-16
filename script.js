@@ -107,7 +107,7 @@ const passwordScreen = document.getElementById('password-screen');
 const passwordForm = document.getElementById('password-form');
 const emailInput = document.getElementById('guest-email');
 const passwordError = document.getElementById('password-error');
-const rsvpModal = document.getElementById('rsvp-modal');
+const rsvpSection = document.getElementById('rsvp-page');
 const rsvpForm = document.getElementById('rsvp-form');
 const rsvpFeedback = document.getElementById('rsvp-feedback');
 const primaryNameEl = document.querySelector('[data-guest-name="primary"]');
@@ -126,7 +126,6 @@ const plusOneLastNameInput = document.getElementById('plusone-last-name');
 const rsvpEmailField = document.getElementById('rsvp-email');
 const inviteTokenField = document.getElementById('invite-token');
 const openRsvpButton = document.getElementById('open-rsvp');
-const closeModalEls = document.querySelectorAll('[data-close-modal]');
 const guestSections = document.querySelectorAll('.guest-response');
 const stepIndicators = document.querySelectorAll('[data-step-indicator]');
 const stepSections = document.querySelectorAll('[data-rsvp-step]');
@@ -302,7 +301,7 @@ function setupGuestSectionToggles() {
   handleChange(mobileModalMedia.matches);
 }
 
-function resetGuestSectionStateForModal() {
+function resetGuestSectionState() {
   applyGuestSectionResponsiveState(mobileModalMedia.matches);
 }
 
@@ -1160,11 +1159,9 @@ updateHeaderOffset();
 
 setupGuestSectionToggles();
 
-function openModal() {
-  if (!rsvpModal) return;
-  rsvpModal.hidden = false;
-  rsvpModal.classList.add('open');
-  document.body.style.overflow = 'hidden';
+function openRsvpSection() {
+  if (!rsvpSection) return;
+  rsvpSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
@@ -1177,31 +1174,10 @@ function openModal() {
   }
 
   showStep(1);
-  resetGuestSectionStateForModal();
+  resetGuestSectionState();
 }
 
-function closeModal() {
-  if (!rsvpModal) return;
-  rsvpModal.classList.remove('open');
-  document.body.style.overflow = '';
-  setTimeout(() => {
-    rsvpModal.hidden = true;
-  }, 300);
-}
-
-openRsvpButton?.addEventListener('click', openModal);
-closeModalEls.forEach(el => el.addEventListener('click', closeModal));
-rsvpModal?.addEventListener('click', event => {
-  if (event.target === rsvpModal) {
-    closeModal();
-  }
-});
-
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && rsvpModal && !rsvpModal.hidden) {
-    closeModal();
-  }
-});
+openRsvpButton?.addEventListener('click', openRsvpSection);
 
 function validateStep(step, formData, profile) {
   const errors = [];
