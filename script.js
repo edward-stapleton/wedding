@@ -1,5 +1,7 @@
 const SUPABASE_URL = 'https://ipxbndockmhkfuwjyevi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
+const SITE_BASE_URL = 'https://edward-stapleton.github.io/wedding/';
+const MAGIC_LINK_REDIRECT_URL = new URL(window.location.pathname, SITE_BASE_URL).toString();
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
 const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
@@ -147,10 +149,12 @@ let guestProfile = null;
 let inviteToken = null;
 let inviteDetails = null;
 let inviteTypeOverride = '';
+let inviteTypeFromUrl = '';
 let authenticatedEmail = '';
 let currentStep = 1;
 let invitationGroupId = '';
 let inviteLookupFailed = false;
+let storedEmail = '';
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -471,7 +475,7 @@ function normalizeInviteType(value) {
 function resolveInviteToken() {
   const params = new URLSearchParams(window.location.search);
   const tokenFromUrl = params.get('i');
-  const inviteTypeFromUrl = normalizeInviteType(params.get(INVITE_TYPE_QUERY_KEY));
+  inviteTypeFromUrl = normalizeInviteType(params.get(INVITE_TYPE_QUERY_KEY));
   const storedToken = localStorage.getItem(INVITE_TOKEN_STORAGE_KEY);
   const activeToken = tokenFromUrl || storedToken || '';
   const storedInviteType = localStorage.getItem(INVITE_TYPE_STORAGE_KEY);
@@ -639,7 +643,7 @@ async function handleMagicLinkSubmit(event) {
   const { error } = await supabaseClient.auth.signInWithOtp({
     email: emailValue,
     options: {
-      emailRedirectTo: `${window.location.origin}${window.location.pathname}`,
+      emailRedirectTo: MAGIC_LINK_REDIRECT_URL,
     },
   });
 
@@ -659,7 +663,9 @@ emailInput?.addEventListener('input', () => {
 
 async function initAuth() {
   resolveInviteToken();
-  const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
+  storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
+  const allowDirectInvite = Boolean(inviteTypeOverride);
+  const shouldAutoOpenInvite = Boolean(inviteTypeFromUrl);
 
   if (emailInput && storedEmail) {
     emailInput.value = storedEmail;
@@ -667,7 +673,14 @@ async function initAuth() {
 
   if (!supabaseClient) {
     applyInviteDetailsToProfile(null, storedEmail);
-    lockSite();
+    if (allowDirectInvite) {
+      unlockSite();
+      if (shouldAutoOpenInvite) {
+        openModal();
+      }
+    } else {
+      lockSite();
+    }
     return;
   }
 
@@ -705,6 +718,12 @@ async function initAuth() {
     const guestRows = await loadGuestRowsByEmail(data.session.user.email);
     populateRsvpFromGuests(guestRows, data.session.user.email);
     unlockSite();
+  } else if (allowDirectInvite) {
+    applyInviteDetailsToProfile(inviteDetails, storedEmail);
+    unlockSite();
+    if (shouldAutoOpenInvite) {
+      openModal();
+    }
   } else {
     applyInviteDetailsToProfile(inviteDetails, storedEmail);
     lockSite();
