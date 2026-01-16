@@ -123,6 +123,7 @@ const primaryDietaryInput = document.getElementById('primary-dietary');
 const plusOneDietaryInput = document.getElementById('plusone-dietary');
 const plusOneFirstNameInput = document.getElementById('plusone-first-name');
 const plusOneLastNameInput = document.getElementById('plusone-last-name');
+const rsvpPasswordInput = document.getElementById('rsvp-password');
 const rsvpEmailField = document.getElementById('rsvp-email');
 const inviteTokenField = document.getElementById('invite-token');
 const openRsvpButton = document.getElementById('open-rsvp');
@@ -139,6 +140,8 @@ const navLinks = document.querySelectorAll('.nav-links a');
 const header = document.querySelector('.site-header');
 const mobileModalMedia = window.matchMedia('(max-width: 600px)');
 const mapReplayButton = document.querySelector('[data-map-replay]');
+const thankYouMessageEl = document.getElementById('rsvp-thank-you-message');
+const thankYouPersonalEl = document.getElementById('rsvp-thank-you-personal');
 
 let mapLoaded = false;
 let mapInstance;
@@ -161,6 +164,7 @@ const ATTENDANCE_PROMPT = 'Able to come?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
 const INVITE_TYPE_QUERY_KEY = 'invite';
+const RSVP_PASSWORD = 'STARFORD';
 
 function createGuestProfile(email) {
   return {
@@ -322,15 +326,16 @@ function showStep(step) {
   setStepIndicator(step);
 
   if (stepPrevButton) {
-    stepPrevButton.hidden = step === 1;
+    stepPrevButton.hidden = step === 1 || step === 5;
   }
 
   if (stepNextButton) {
-    stepNextButton.hidden = step !== 1;
+    stepNextButton.hidden = step < 1 || step > 3;
+    stepNextButton.textContent = step === 1 ? 'RSVP' : 'Next';
   }
 
   if (stepSubmitButton) {
-    stepSubmitButton.hidden = step !== 2;
+    stepSubmitButton.hidden = step !== 4;
   }
 
   const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === step);
@@ -1191,6 +1196,15 @@ function validateStep(step, formData, profile) {
   const hasPlusOne = isPlusOneActive(profile);
 
   if (step === 1) {
+    const passwordValue = formData.get('rsvp-password')?.toString().trim().toUpperCase() || '';
+    if (!passwordValue) {
+      errors.push('Please enter the RSVP password from your invitation.');
+    } else if (passwordValue !== RSVP_PASSWORD) {
+      errors.push('The RSVP password is incorrect. Please check your invitation.');
+    }
+  }
+
+  if (step === 2) {
     if (!formData.get('primary-first-name') || !formData.get('primary-last-name')) {
       errors.push(`Please enter ${primaryName}'s first name and surname.`);
     }
@@ -1198,19 +1212,19 @@ function validateStep(step, formData, profile) {
     if (!formData.get('primary-attendance')) {
       errors.push(`Please let us know if ${primaryName} can make it.`);
     }
+  }
 
-    if (hasPlusOne) {
-      if (!formData.get('plusone-first-name') || !formData.get('plusone-last-name')) {
-        errors.push(`Please enter ${plusOneName}'s first name and surname.`);
-      }
+  if (step === 3 && hasPlusOne) {
+    if (!formData.get('plusone-first-name') || !formData.get('plusone-last-name')) {
+      errors.push(`Please enter ${plusOneName}'s first name and surname.`);
+    }
 
-      if (!formData.get('plusone-attendance')) {
-        errors.push(`Please let us know if ${plusOneName} can make it.`);
-      }
+    if (!formData.get('plusone-attendance')) {
+      errors.push(`Please let us know if ${plusOneName} can make it.`);
     }
   }
 
-  if (step === 2) {
+  if (step === 4) {
     const emailValue = formData.get('guest-email')?.toString().trim() || '';
     if (!emailValue || !emailValue.includes('@')) {
       errors.push('Please enter a valid email address so we can keep in touch.');
@@ -1235,7 +1249,9 @@ function validateStep(step, formData, profile) {
 function validateForm(formData, profile) {
   const stepOneErrors = validateStep(1, formData, profile);
   const stepTwoErrors = validateStep(2, formData, profile);
-  return [...stepOneErrors, ...stepTwoErrors];
+  const stepThreeErrors = validateStep(3, formData, profile);
+  const stepFourErrors = validateStep(4, formData, profile);
+  return [...stepOneErrors, ...stepTwoErrors, ...stepThreeErrors, ...stepFourErrors];
 }
 
 function normalizeAttendance(value) {
@@ -1248,7 +1264,7 @@ function normalizeAttendance(value) {
 stepNextButton?.addEventListener('click', () => {
   if (!rsvpForm) return;
   const formData = new FormData(rsvpForm);
-  const errors = validateStep(1, formData, guestProfile);
+  const errors = validateStep(currentStep, formData, guestProfile);
   if (errors.length > 0) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent = errors.join(' ');
@@ -1258,14 +1274,14 @@ stepNextButton?.addEventListener('click', () => {
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
-  showStep(2);
+  showStep(Math.min(currentStep + 1, 5));
 });
 
 stepPrevButton?.addEventListener('click', () => {
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
-  showStep(1);
+  showStep(Math.max(currentStep - 1, 1));
 });
 
 async function submitRsvp(event) {
@@ -1393,11 +1409,26 @@ async function submitRsvp(event) {
 
     rsvpForm.reset();
     updateGuestUi(profile);
+    const formattedName = formatGuestName(
+      formData.get('primary-first-name'),
+      formData.get('primary-last-name'),
+      profile.primary?.name || 'there'
+    );
     const thankYouMessage =
       primaryAttendance === 'yes'
         ? "Thank you for your RSVP — we can't wait to celebrate with you!"
         : "Thank you for letting us know. We're sure we'll see you soon.";
-    rsvpForm.innerHTML = `<p class="thank-you">${thankYouMessage}</p>`;
+    const personalMessage =
+      primaryAttendance === 'yes'
+        ? `We’re so excited to celebrate with you, ${formattedName}.`
+        : `We’ll miss you, ${formattedName}.`;
+    if (thankYouMessageEl) {
+      thankYouMessageEl.textContent = thankYouMessage;
+    }
+    if (thankYouPersonalEl) {
+      thankYouPersonalEl.textContent = personalMessage;
+    }
+    showStep(5);
   } catch (error) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent =
