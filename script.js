@@ -103,10 +103,9 @@ const GARDEN_FOOTPRINT = {
   ],
 };
 
-const passwordScreen = document.getElementById('password-screen');
-const passwordForm = document.getElementById('password-form');
-const emailInput = document.getElementById('guest-email');
-const passwordError = document.getElementById('password-error');
+const rsvpAccessEmailInput = document.getElementById('rsvp-access-email');
+const rsvpAccessButton = document.getElementById('rsvp-access-button');
+const rsvpAccessFeedback = document.getElementById('rsvp-access-feedback');
 const rsvpSection = document.getElementById('rsvp-page');
 const rsvpForm = document.getElementById('rsvp-form');
 const rsvpFeedback = document.getElementById('rsvp-feedback');
@@ -383,6 +382,8 @@ function showStep(step) {
   if (focusTarget) {
     setTimeout(() => focusTarget.focus(), 50);
   }
+
+  updatePasswordGate();
 }
 
 function setupRsvpStepLayoutWatcher() {
@@ -505,10 +506,6 @@ function updateGuestUi(profile) {
 
   if (rsvpEmailField) {
     rsvpEmailField.value = emailValue;
-  }
-
-  if (emailInput && emailValue) {
-    emailInput.value = emailValue;
   }
 }
 
@@ -647,21 +644,6 @@ async function loadGuestRowsByEmail(email) {
   return data || [];
 }
 
-function unlockSite() {
-  emailInput?.removeAttribute('aria-invalid');
-  if (!passwordScreen) return;
-  passwordScreen.classList.add('hidden');
-  setTimeout(() => {
-    passwordScreen.style.display = 'none';
-  }, 400);
-}
-
-function lockSite() {
-  if (!passwordScreen) return;
-  passwordScreen.style.display = 'flex';
-  passwordScreen.classList.remove('hidden');
-}
-
 function setAuthEmail(email) {
   authenticatedEmail = email;
   if (email) {
@@ -678,27 +660,33 @@ function setAuthEmail(email) {
   }
 }
 
-async function handleMagicLinkSubmit(event) {
-  event.preventDefault();
-  if (!emailInput) return;
+function setRsvpAccessFeedback(message) {
+  if (rsvpAccessFeedback) {
+    rsvpAccessFeedback.textContent = message;
+  }
+}
+
+async function handleMagicLinkSubmit() {
+  if (!rsvpAccessEmailInput) return;
   if (!supabaseClient) {
-    passwordError.textContent = 'Email login is unavailable right now. Please try again later.';
+    setRsvpAccessFeedback('Email login is unavailable right now. Please try again later.');
     return;
   }
 
-  passwordError.textContent = '';
-  emailInput.removeAttribute('aria-invalid');
+  setRsvpAccessFeedback('');
+  rsvpAccessEmailInput.removeAttribute('aria-invalid');
 
-  const emailValue = emailInput.value.trim();
+  const emailValue = rsvpAccessEmailInput.value.trim();
 
   if (!emailValue || !emailValue.includes('@')) {
-    passwordError.textContent = 'Please enter a valid email address to continue.';
-    emailInput.setAttribute('aria-invalid', 'true');
-    emailInput.focus();
+    setRsvpAccessFeedback('Please enter a valid email address to continue.');
+    rsvpAccessEmailInput.setAttribute('aria-invalid', 'true');
+    rsvpAccessEmailInput.focus();
     return;
   }
 
-  passwordError.textContent = 'Sending your magic link...';
+  localStorage.setItem(EMAIL_STORAGE_KEY, emailValue);
+  setRsvpAccessFeedback('Sending your magic link...');
   const { error } = await supabaseClient.auth.signInWithOtp({
     email: emailValue,
     options: {
@@ -707,17 +695,16 @@ async function handleMagicLinkSubmit(event) {
   });
 
   if (error) {
-    passwordError.textContent =
-      error.message || 'We could not send that link. Please try again in a moment.';
+    setRsvpAccessFeedback(error.message || 'We could not send that link. Please try again in a moment.');
     return;
   }
 
-  passwordError.textContent = 'Check your inbox for your magic link.';
+  setRsvpAccessFeedback('Check your inbox for your magic link.');
 }
 
-emailInput?.addEventListener('input', () => {
-  emailInput.removeAttribute('aria-invalid');
-  passwordError.textContent = '';
+rsvpAccessEmailInput?.addEventListener('input', () => {
+  rsvpAccessEmailInput.removeAttribute('aria-invalid');
+  setRsvpAccessFeedback('');
 });
 
 async function initAuth() {
@@ -726,19 +713,15 @@ async function initAuth() {
   const allowDirectInvite = Boolean(inviteTypeOverride);
   const shouldAutoOpenInvite = Boolean(inviteTypeFromUrl);
 
-  if (emailInput && storedEmail) {
-    emailInput.value = storedEmail;
+  if (rsvpAccessEmailInput && storedEmail) {
+    rsvpAccessEmailInput.value = storedEmail;
   }
 
   if (!supabaseClient) {
-    applyInviteDetailsToProfile(null, storedEmail);
-    if (allowDirectInvite) {
-      unlockSite();
-      if (shouldAutoOpenInvite) {
-        openModal();
-      }
+    if (inviteTypeOverride) {
+      applyInviteTypeOverride(inviteTypeOverride, storedEmail);
     } else {
-      lockSite();
+      applyInviteDetailsToProfile(null, storedEmail);
     }
     return;
   }
@@ -749,10 +732,9 @@ async function initAuth() {
       applyInviteDetailsToProfile(invite, storedEmail);
     } else if (!applyInviteTypeOverride(inviteTypeOverride, storedEmail)) {
       applyInviteDetailsToProfile(null, storedEmail);
-      if (passwordError) {
-        passwordError.textContent =
-          'This invite link looks invalid or has expired. Please contact us for a fresh link.';
-      }
+      setRsvpAccessFeedback(
+        'This invite link looks invalid or has expired. Please contact us for a fresh link.'
+      );
     }
   } else if (!applyInviteTypeOverride(inviteTypeOverride, storedEmail)) {
     applyInviteDetailsToProfile(null, storedEmail);
@@ -765,9 +747,8 @@ async function initAuth() {
     const { error } = await supabaseClient.auth.exchangeCodeForSession(code);
     if (!error) {
       window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
-    } else if (passwordError) {
-      passwordError.textContent =
-        'We could not verify that login link. Please request a new magic link.';
+    } else {
+      setRsvpAccessFeedback('We could not verify that login link. Please request a new magic link.');
     }
   }
 
@@ -776,16 +757,13 @@ async function initAuth() {
     setAuthEmail(data.session.user.email);
     const guestRows = await loadGuestRowsByEmail(data.session.user.email);
     populateRsvpFromGuests(guestRows, data.session.user.email);
-    unlockSite();
   } else if (allowDirectInvite) {
     applyInviteDetailsToProfile(inviteDetails, storedEmail);
-    unlockSite();
     if (shouldAutoOpenInvite) {
       openModal();
     }
   } else {
     applyInviteDetailsToProfile(inviteDetails, storedEmail);
-    lockSite();
   }
 
   supabaseClient.auth.onAuthStateChange((_event, session) => {
@@ -795,17 +773,15 @@ async function initAuth() {
       loadGuestRowsByEmail(email).then(guestRows => {
         populateRsvpFromGuests(guestRows, email);
       });
-      unlockSite();
       return;
     }
     setAuthEmail('');
-    lockSite();
   });
 }
 
 initAuth();
 
-passwordForm?.addEventListener('submit', handleMagicLinkSubmit);
+rsvpAccessButton?.addEventListener('click', handleMagicLinkSubmit);
 
 function setupGuideCarousel() {
   const carousel = document.querySelector('[data-guide-carousel]');
@@ -1228,7 +1204,7 @@ function openRsvpSection() {
   }
 
   if (!guestProfile) {
-    const fallbackEmail = emailInput?.value.trim() || storedEmail || '';
+    const fallbackEmail = rsvpEmailField?.value.trim() || rsvpAccessEmailInput?.value.trim() || storedEmail || '';
     setGuestProfile(createGuestProfile(fallbackEmail));
   } else {
     updateGuestUi(guestProfile);
@@ -1242,14 +1218,10 @@ openRsvpButton?.addEventListener('click', openRsvpSection);
 
 function validateStep(step, formData, profile) {
   const errors = [];
-  if (!profile) {
-    errors.push('Please sign in with your email before responding.');
-    return errors;
-  }
-
-  const primaryName = profile.primary?.name || 'Guest 1';
-  const plusOneName = profile.plusOne?.name || 'Guest 2';
-  const hasPlusOne = isPlusOneActive(profile);
+  const activeProfile = profile || createGuestProfile(rsvpEmailField?.value.trim() || storedEmail || '');
+  const primaryName = activeProfile.primary?.name || 'Guest 1';
+  const plusOneName = activeProfile.plusOne?.name || 'Guest 2';
+  const hasPlusOne = isPlusOneActive(activeProfile);
 
   if (step === 1) {
     const passwordValue = formData.get('rsvp-password')?.toString().trim().toUpperCase() || '';
@@ -1326,6 +1298,25 @@ function normalizeAttendance(value) {
   return '';
 }
 
+function isRsvpPasswordValid(value) {
+  return value?.toString().trim().toUpperCase() === RSVP_PASSWORD;
+}
+
+function updatePasswordGate() {
+  if (!stepNextButton) return;
+  if (currentStep !== 1) {
+    stepNextButton.disabled = false;
+    return;
+  }
+  const passwordValue = rsvpPasswordInput?.value || '';
+  const isValid = isRsvpPasswordValid(passwordValue);
+  stepNextButton.disabled = !isValid;
+  if (rsvpPasswordInput) {
+    const shouldFlag = passwordValue.trim() !== '' && !isValid;
+    rsvpPasswordInput.setAttribute('aria-invalid', String(shouldFlag));
+  }
+}
+
 stepNextButton?.addEventListener('click', () => {
   if (!rsvpForm) return;
   const formData = new FormData(rsvpForm);
@@ -1347,6 +1338,13 @@ stepPrevButton?.addEventListener('click', () => {
     rsvpFeedback.textContent = '';
   }
   showStep(getRsvpStepByOffset(currentStep, -1));
+});
+
+rsvpPasswordInput?.addEventListener('input', () => {
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+  updatePasswordGate();
 });
 
 async function submitRsvp(event) {
