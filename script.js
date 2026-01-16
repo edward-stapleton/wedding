@@ -2,6 +2,7 @@ const SUPABASE_URL = 'https://ipxbndockmhkfuwjyevi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
 const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
+const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
@@ -145,6 +146,7 @@ let initialCameraCache = null;
 let guestProfile = null;
 let inviteToken = null;
 let inviteDetails = null;
+let inviteTypeOverride = '';
 let authenticatedEmail = '';
 let currentStep = 1;
 let invitationGroupId = '';
@@ -155,6 +157,7 @@ const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON
 const ATTENDANCE_PROMPT = 'Able to come?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
+const INVITE_TYPE_QUERY_KEY = 'invite';
 
 function createGuestProfile(email) {
   return {
@@ -214,6 +217,21 @@ function applyInviteDetailsToProfile(invite, emailFallback) {
         }
       : null,
   });
+}
+
+function applyInviteTypeOverride(inviteType, emailFallback) {
+  const normalized = normalizeInviteType(inviteType);
+  if (!normalized) {
+    return false;
+  }
+  applyInviteDetailsToProfile(
+    {
+      invite_type: normalized,
+      primary_email: emailFallback || '',
+    },
+    emailFallback
+  );
+  return true;
 }
 
 async function fetchInviteDetails(token) {
@@ -443,17 +461,30 @@ function isPlusOneActive(profile) {
   return Array.from(plusOneSections).some(section => !section.hidden);
 }
 
+function normalizeInviteType(value) {
+  const normalized = value?.toString().trim().toLowerCase();
+  if (normalized === 'single' || normalized === 'solo') return 'single';
+  if (normalized === 'plusone' || normalized === 'plus-one') return 'plusone';
+  return '';
+}
+
 function resolveInviteToken() {
   const params = new URLSearchParams(window.location.search);
   const tokenFromUrl = params.get('i');
+  const inviteTypeFromUrl = normalizeInviteType(params.get(INVITE_TYPE_QUERY_KEY));
   const storedToken = localStorage.getItem(INVITE_TOKEN_STORAGE_KEY);
   const activeToken = tokenFromUrl || storedToken || '';
+  const storedInviteType = localStorage.getItem(INVITE_TYPE_STORAGE_KEY);
 
   if (tokenFromUrl) {
     localStorage.setItem(INVITE_TOKEN_STORAGE_KEY, tokenFromUrl);
   }
+  if (inviteTypeFromUrl) {
+    localStorage.setItem(INVITE_TYPE_STORAGE_KEY, inviteTypeFromUrl);
+  }
 
   inviteToken = activeToken;
+  inviteTypeOverride = inviteTypeFromUrl || storedInviteType || '';
 
   if (inviteTokenField) {
     inviteTokenField.value = inviteToken;
@@ -644,14 +675,14 @@ async function initAuth() {
     const invite = await fetchInviteDetails(inviteToken);
     if (invite) {
       applyInviteDetailsToProfile(invite, storedEmail);
-    } else {
+    } else if (!applyInviteTypeOverride(inviteTypeOverride, storedEmail)) {
       applyInviteDetailsToProfile(null, storedEmail);
       if (passwordError) {
         passwordError.textContent =
           'This invite link looks invalid or has expired. Please contact us for a fresh link.';
       }
     }
-  } else {
+  } else if (!applyInviteTypeOverride(inviteTypeOverride, storedEmail)) {
     applyInviteDetailsToProfile(null, storedEmail);
   }
 
@@ -1273,6 +1304,10 @@ async function submitRsvp(event) {
     await fetchInviteDetails(token);
   }
 
+  if (!inviteDetails && inviteTypeOverride) {
+    applyInviteTypeOverride(inviteTypeOverride, profile.email);
+  }
+
   if (!inviteDetails && !invitationGroupId) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent =
@@ -1296,7 +1331,11 @@ async function submitRsvp(event) {
   const includesPlusOne = inviteType === 'plusone';
   const primaryAttendance = normalizeAttendance(formData.get('primary-attendance'));
   const plusOneAttendance = normalizeAttendance(formData.get('plusone-attendance'));
-  const groupId = inviteDetails?.id || invitationGroupId;
+  let groupId = inviteDetails?.id || invitationGroupId;
+  if (!groupId) {
+    groupId = crypto.randomUUID();
+    invitationGroupId = groupId;
+  }
 
   const guestRows = [
     {
