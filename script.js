@@ -139,6 +139,7 @@ const navToggle = document.querySelector('.nav-toggle');
 const navLinks = document.querySelectorAll('.nav-links a');
 const header = document.querySelector('.site-header');
 const mobileModalMedia = window.matchMedia('(max-width: 600px)');
+const desktopRsvpStepMedia = window.matchMedia('(min-width: 900px)');
 const mapReplayButton = document.querySelector('[data-map-replay]');
 const thankYouMessageEl = document.getElementById('rsvp-thank-you-message');
 const thankYouPersonalEl = document.getElementById('rsvp-thank-you-personal');
@@ -309,41 +310,95 @@ function resetGuestSectionState() {
   applyGuestSectionResponsiveState(mobileModalMedia.matches);
 }
 
-function setStepIndicator(step) {
+function isDesktopRsvpStepLayout() {
+  return desktopRsvpStepMedia.matches;
+}
+
+function getRsvpStepSequence() {
+  if (isDesktopRsvpStepLayout()) {
+    return [1, 2, 4, 5];
+  }
+  return [1, 2, 3, 4, 5];
+}
+
+function getNearestRsvpStep(step) {
+  const sequence = getRsvpStepSequence();
+  if (sequence.includes(step)) {
+    return step;
+  }
+  const priorStep = sequence.filter(sequenceStep => sequenceStep <= step).pop();
+  return priorStep ?? sequence[0];
+}
+
+function getRsvpStepByOffset(step, offset) {
+  const sequence = getRsvpStepSequence();
+  const currentIndex = sequence.indexOf(step);
+  if (currentIndex === -1) {
+    return sequence[0];
+  }
+  const nextIndex = Math.min(Math.max(currentIndex + offset, 0), sequence.length - 1);
+  return sequence[nextIndex];
+}
+
+function updateStepIndicators(activeStep) {
   stepIndicators.forEach(indicator => {
     const indicatorStep = Number(indicator.dataset.stepIndicator);
-    indicator.classList.toggle('is-active', indicatorStep === step);
+    const shouldHide = isDesktopRsvpStepLayout() && indicatorStep === 3;
+    indicator.hidden = shouldHide;
+    indicator.classList.toggle('is-active', indicatorStep === activeStep);
   });
 }
 
 function showStep(step) {
-  currentStep = step;
+  const resolvedStep = getNearestRsvpStep(step);
+  const isDesktop = isDesktopRsvpStepLayout();
+  currentStep = resolvedStep;
   stepSections.forEach(section => {
     const sectionStep = Number(section.dataset.rsvpStep);
-    section.hidden = sectionStep !== step;
+    const shouldShow =
+      sectionStep === resolvedStep ||
+      (isDesktop && resolvedStep === 2 && (sectionStep === 2 || sectionStep === 3));
+    section.hidden = !shouldShow;
   });
 
-  setStepIndicator(step);
+  updateStepIndicators(resolvedStep);
 
   if (stepPrevButton) {
-    stepPrevButton.hidden = step === 1 || step === 5;
+    stepPrevButton.hidden = resolvedStep === 1 || resolvedStep === 5;
   }
 
   if (stepNextButton) {
-    stepNextButton.hidden = step < 1 || step > 3;
-    stepNextButton.textContent = step === 1 ? 'RSVP' : 'Next';
+    stepNextButton.hidden = resolvedStep < 1 || resolvedStep >= 4;
+    stepNextButton.textContent = resolvedStep === 1 ? 'RSVP' : 'Next';
   }
 
   if (stepSubmitButton) {
-    stepSubmitButton.hidden = step !== 4;
+    stepSubmitButton.hidden = resolvedStep !== 4;
   }
 
-  const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === step);
+  const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === resolvedStep);
   const focusTarget = activeSection?.querySelector(
     'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled])'
   );
   if (focusTarget) {
     setTimeout(() => focusTarget.focus(), 50);
+  }
+}
+
+function setupRsvpStepLayoutWatcher() {
+  const handleChange = event => {
+    const matches = typeof event === 'boolean' ? event : event.matches;
+    if (matches === null || matches === undefined) {
+      showStep(currentStep);
+      return;
+    }
+    showStep(currentStep);
+  };
+
+  if (desktopRsvpStepMedia.addEventListener) {
+    desktopRsvpStepMedia.addEventListener('change', handleChange);
+  } else if (desktopRsvpStepMedia.addListener) {
+    desktopRsvpStepMedia.addListener(handleChange);
   }
 }
 
@@ -1163,6 +1218,7 @@ window.addEventListener('load', updateHeaderOffset);
 updateHeaderOffset();
 
 setupGuestSectionToggles();
+setupRsvpStepLayoutWatcher();
 
 function openRsvpSection() {
   if (!rsvpSection) return;
@@ -1204,6 +1260,17 @@ function validateStep(step, formData, profile) {
     }
   }
 
+  const mergeGuestSteps = isDesktopRsvpStepLayout();
+  const validatePlusOne = () => {
+    if (!formData.get('plusone-first-name') || !formData.get('plusone-last-name')) {
+      errors.push(`Please enter ${plusOneName}'s first name and surname.`);
+    }
+
+    if (!formData.get('plusone-attendance')) {
+      errors.push(`Please let us know if ${plusOneName} can make it.`);
+    }
+  };
+
   if (step === 2) {
     if (!formData.get('primary-first-name') || !formData.get('primary-last-name')) {
       errors.push(`Please enter ${primaryName}'s first name and surname.`);
@@ -1212,16 +1279,14 @@ function validateStep(step, formData, profile) {
     if (!formData.get('primary-attendance')) {
       errors.push(`Please let us know if ${primaryName} can make it.`);
     }
+
+    if (mergeGuestSteps && hasPlusOne) {
+      validatePlusOne();
+    }
   }
 
-  if (step === 3 && hasPlusOne) {
-    if (!formData.get('plusone-first-name') || !formData.get('plusone-last-name')) {
-      errors.push(`Please enter ${plusOneName}'s first name and surname.`);
-    }
-
-    if (!formData.get('plusone-attendance')) {
-      errors.push(`Please let us know if ${plusOneName} can make it.`);
-    }
+  if (step === 3 && hasPlusOne && !mergeGuestSteps) {
+    validatePlusOne();
   }
 
   if (step === 4) {
@@ -1274,14 +1339,14 @@ stepNextButton?.addEventListener('click', () => {
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
-  showStep(Math.min(currentStep + 1, 5));
+  showStep(getRsvpStepByOffset(currentStep, 1));
 });
 
 stepPrevButton?.addEventListener('click', () => {
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
-  showStep(Math.max(currentStep - 1, 1));
+  showStep(getRsvpStepByOffset(currentStep, -1));
 });
 
 async function submitRsvp(event) {
