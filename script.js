@@ -5,6 +5,7 @@ const MAGIC_LINK_REDIRECT_URL = new URL(window.location.pathname, SITE_BASE_URL)
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
 const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
+const RSVP_COMPLETED_KEY_PREFIX = 'weddingRsvpCompleted:';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
@@ -125,7 +126,7 @@ const plusOneLastNameInput = document.getElementById('plusone-last-name');
 const rsvpPasswordInput = document.getElementById('rsvp-password');
 const rsvpEmailField = document.getElementById('rsvp-email');
 const inviteTokenField = document.getElementById('invite-token');
-const openRsvpButton = document.getElementById('open-rsvp');
+const rsvpTriggers = document.querySelectorAll('[data-rsvp-trigger]');
 const guestSections = document.querySelectorAll('.guest-response');
 const stepIndicators = document.querySelectorAll('[data-step-indicator]');
 const stepSections = document.querySelectorAll('[data-rsvp-step]');
@@ -157,6 +158,7 @@ let currentStep = 1;
 let invitationGroupId = '';
 let inviteLookupFailed = false;
 let storedEmail = '';
+let hasAppliedCompletionDismissal = false;
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -172,6 +174,26 @@ function createGuestProfile(email) {
     primary: { name: 'Guest 1', firstName: '', lastName: '' },
     plusOne: { name: 'Guest 2', firstName: '', lastName: '' },
   };
+}
+
+function normalizeEmailForStorage(email) {
+  return email?.trim().toLowerCase() || '';
+}
+
+function getRsvpCompletionKey(email) {
+  const normalized = normalizeEmailForStorage(email);
+  return normalized ? `${RSVP_COMPLETED_KEY_PREFIX}${normalized}` : '';
+}
+
+function isRsvpCompleted(email) {
+  const key = getRsvpCompletionKey(email);
+  return key ? localStorage.getItem(key) === 'true' : false;
+}
+
+function setRsvpCompleted(email) {
+  const key = getRsvpCompletionKey(email);
+  if (!key) return;
+  localStorage.setItem(key, 'true');
 }
 
 function formatGuestName(firstName, lastName, fallback) {
@@ -644,6 +666,48 @@ async function loadGuestRowsByEmail(email) {
   return data || [];
 }
 
+function getActiveRsvpEmail() {
+  return (
+    authenticatedEmail ||
+    guestProfile?.email ||
+    storedEmail ||
+    rsvpEmailField?.value ||
+    rsvpAccessEmailInput?.value ||
+    ''
+  );
+}
+
+function updateRsvpTriggerLabels() {
+  if (!rsvpTriggers.length) return;
+  const email = getActiveRsvpEmail();
+  const completed = isRsvpCompleted(email);
+  rsvpTriggers.forEach(trigger => {
+    if (!trigger.dataset.rsvpDefaultLabel) {
+      trigger.dataset.rsvpDefaultLabel = trigger.textContent?.trim() || 'RSVP';
+    }
+    trigger.textContent = completed ? 'Edit RSVP' : trigger.dataset.rsvpDefaultLabel;
+  });
+}
+
+function setRsvpSectionVisibility(shouldShow) {
+  if (!rsvpSection) return;
+  rsvpSection.hidden = !shouldShow;
+  rsvpSection.setAttribute('aria-hidden', String(!shouldShow));
+}
+
+function applyRsvpCompletionDismissal() {
+  if (hasAppliedCompletionDismissal) {
+    updateRsvpTriggerLabels();
+    return;
+  }
+  const email = getActiveRsvpEmail();
+  updateRsvpTriggerLabels();
+  if (isRsvpCompleted(email)) {
+    setRsvpSectionVisibility(false);
+  }
+  hasAppliedCompletionDismissal = true;
+}
+
 function setAuthEmail(email) {
   authenticatedEmail = email;
   if (email) {
@@ -658,6 +722,7 @@ function setAuthEmail(email) {
   } else {
     setGuestProfile(createGuestProfile(email));
   }
+  updateRsvpTriggerLabels();
 }
 
 function setRsvpAccessFeedback(message) {
@@ -723,6 +788,7 @@ async function initAuth() {
     } else {
       applyInviteDetailsToProfile(null, storedEmail);
     }
+    applyRsvpCompletionDismissal();
     return;
   }
 
@@ -764,7 +830,13 @@ async function initAuth() {
     }
   } else {
     applyInviteDetailsToProfile(inviteDetails, storedEmail);
+    if (storedEmail && isRsvpCompleted(storedEmail)) {
+      const guestRows = await loadGuestRowsByEmail(storedEmail);
+      populateRsvpFromGuests(guestRows, storedEmail);
+    }
   }
+
+  applyRsvpCompletionDismissal();
 
   supabaseClient.auth.onAuthStateChange((_event, session) => {
     const email = session?.user?.email || '';
@@ -1196,8 +1268,22 @@ updateHeaderOffset();
 setupGuestSectionToggles();
 setupRsvpStepLayoutWatcher();
 
+function dismissRsvpSection() {
+  setRsvpSectionVisibility(false);
+  const target = document.querySelector('#schedule') || document.querySelector('#home');
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function getInitialRsvpStep() {
+  const email = getActiveRsvpEmail();
+  return isRsvpCompleted(email) ? 2 : 1;
+}
+
 function openRsvpSection() {
   if (!rsvpSection) return;
+  setRsvpSectionVisibility(true);
   rsvpSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
@@ -1210,11 +1296,18 @@ function openRsvpSection() {
     updateGuestUi(guestProfile);
   }
 
-  showStep(1);
+  showStep(getInitialRsvpStep());
   resetGuestSectionState();
 }
 
-openRsvpButton?.addEventListener('click', openRsvpSection);
+rsvpTriggers.forEach(trigger => {
+  trigger.addEventListener('click', event => {
+    if (trigger instanceof HTMLAnchorElement) {
+      event.preventDefault();
+    }
+    openRsvpSection();
+  });
+});
 
 function validateStep(step, formData, profile) {
   const errors = [];
@@ -1499,7 +1592,12 @@ async function submitRsvp(event) {
     if (thankYouPersonalEl) {
       thankYouPersonalEl.textContent = personalMessage;
     }
+    storedEmail = email;
+    localStorage.setItem(EMAIL_STORAGE_KEY, email);
+    setRsvpCompleted(email);
+    updateRsvpTriggerLabels();
     showStep(5);
+    dismissRsvpSection();
   } catch (error) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent =
