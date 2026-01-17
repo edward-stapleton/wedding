@@ -139,7 +139,6 @@ const navToggle = document.querySelector('.nav-toggle');
 const navLinks = document.querySelectorAll('.nav-links a');
 const header = document.querySelector('.site-header');
 const mobileModalMedia = window.matchMedia('(max-width: 600px)');
-const desktopRsvpStepMedia = window.matchMedia('(min-width: 900px)');
 const mapReplayButton = document.querySelector('[data-map-replay]');
 const thankYouMessageEl = document.getElementById('rsvp-thank-you-message');
 const thankYouPersonalEl = document.getElementById('rsvp-thank-you-personal');
@@ -331,14 +330,7 @@ function resetGuestSectionState() {
   applyGuestSectionResponsiveState(mobileModalMedia.matches);
 }
 
-function isDesktopRsvpStepLayout() {
-  return desktopRsvpStepMedia.matches;
-}
-
 function getRsvpStepSequence() {
-  if (isDesktopRsvpStepLayout()) {
-    return [1, 2, 4, 5];
-  }
   return [1, 2, 3, 4, 5];
 }
 
@@ -364,22 +356,16 @@ function getRsvpStepByOffset(step, offset) {
 function updateStepIndicators(activeStep) {
   stepIndicators.forEach(indicator => {
     const indicatorStep = Number(indicator.dataset.stepIndicator);
-    const shouldHide = isDesktopRsvpStepLayout() && indicatorStep === 3;
-    indicator.hidden = shouldHide;
     indicator.classList.toggle('is-active', indicatorStep === activeStep);
   });
 }
 
 function showStep(step) {
   const resolvedStep = getNearestRsvpStep(step);
-  const isDesktop = isDesktopRsvpStepLayout();
   currentStep = resolvedStep;
   stepSections.forEach(section => {
     const sectionStep = Number(section.dataset.rsvpStep);
-    const shouldShow =
-      sectionStep === resolvedStep ||
-      (isDesktop && resolvedStep === 2 && (sectionStep === 2 || sectionStep === 3));
-    section.hidden = !shouldShow;
+    section.hidden = sectionStep !== resolvedStep;
   });
 
   updateStepIndicators(resolvedStep);
@@ -408,22 +394,6 @@ function showStep(step) {
   updatePasswordGate();
 }
 
-function setupRsvpStepLayoutWatcher() {
-  const handleChange = event => {
-    const matches = typeof event === 'boolean' ? event : event.matches;
-    if (matches === null || matches === undefined) {
-      showStep(currentStep);
-      return;
-    }
-    showStep(currentStep);
-  };
-
-  if (desktopRsvpStepMedia.addEventListener) {
-    desktopRsvpStepMedia.addEventListener('change', handleChange);
-  } else if (desktopRsvpStepMedia.addListener) {
-    desktopRsvpStepMedia.addListener(handleChange);
-  }
-}
 
 function updateGuestUi(profile) {
   if (!profile) return;
@@ -1266,7 +1236,6 @@ window.addEventListener('load', updateHeaderOffset);
 updateHeaderOffset();
 
 setupGuestSectionToggles();
-setupRsvpStepLayoutWatcher();
 
 function dismissRsvpSection() {
   setRsvpSectionVisibility(false);
@@ -1325,7 +1294,6 @@ function validateStep(step, formData, profile) {
     }
   }
 
-  const mergeGuestSteps = isDesktopRsvpStepLayout();
   const validatePlusOne = () => {
     if (!formData.get('plusone-first-name') || !formData.get('plusone-last-name')) {
       errors.push(`Please enter ${plusOneName}'s first name and surname.`);
@@ -1345,12 +1313,12 @@ function validateStep(step, formData, profile) {
       errors.push(`Please let us know if ${primaryName} can make it.`);
     }
 
-    if (mergeGuestSteps && hasPlusOne) {
+    if (hasPlusOne) {
       validatePlusOne();
     }
   }
 
-  if (step === 3 && hasPlusOne && !mergeGuestSteps) {
+  if (step === 3 && hasPlusOne) {
     validatePlusOne();
   }
 
