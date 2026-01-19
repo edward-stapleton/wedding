@@ -417,6 +417,7 @@ function updateStepIndicators(activeStep) {
   stepIndicators.forEach(indicator => {
     const indicatorStep = Number(indicator.dataset.stepIndicator);
     indicator.classList.toggle('is-active', indicatorStep === activeStep);
+    indicator.classList.toggle('is-complete', indicatorStep < activeStep);
   });
 }
 
