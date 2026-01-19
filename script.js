@@ -1,6 +1,9 @@
 const SUPABASE_URL = 'https://ipxbndockmhkfuwjyevi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
 const SITE_BASE_URL = 'https://edward-stapleton.github.io/wedding/';
+const RSVP_ROUTE_PATH = 'rsvp/';
+const RSVP_ROUTE_URL = new URL(RSVP_ROUTE_PATH, SITE_BASE_URL).toString();
+const isRsvpRoute = window.location.pathname.includes(`/${RSVP_ROUTE_PATH}`);
 const MAGIC_LINK_REDIRECT_URL = new URL(window.location.pathname, SITE_BASE_URL).toString();
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
 const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
@@ -636,6 +639,29 @@ async function loadGuestRowsByEmail(email) {
   return data || [];
 }
 
+function isGuestRsvpComplete(guestRows) {
+  if (!guestRows.length) return false;
+  return guestRows.some(guest => typeof guest.attendance === 'string' && guest.attendance.trim() !== '');
+}
+
+async function enforceRsvpGate() {
+  if (isRsvpRoute || !supabaseClient) return true;
+  const { data } = await supabaseClient.auth.getSession();
+  const email = data?.session?.user?.email || '';
+  if (!email) {
+    window.location.href = RSVP_ROUTE_URL;
+    return false;
+  }
+
+  const guestRows = await loadGuestRowsByEmail(email);
+  if (!isGuestRsvpComplete(guestRows)) {
+    window.location.href = RSVP_ROUTE_URL;
+    return false;
+  }
+
+  return true;
+}
+
 function getActiveRsvpEmail() {
   return (
     authenticatedEmail ||
@@ -821,7 +847,11 @@ async function initAuth() {
   });
 }
 
-initAuth();
+enforceRsvpGate().then(shouldInit => {
+  if (shouldInit) {
+    initAuth();
+  }
+});
 
 rsvpAccessButton?.addEventListener('click', handleMagicLinkSubmit);
 

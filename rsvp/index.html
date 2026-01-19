@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edward &amp; Laura — RSVP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Stack+Sans+Headline:wght@200..700&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div class="page" id="page">
+      <header class="site-header">
+        <nav class="site-nav" aria-label="Primary">
+          <button
+            class="nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="primary-nav"
+            aria-label="Toggle navigation"
+          >
+            <span class="nav-toggle-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Menu</span>
+          </button>
+          <ul id="primary-nav" class="nav-links">
+            <li><a href="../#home">Home</a></li>
+            <li><a href="index.html">RSVP</a></li>
+            <li><a href="../#schedule">Schedule</a></li>
+            <li><a href="../#guide">Guide</a></li>
+            <li><a href="../#faqs">FAQs</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <main>
+        <section id="rsvp-page" class="section alt rsvp-page fade-section" data-section>
+          <div class="section-content">
+            <div class="rsvp-panel">
+              <div class="rsvp-body">
+                <h2 id="rsvp-title">RSVP</h2>
+                <form id="rsvp-form" novalidate>
+                  <ol class="rsvp-steps rsvp-progress" aria-label="RSVP progress">
+                    <li class="rsvp-step-indicator is-active" data-step-indicator="1">Welcome</li>
+                    <li class="rsvp-step-indicator" data-step-indicator="2">Guest 1</li>
+                    <li class="rsvp-step-indicator" data-step-indicator="3">Guest 2</li>
+                    <li class="rsvp-step-indicator" data-step-indicator="4">Contact</li>
+                    <li class="rsvp-step-indicator" data-step-indicator="5">Thank you</li>
+                  </ol>
+
+                  <section class="rsvp-step" data-rsvp-step="1">
+                    <h3 class="rsvp-step-title">Welcome</h3>
+                    <p class="rsvp-step-intro">
+                      Saturday 22 August 2026 &middot; Oxford. Please enter the password from your invitation to begin your
+                      RSVP.
+                    </p>
+                    <div class="form-field">
+                      <label for="rsvp-password">Password</label>
+                      <input
+                        id="rsvp-password"
+                        name="rsvp-password"
+                        type="password"
+                        autocomplete="off"
+                        class="form-control"
+                        placeholder="STARFORD"
+                        required
+                        data-initial-focus
+                      />
+                    </div>
+                  </section>
+
+                  <section class="rsvp-step" data-rsvp-step="2" hidden>
+                    <h3 class="rsvp-step-title">Guest 1</h3>
+                    <p class="rsvp-step-intro">Please share the primary guest details and attendance.</p>
+
+                    <section class="guest-response" data-guest-section="primary">
+                      <h4 class="guest-title"><span data-guest-name="primary">Guest 1</span></h4>
+                      <div class="form-grid">
+                        <div class="form-field">
+                          <label for="primary-first-name">First name</label>
+                          <input
+                            id="primary-first-name"
+                            name="primary-first-name"
+                            type="text"
+                            autocomplete="given-name"
+                            class="form-control"
+                            required
+                          />
+                        </div>
+                        <div class="form-field">
+                          <label for="primary-last-name">Surname</label>
+                          <input
+                            id="primary-last-name"
+                            name="primary-last-name"
+                            type="text"
+                            autocomplete="family-name"
+                            class="form-control"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <fieldset>
+                        <legend data-attendance-legend="primary">Able to come?</legend>
+                        <label>
+                          <input id="primary-attending" type="radio" name="primary-attendance" value="Yes" required />
+                          Yes
+                        </label>
+                        <label>
+                          <input type="radio" name="primary-attendance" value="No" required />
+                          No
+                        </label>
+                      </fieldset>
+                      <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
+                      <textarea
+                        id="primary-dietary"
+                        name="primary-dietary"
+                        class="form-control"
+                        rows="3"
+                        placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
+                      ></textarea>
+                    </section>
+                  </section>
+
+                  <section class="rsvp-step" data-rsvp-step="3" hidden>
+                    <h3 class="rsvp-step-title">Guest 2</h3>
+                    <p class="rsvp-step-intro">
+                      If your invite includes a second guest, please confirm their details and dietary needs.
+                    </p>
+
+                    <section class="guest-response" data-guest-section="plusOne">
+                      <h4 class="guest-title"><span data-guest-name="plusOne">Guest 2</span></h4>
+                      <div class="form-grid">
+                        <div class="form-field">
+                          <label for="plusone-first-name">First name</label>
+                          <input
+                            id="plusone-first-name"
+                            name="plusone-first-name"
+                            type="text"
+                            autocomplete="given-name"
+                            class="form-control"
+                            required
+                          />
+                        </div>
+                        <div class="form-field">
+                          <label for="plusone-last-name">Surname</label>
+                          <input
+                            id="plusone-last-name"
+                            name="plusone-last-name"
+                            type="text"
+                            autocomplete="family-name"
+                            class="form-control"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <fieldset>
+                        <legend data-attendance-legend="plusOne">Able to come?</legend>
+                        <label>
+                          <input type="radio" name="plusone-attendance" value="Yes" required />
+                          Yes
+                        </label>
+                        <label>
+                          <input type="radio" name="plusone-attendance" value="No" required />
+                          No
+                        </label>
+                      </fieldset>
+                      <label for="plusone-dietary" data-dietary-label="plusOne">Any dietary requirements?</label>
+                      <textarea
+                        id="plusone-dietary"
+                        name="plusone-dietary"
+                        class="form-control"
+                        rows="3"
+                        placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
+                      ></textarea>
+                    </section>
+                  </section>
+
+                  <section class="rsvp-step" data-rsvp-step="4" hidden>
+                    <h3 class="rsvp-step-title">Contact Details</h3>
+                    <p class="rsvp-step-intro">
+                      We&rsquo;ll use this to send confirmations and stay in touch. Address details are only needed for the
+                      primary guest.
+                    </p>
+                    <div class="rsvp-access">
+                      <h4 class="rsvp-access-title">Already RSVPed?</h4>
+                      <p class="rsvp-access-intro">
+                        Enter your email address to receive a secure magic link that reloads your saved RSVP.
+                      </p>
+                      <div class="form-field">
+                        <label for="rsvp-access-email">Email address</label>
+                        <input
+                          id="rsvp-access-email"
+                          name="rsvp-access-email"
+                          type="email"
+                          inputmode="email"
+                          autocomplete="email"
+                          class="form-control"
+                          placeholder="you@example.com"
+                        />
+                      </div>
+                      <button type="button" class="secondary" id="rsvp-access-button">Send magic link</button>
+                      <p id="rsvp-access-feedback" role="status" aria-live="polite"></p>
+                    </div>
+
+                    <div class="form-field">
+                      <label for="rsvp-email">Email address</label>
+                      <input
+                        id="rsvp-email"
+                        name="guest-email"
+                        type="email"
+                        inputmode="email"
+                        autocomplete="email"
+                        class="form-control"
+                        required
+                      />
+                    </div>
+
+                    <div class="form-grid">
+                      <div class="form-field">
+                        <label for="address-line-1">Address line 1</label>
+                        <input
+                          id="address-line-1"
+                          name="address-line-1"
+                          type="text"
+                          autocomplete="address-line1"
+                          class="form-control"
+                          required
+                        />
+                      </div>
+                      <div class="form-field">
+                        <label for="address-line-2">Address line 2</label>
+                        <input
+                          id="address-line-2"
+                          name="address-line-2"
+                          type="text"
+                          autocomplete="address-line2"
+                          class="form-control"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="form-grid">
+                      <div class="form-field">
+                        <label for="address-city">City</label>
+                        <input
+                          id="address-city"
+                          name="address-city"
+                          type="text"
+                          autocomplete="address-level2"
+                          class="form-control"
+                          required
+                        />
+                      </div>
+                      <div class="form-field">
+                        <label for="address-postcode">Postcode</label>
+                        <input
+                          id="address-postcode"
+                          name="address-postcode"
+                          type="text"
+                          autocomplete="postal-code"
+                          class="form-control"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div class="form-field">
+                      <label for="address-country">Country</label>
+                      <input
+                        id="address-country"
+                        name="address-country"
+                        type="text"
+                        autocomplete="country-name"
+                        class="form-control"
+                      />
+                    </div>
+                  </section>
+
+                  <section class="rsvp-step" data-rsvp-step="5" hidden>
+                    <h3 class="rsvp-step-title">Thank you</h3>
+                    <p class="rsvp-step-intro">Your RSVP has been sent.</p>
+                    <p id="rsvp-thank-you-message" class="thank-you"></p>
+                    <p id="rsvp-thank-you-personal"></p>
+                  </section>
+
+                  <input type="hidden" name="invite-token" id="invite-token" />
+                  <div class="rsvp-actions">
+                    <button type="button" class="secondary" data-step-prev hidden>Back</button>
+                    <button type="button" class="primary" data-step-next>Next</button>
+                    <button type="submit" class="primary" data-step-submit hidden>Enter</button>
+                  </div>
+                  <p id="rsvp-feedback" role="status" aria-live="polite"></p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer"></footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="../script.js" defer></script>
+  </body>
+</html>
