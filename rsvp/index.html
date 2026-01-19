@@ -188,21 +188,35 @@
                     <div class="rsvp-access">
                       <h4 class="rsvp-access-title">Already RSVPed?</h4>
                       <p class="rsvp-access-intro">
-                        Enter your email address to receive a secure magic link that reloads your saved RSVP.
+                        Use the RSVP gate on this page to reopen your saved response. Enter the same email address you
+                        used before, along with the invitation password.
                       </p>
-                      <div class="form-field">
-                        <label for="rsvp-access-email">Email address</label>
-                        <input
-                          id="rsvp-access-email"
-                          name="rsvp-access-email"
-                          type="email"
-                          inputmode="email"
-                          autocomplete="email"
-                          class="form-control"
-                          placeholder="you@example.com"
-                        />
+                      <div class="form-grid">
+                        <div class="form-field">
+                          <label for="rsvp-access-email">Email address</label>
+                          <input
+                            id="rsvp-access-email"
+                            name="rsvp-access-email"
+                            type="email"
+                            inputmode="email"
+                            autocomplete="email"
+                            class="form-control"
+                            placeholder="you@example.com"
+                          />
+                        </div>
+                        <div class="form-field">
+                          <label for="rsvp-access-password">Invitation password</label>
+                          <input
+                            id="rsvp-access-password"
+                            name="rsvp-access-password"
+                            type="password"
+                            autocomplete="off"
+                            class="form-control"
+                            placeholder="STARFORD"
+                          />
+                        </div>
                       </div>
-                      <button type="button" class="secondary" id="rsvp-access-button">Send magic link</button>
+                      <button type="button" class="secondary" id="rsvp-access-button">Load my RSVP</button>
                       <p id="rsvp-access-feedback" role="status" aria-live="polite"></p>
                     </div>
 

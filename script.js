@@ -4,11 +4,11 @@ const SITE_BASE_URL = 'https://edward-stapleton.github.io/wedding/';
 const RSVP_ROUTE_PATH = 'rsvp/';
 const RSVP_ROUTE_URL = new URL(RSVP_ROUTE_PATH, SITE_BASE_URL).toString();
 const isRsvpRoute = window.location.pathname.includes(`/${RSVP_ROUTE_PATH}`);
-const MAGIC_LINK_REDIRECT_URL = new URL(window.location.pathname, SITE_BASE_URL).toString();
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
 const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
 const RSVP_COMPLETED_KEY_PREFIX = 'weddingRsvpCompleted:';
+const RSVP_ACCESS_STORAGE_KEY = 'weddingRsvpAccessEmail';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
@@ -108,6 +108,7 @@ const GARDEN_FOOTPRINT = {
 };
 
 const rsvpAccessEmailInput = document.getElementById('rsvp-access-email');
+const rsvpAccessPasswordInput = document.getElementById('rsvp-access-password');
 const rsvpAccessButton = document.getElementById('rsvp-access-button');
 const rsvpAccessFeedback = document.getElementById('rsvp-access-feedback');
 const rsvpSection = document.getElementById('rsvp-page');
@@ -196,6 +197,16 @@ function setRsvpCompleted(email) {
   const key = getRsvpCompletionKey(email);
   if (!key) return;
   localStorage.setItem(key, 'true');
+}
+
+function setRsvpAccessEmail(email) {
+  const normalized = normalizeEmailForStorage(email);
+  if (!normalized) return;
+  localStorage.setItem(RSVP_ACCESS_STORAGE_KEY, normalized);
+}
+
+function getStoredRsvpAccessEmail() {
+  return localStorage.getItem(RSVP_ACCESS_STORAGE_KEY) || '';
 }
 
 function formatGuestName(firstName, lastName, fallback) {
@@ -646,15 +657,14 @@ function isGuestRsvpComplete(guestRows) {
 
 async function enforceRsvpGate() {
   if (isRsvpRoute || !supabaseClient) return true;
-  const { data } = await supabaseClient.auth.getSession();
-  const email = data?.session?.user?.email || '';
+  const email = getStoredRsvpAccessEmail();
   if (!email) {
     window.location.href = RSVP_ROUTE_URL;
     return false;
   }
 
   const guestRows = await loadGuestRowsByEmail(email);
-  if (!isGuestRsvpComplete(guestRows)) {
+  if (!guestRows.length) {
     window.location.href = RSVP_ROUTE_URL;
     return false;
   }
@@ -727,17 +737,19 @@ function setRsvpAccessFeedback(message) {
   }
 }
 
-async function handleMagicLinkSubmit() {
-  if (!rsvpAccessEmailInput) return;
+async function handleRsvpAccessSubmit() {
+  if (!rsvpAccessEmailInput || !rsvpAccessPasswordInput) return;
   if (!supabaseClient) {
-    setRsvpAccessFeedback('Email login is unavailable right now. Please try again later.');
+    setRsvpAccessFeedback('RSVP access is unavailable right now. Please try again later.');
     return;
   }
 
   setRsvpAccessFeedback('');
   rsvpAccessEmailInput.removeAttribute('aria-invalid');
+  rsvpAccessPasswordInput.removeAttribute('aria-invalid');
 
   const emailValue = rsvpAccessEmailInput.value.trim();
+  const passwordValue = rsvpAccessPasswordInput.value.trim().toUpperCase();
 
   if (!emailValue || !emailValue.includes('@')) {
     setRsvpAccessFeedback('Please enter a valid email address to continue.');
@@ -746,25 +758,36 @@ async function handleMagicLinkSubmit() {
     return;
   }
 
-  localStorage.setItem(EMAIL_STORAGE_KEY, emailValue);
-  setRsvpAccessFeedback('Sending your magic link...');
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email: emailValue,
-    options: {
-      emailRedirectTo: MAGIC_LINK_REDIRECT_URL,
-    },
-  });
-
-  if (error) {
-    setRsvpAccessFeedback(error.message || 'We could not send that link. Please try again in a moment.');
+  if (!passwordValue || passwordValue !== RSVP_PASSWORD) {
+    setRsvpAccessFeedback('Please enter the invitation password to continue.');
+    rsvpAccessPasswordInput.setAttribute('aria-invalid', 'true');
+    rsvpAccessPasswordInput.focus();
     return;
   }
 
-  setRsvpAccessFeedback('Check your inbox for your magic link.');
+  setRsvpAccessFeedback('Checking your RSVP...');
+  const guestRows = await loadGuestRowsByEmail(emailValue);
+  if (!guestRows.length) {
+    setRsvpAccessFeedback('We could not find an RSVP for that email address.');
+    rsvpAccessEmailInput.setAttribute('aria-invalid', 'true');
+    rsvpAccessEmailInput.focus();
+    return;
+  }
+
+  localStorage.setItem(EMAIL_STORAGE_KEY, emailValue);
+  setRsvpAccessEmail(emailValue);
+  setAuthEmail(emailValue);
+  populateRsvpFromGuests(guestRows, emailValue);
+  setRsvpAccessFeedback('Welcome back! We have loaded your saved RSVP.');
 }
 
 rsvpAccessEmailInput?.addEventListener('input', () => {
   rsvpAccessEmailInput.removeAttribute('aria-invalid');
+  setRsvpAccessFeedback('');
+});
+
+rsvpAccessPasswordInput?.addEventListener('input', () => {
+  rsvpAccessPasswordInput.removeAttribute('aria-invalid');
   setRsvpAccessFeedback('');
 });
 
@@ -773,6 +796,7 @@ async function initAuth() {
   storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
   const allowDirectInvite = Boolean(inviteTypeOverride);
   const shouldAutoOpenInvite = Boolean(inviteTypeFromUrl);
+  const storedAccessEmail = getStoredRsvpAccessEmail();
 
   if (rsvpAccessEmailInput && storedEmail) {
     rsvpAccessEmailInput.value = storedEmail;
@@ -802,23 +826,10 @@ async function initAuth() {
     applyInviteDetailsToProfile(null, storedEmail);
   }
 
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-
-  if (code) {
-    const { error } = await supabaseClient.auth.exchangeCodeForSession(code);
-    if (!error) {
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
-    } else {
-      setRsvpAccessFeedback('We could not verify that login link. Please request a new magic link.');
-    }
-  }
-
-  const { data } = await supabaseClient.auth.getSession();
-  if (data?.session?.user?.email) {
-    setAuthEmail(data.session.user.email);
-    const guestRows = await loadGuestRowsByEmail(data.session.user.email);
-    populateRsvpFromGuests(guestRows, data.session.user.email);
+  if (storedAccessEmail) {
+    setAuthEmail(storedAccessEmail);
+    const guestRows = await loadGuestRowsByEmail(storedAccessEmail);
+    populateRsvpFromGuests(guestRows, storedAccessEmail);
   } else if (allowDirectInvite) {
     applyInviteDetailsToProfile(inviteDetails, storedEmail);
     if (shouldAutoOpenInvite) {
@@ -833,18 +844,6 @@ async function initAuth() {
   }
 
   applyRsvpCompletionDismissal();
-
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
-    const email = session?.user?.email || '';
-    if (email) {
-      setAuthEmail(email);
-      loadGuestRowsByEmail(email).then(guestRows => {
-        populateRsvpFromGuests(guestRows, email);
-      });
-      return;
-    }
-    setAuthEmail('');
-  });
 }
 
 enforceRsvpGate().then(shouldInit => {
@@ -853,7 +852,7 @@ enforceRsvpGate().then(shouldInit => {
   }
 });
 
-rsvpAccessButton?.addEventListener('click', handleMagicLinkSubmit);
+rsvpAccessButton?.addEventListener('click', handleRsvpAccessSubmit);
 
 function setupGuideCarousel() {
   const carousel = document.querySelector('[data-guide-carousel]');
@@ -1592,6 +1591,7 @@ async function submitRsvp(event) {
     }
     storedEmail = email;
     localStorage.setItem(EMAIL_STORAGE_KEY, email);
+    setRsvpAccessEmail(email);
     setRsvpCompleted(email);
     updateRsvpTriggerLabels();
     showStep(5);
