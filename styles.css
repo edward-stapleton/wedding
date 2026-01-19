@@ -1014,6 +1014,7 @@ body.nav-open {
 }
 
 .rsvp-steps {
+  position: relative;
   list-style: none;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -1022,18 +1023,39 @@ body.nav-open {
   margin: 0;
 }
 
+.rsvp-steps::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0.4rem;
+  right: 0.4rem;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-50%);
+  z-index: 0;
+}
+
 .rsvp-step-indicator {
+  position: relative;
+  z-index: 1;
   padding: 0.65rem 0.75rem;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   text-align: center;
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.8);
+  background: rgba(79, 117, 42, 0.85);
 }
 
 .rsvp-step-indicator.is-active {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+}
+
+.rsvp-step-indicator.is-complete {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.85);
   color: #ffffff;
 }
 
