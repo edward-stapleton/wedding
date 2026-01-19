@@ -162,6 +162,7 @@ let invitationGroupId = '';
 let inviteLookupFailed = false;
 let storedEmail = '';
 let hasAppliedCompletionDismissal = false;
+const rsvpCompletionCache = new Map();
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -197,6 +198,51 @@ function setRsvpCompleted(email) {
   const key = getRsvpCompletionKey(email);
   if (!key) return;
   localStorage.setItem(key, 'true');
+  const normalizedEmail = normalizeEmailForStorage(email);
+  if (normalizedEmail) {
+    rsvpCompletionCache.set(normalizedEmail, true);
+  }
+}
+
+async function fetchRsvpCompletionStatus(email) {
+  const normalizedEmail = normalizeEmailForStorage(email);
+  if (!normalizedEmail) return false;
+
+  if (rsvpCompletionCache.has(normalizedEmail)) {
+    return rsvpCompletionCache.get(normalizedEmail);
+  }
+
+  if (!supabaseClient) {
+    const cachedCompletion = isRsvpCompleted(normalizedEmail);
+    rsvpCompletionCache.set(normalizedEmail, cachedCompletion);
+    return cachedCompletion;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('guests')
+    .select('attendance')
+    .eq('email', normalizedEmail);
+
+  if (error) {
+    const cachedCompletion = isRsvpCompleted(normalizedEmail);
+    rsvpCompletionCache.set(normalizedEmail, cachedCompletion);
+    return cachedCompletion;
+  }
+
+  const completed =
+    data?.some(guest => typeof guest.attendance === 'string' && guest.attendance.trim() !== '') ?? false;
+
+  if (completed) {
+    setRsvpCompleted(normalizedEmail);
+  } else {
+    const key = getRsvpCompletionKey(normalizedEmail);
+    if (key) {
+      localStorage.removeItem(key);
+    }
+  }
+
+  rsvpCompletionCache.set(normalizedEmail, completed);
+  return completed;
 }
 
 function setRsvpAccessEmail(email) {
@@ -656,15 +702,15 @@ function isGuestRsvpComplete(guestRows) {
 }
 
 async function enforceRsvpGate() {
-  if (isRsvpRoute || !supabaseClient) return true;
+  if (isRsvpRoute) return true;
   const email = getStoredRsvpAccessEmail();
   if (!email) {
     window.location.href = RSVP_ROUTE_URL;
     return false;
   }
 
-  const guestRows = await loadGuestRowsByEmail(email);
-  if (!guestRows.length) {
+  const completed = await fetchRsvpCompletionStatus(email);
+  if (!completed) {
     window.location.href = RSVP_ROUTE_URL;
     return false;
   }
@@ -683,10 +729,10 @@ function getActiveRsvpEmail() {
   );
 }
 
-function updateRsvpTriggerLabels() {
+async function updateRsvpTriggerLabels() {
   if (!rsvpTriggers.length) return;
   const email = getActiveRsvpEmail();
-  const completed = isRsvpCompleted(email);
+  const completed = await fetchRsvpCompletionStatus(email);
   rsvpTriggers.forEach(trigger => {
     if (!trigger.dataset.rsvpDefaultLabel) {
       trigger.dataset.rsvpDefaultLabel = trigger.textContent?.trim() || 'RSVP';
@@ -701,20 +747,21 @@ function setRsvpSectionVisibility(shouldShow) {
   rsvpSection.setAttribute('aria-hidden', String(!shouldShow));
 }
 
-function applyRsvpCompletionDismissal() {
+async function applyRsvpCompletionDismissal() {
   if (hasAppliedCompletionDismissal) {
-    updateRsvpTriggerLabels();
+    await updateRsvpTriggerLabels();
     return;
   }
   const email = getActiveRsvpEmail();
-  updateRsvpTriggerLabels();
-  if (isRsvpCompleted(email)) {
+  await updateRsvpTriggerLabels();
+  const completed = await fetchRsvpCompletionStatus(email);
+  if (completed) {
     setRsvpSectionVisibility(false);
   }
   hasAppliedCompletionDismissal = true;
 }
 
-function setAuthEmail(email) {
+async function setAuthEmail(email) {
   authenticatedEmail = email;
   if (email) {
     localStorage.setItem(EMAIL_STORAGE_KEY, email);
@@ -728,7 +775,7 @@ function setAuthEmail(email) {
   } else {
     setGuestProfile(createGuestProfile(email));
   }
-  updateRsvpTriggerLabels();
+  await updateRsvpTriggerLabels();
 }
 
 function setRsvpAccessFeedback(message) {
@@ -766,17 +813,22 @@ async function handleRsvpAccessSubmit() {
   }
 
   setRsvpAccessFeedback('Checking your RSVP...');
-  const guestRows = await loadGuestRowsByEmail(emailValue);
-  if (!guestRows.length) {
+  const completed = await fetchRsvpCompletionStatus(emailValue);
+  if (!completed) {
     setRsvpAccessFeedback('We could not find an RSVP for that email address.');
     rsvpAccessEmailInput.setAttribute('aria-invalid', 'true');
     rsvpAccessEmailInput.focus();
     return;
   }
 
+  const guestRows = await loadGuestRowsByEmail(emailValue);
+  if (!guestRows.length) {
+    setRsvpAccessFeedback('We could not load your RSVP right now. Please try again soon.');
+    return;
+  }
   localStorage.setItem(EMAIL_STORAGE_KEY, emailValue);
   setRsvpAccessEmail(emailValue);
-  setAuthEmail(emailValue);
+  await setAuthEmail(emailValue);
   populateRsvpFromGuests(guestRows, emailValue);
   setRsvpAccessFeedback('Welcome back! We have loaded your saved RSVP.');
 }
@@ -808,7 +860,7 @@ async function initAuth() {
     } else {
       applyInviteDetailsToProfile(null, storedEmail);
     }
-    applyRsvpCompletionDismissal();
+    await applyRsvpCompletionDismissal();
     return;
   }
 
@@ -827,7 +879,7 @@ async function initAuth() {
   }
 
   if (storedAccessEmail) {
-    setAuthEmail(storedAccessEmail);
+    await setAuthEmail(storedAccessEmail);
     const guestRows = await loadGuestRowsByEmail(storedAccessEmail);
     populateRsvpFromGuests(guestRows, storedAccessEmail);
   } else if (allowDirectInvite) {
@@ -837,13 +889,13 @@ async function initAuth() {
     }
   } else {
     applyInviteDetailsToProfile(inviteDetails, storedEmail);
-    if (storedEmail && isRsvpCompleted(storedEmail)) {
+    if (storedEmail && (await fetchRsvpCompletionStatus(storedEmail))) {
       const guestRows = await loadGuestRowsByEmail(storedEmail);
       populateRsvpFromGuests(guestRows, storedEmail);
     }
   }
 
-  applyRsvpCompletionDismissal();
+  await applyRsvpCompletionDismissal();
 }
 
 enforceRsvpGate().then(shouldInit => {
@@ -1274,12 +1326,13 @@ function dismissRsvpSection() {
   }
 }
 
-function getInitialRsvpStep() {
+async function getInitialRsvpStep() {
   const email = getActiveRsvpEmail();
-  return isRsvpCompleted(email) ? 2 : 1;
+  const completed = await fetchRsvpCompletionStatus(email);
+  return completed ? 2 : 1;
 }
 
-function openRsvpSection() {
+async function openRsvpSection() {
   if (!rsvpSection) return;
   setRsvpSectionVisibility(true);
   rsvpSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1294,7 +1347,8 @@ function openRsvpSection() {
     updateGuestUi(guestProfile);
   }
 
-  showStep(getInitialRsvpStep());
+  const initialStep = await getInitialRsvpStep();
+  showStep(initialStep);
   resetGuestSectionState();
 }
 
@@ -1303,7 +1357,7 @@ rsvpTriggers.forEach(trigger => {
     if (trigger instanceof HTMLAnchorElement) {
       event.preventDefault();
     }
-    openRsvpSection();
+    void openRsvpSection();
   });
 });
 
@@ -1593,7 +1647,7 @@ async function submitRsvp(event) {
     localStorage.setItem(EMAIL_STORAGE_KEY, email);
     setRsvpAccessEmail(email);
     setRsvpCompleted(email);
-    updateRsvpTriggerLabels();
+    await updateRsvpTriggerLabels();
     showStep(5);
     dismissRsvpSection();
   } catch (error) {
