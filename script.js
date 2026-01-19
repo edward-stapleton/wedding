@@ -1362,6 +1362,13 @@ rsvpTriggers.forEach(trigger => {
   });
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+  if (!isRsvpRoute && !rsvpSection) return;
+  setRsvpSectionVisibility(true);
+  showStep(1);
+  void openRsvpSection();
+});
+
 function validateStep(step, formData, profile) {
   const errors = [];
   const activeProfile = profile || createGuestProfile(rsvpEmailField?.value.trim() || storedEmail || '');
