@@ -170,6 +170,7 @@ let inviteLookupFailed = false;
 let storedEmail = '';
 let hasAppliedCompletionDismissal = false;
 let isReturningRsvp = false;
+let hasCompletedRsvp = false;
 const rsvpCompletionCache = new Map();
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -435,24 +436,25 @@ function getStepOneButtonLabel() {
 }
 
 function setReturningRsvpState(shouldReturn) {
-  isReturningRsvp = shouldReturn;
+  const canReturn = shouldReturn && hasCompletedRsvp;
+  isReturningRsvp = canReturn;
   if (returningEmailField) {
-    returningEmailField.hidden = !shouldReturn;
+    returningEmailField.hidden = !canReturn;
   }
   if (rsvpAccessEmailInput) {
-    rsvpAccessEmailInput.required = shouldReturn;
-    if (!shouldReturn) {
+    rsvpAccessEmailInput.required = canReturn;
+    if (!canReturn) {
       rsvpAccessEmailInput.removeAttribute('required');
       rsvpAccessEmailInput.removeAttribute('aria-invalid');
     }
   }
 
   if (stepOneTitle) {
-    stepOneTitle.textContent = shouldReturn ? 'Welcome back' : stepOneTitleDefault;
+    stepOneTitle.textContent = canReturn ? 'Welcome back' : stepOneTitleDefault;
   }
 
   if (stepOneIntro) {
-    stepOneIntro.textContent = shouldReturn
+    stepOneIntro.textContent = canReturn
       ? 'Enter the email address you used before along with the invitation password to reopen your RSVP.'
       : stepOneIntroDefault;
   }
@@ -825,6 +827,7 @@ async function setAuthEmail(email) {
     setGuestProfile(createGuestProfile(email));
   }
   await updateRsvpTriggerLabels();
+  await refreshRsvpCompletionGate(email);
 }
 
 function setRsvpAccessFeedback(message) {
@@ -835,6 +838,41 @@ function setRsvpAccessFeedback(message) {
   if (rsvpFeedback) {
     rsvpFeedback.textContent = message;
   }
+}
+
+function setRsvpAccessLinkState(canAccess) {
+  if (!rsvpAccessLink) return;
+  const isEnabled = Boolean(canAccess);
+  rsvpAccessLink.hidden = !isEnabled;
+  rsvpAccessLink.setAttribute('aria-hidden', String(!isEnabled));
+  rsvpAccessLink.setAttribute('aria-disabled', String(!isEnabled));
+  rsvpAccessLink.tabIndex = isEnabled ? 0 : -1;
+}
+
+function applyRsvpCompletionGateState(completed) {
+  hasCompletedRsvp = Boolean(completed);
+  setRsvpAccessLinkState(hasCompletedRsvp);
+  if (!hasCompletedRsvp && isReturningRsvp) {
+    setReturningRsvpState(false);
+  }
+}
+
+async function refreshRsvpCompletionGate(email, { showFeedback = false } = {}) {
+  const normalizedEmail = normalizeEmailForStorage(email);
+  if (!normalizedEmail) {
+    applyRsvpCompletionGateState(false);
+    if (showFeedback) {
+      setRsvpAccessFeedback('Please RSVP first to unlock the returning option.');
+    }
+    return false;
+  }
+
+  const completed = await fetchRsvpCompletionStatus(normalizedEmail);
+  applyRsvpCompletionGateState(completed);
+  if (!completed && showFeedback) {
+    setRsvpAccessFeedback('We could not find a completed RSVP for that email yet.');
+  }
+  return completed;
 }
 
 async function handleRsvpAccessSubmit() {
@@ -900,9 +938,11 @@ async function initAuth() {
   const shouldAutoOpenInvite = Boolean(inviteTypeFromUrl);
   const storedAccessEmail = getStoredRsvpAccessEmail();
 
+  setRsvpAccessLinkState(false);
   if (rsvpAccessEmailInput && storedEmail) {
     rsvpAccessEmailInput.value = storedEmail;
   }
+  await refreshRsvpCompletionGate(storedAccessEmail || storedEmail);
 
   if (!supabaseClient) {
     if (inviteTypeOverride) {
@@ -954,7 +994,13 @@ enforceRsvpGate().then(shouldInit => {
   }
 });
 
-rsvpAccessLink?.addEventListener('click', () => {
+rsvpAccessLink?.addEventListener('click', async event => {
+  event.preventDefault();
+  const activeEmail = getActiveRsvpEmail();
+  const canReturn = await refreshRsvpCompletionGate(activeEmail, { showFeedback: true });
+  if (!canReturn) {
+    return;
+  }
   setReturningRsvpState(!isReturningRsvp);
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
@@ -1723,6 +1769,7 @@ async function submitRsvp(event) {
     localStorage.setItem(EMAIL_STORAGE_KEY, email);
     setRsvpAccessEmail(email);
     setRsvpCompleted(email);
+    applyRsvpCompletionGateState(true);
     await updateRsvpTriggerLabels();
     showStep(5);
     dismissRsvpSection();
