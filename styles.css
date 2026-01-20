@@ -1185,7 +1185,7 @@ body.nav-open {
 
 textarea.form-control {
   resize: vertical;
-  min-height: 120px;
+  min-height: 4.5rem;
 }
 
 #rsvp-form .form-control:focus {
@@ -1377,7 +1377,7 @@ textarea.form-control {
   }
 
   textarea.form-control {
-    min-height: 100px;
+    min-height: 4.5rem;
   }
 
   .guest-toggle {
