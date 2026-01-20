@@ -970,6 +970,9 @@ body.nav-open {
   color: var(--text-color);
   text-align: left;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .rsvp-body {
@@ -977,6 +980,7 @@ body.nav-open {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  overflow-y: auto;
 }
 
 .rsvp-access {
@@ -1423,6 +1427,10 @@ textarea.form-control {
   #schedule .section-content {
     align-items: center;
     text-align: center;
+  }
+
+  .rsvp-panel {
+    max-height: calc(100dvh - var(--header-height) - 7rem);
   }
 }
 
