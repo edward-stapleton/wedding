@@ -187,6 +187,10 @@ body.site-locked .site-header {
   border-color: rgba(255, 255, 255, 0.75);
 }
 
+.rsvp-nav-hidden .site-header {
+  display: none;
+}
+
 .section {
   width: 100%;
   padding: 3.5rem 0;
@@ -1372,6 +1376,11 @@ html.no-js .fade-section {
 }
 
 @media (max-width: 600px) {
+  .rsvp-page .section-content {
+    width: 100%;
+    padding: 0;
+  }
+
   .modal {
     align-items: stretch;
   }
@@ -1396,7 +1405,11 @@ html.no-js .fade-section {
   }
 
   .rsvp-panel {
-    border-radius: 20px;
+    width: 100%;
+    min-height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
   }
 
   .rsvp-body {

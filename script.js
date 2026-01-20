@@ -693,7 +693,10 @@ function isPlusOneActive(profile) {
   if (profile?.plusOne && profile.plusOne.name) {
     return true;
   }
-  return Array.from(plusOneSections).some(section => !section.hidden);
+  if (rsvpState.inviteDetails?.invite_type === 'plusone') {
+    return true;
+  }
+  return rsvpState.inviteTypeOverride === 'plusone';
 }
 
 function normalizeInviteType(value) {
@@ -931,6 +934,7 @@ function applyRsvpCompletionGateState(completed) {
   if (!rsvpState.hasCompletedRsvp && rsvpState.isReturningRsvp) {
     setReturningRsvpState(false);
   }
+  updateRsvpNavigationVisibility();
 }
 
 async function refreshRsvpCompletionGate(email, { showFeedback = false } = {}) {
@@ -1531,6 +1535,7 @@ function setupNavigation() {
 
   navigationInitialized = true;
   updateHeaderOffset();
+  updateRsvpNavigationVisibility();
 }
 
 function toggleNavigation(force) {
@@ -1560,6 +1565,16 @@ function updateHeaderOffset() {
   const isDesktop = window.matchMedia('(min-width: 768px)').matches;
   const height = isDesktop ? header.offsetHeight : 0;
   document.documentElement.style.setProperty('--header-height', `${height}px`);
+}
+
+function updateRsvpNavigationVisibility() {
+  if (!header) return;
+  const shouldHideNav = isRsvpRoute && !rsvpState.hasCompletedRsvp;
+  document.body.classList.toggle('rsvp-nav-hidden', shouldHideNav);
+  if (shouldHideNav) {
+    toggleNavigation(false);
+  }
+  updateHeaderOffset();
 }
 
 window.addEventListener('resize', updateHeaderOffset);
@@ -1664,10 +1679,6 @@ function validateStep(step, formData, profile) {
 
     if (!formData.get('primary-attendance')) {
       errors.push(`Please let us know if ${primaryName} can make it.`);
-    }
-
-    if (hasPlusOne) {
-      validatePlusOne();
     }
   }
 
