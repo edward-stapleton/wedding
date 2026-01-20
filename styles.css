@@ -1097,6 +1097,30 @@ body.nav-open {
   border-color: rgba(255, 255, 255, 0.95);
 }
 
+@media (max-width: 600px) {
+  .rsvp-steps {
+    justify-content: space-between;
+  }
+
+  .rsvp-step-indicator {
+    padding: 0.25rem;
+    min-width: 1.8rem;
+    min-height: 1.8rem;
+  }
+
+  .rsvp-step-label {
+    display: none;
+  }
+
+  .rsvp-step-indicator.is-active {
+    padding: 0.35rem 0.7rem;
+  }
+
+  .rsvp-step-indicator.is-active .rsvp-step-label {
+    display: inline;
+  }
+}
+
 .rsvp-step-title {
   margin: 0;
   font-size: 1.2rem;
