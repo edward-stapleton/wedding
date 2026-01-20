@@ -21,7 +21,53 @@
       <div data-shared-header></div>
 
       <main>
-        <section id="home" class="section hero-section fade-section" data-section>
+        <section id="site-access" class="section alt site-access fade-section" data-site-access hidden>
+          <div class="section-content">
+            <div class="rsvp-panel">
+              <div class="rsvp-body">
+                <h2>Welcome back</h2>
+                <p class="rsvp-step-intro">
+                  Please enter the email address you RSVP&rsquo;d with and the website password to continue.
+                </p>
+                <form id="site-access-form" novalidate>
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label for="site-access-email">Email address</label>
+                      <input
+                        id="site-access-email"
+                        name="site-access-email"
+                        type="email"
+                        inputmode="email"
+                        autocomplete="email"
+                        class="form-control"
+                        placeholder="you@example.com"
+                        required
+                      />
+                    </div>
+                    <div class="form-field">
+                      <label for="site-access-password">Website password</label>
+                      <input
+                        id="site-access-password"
+                        name="site-access-password"
+                        type="password"
+                        autocomplete="off"
+                        class="form-control"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div class="rsvp-actions">
+                    <button type="submit" class="primary">Enter</button>
+                  </div>
+                  <p id="site-access-feedback" role="status" aria-live="polite"></p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div data-site-content>
+          <section id="home" class="section hero-section fade-section" data-section>
           <img class="hero-image" src="assets/hero-image.jpg" alt="Hero Image" />
           <div class="hero-content">
             <p class="hero-date">The Wedding of</p>
@@ -558,7 +604,7 @@
         </div>
         </section>
 
-        <section id="faqs" class="section fade-section" data-section>
+          <section id="faqs" class="section fade-section" data-section>
           <div class="section-content">
             <h2 class="section-title--center">FAQs</h2>
             <div class="accordion" id="faq-accordion">
@@ -673,7 +719,8 @@
               </div>
             </div>
           </div>
-        </section>
+          </section>
+        </div>
       </main>
 
       <footer class="site-footer"></footer>
