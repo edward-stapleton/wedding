@@ -1,6 +1,7 @@
-const SUPABASE_URL = 'https://ipxbndockmhkfuwjyevi.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
-const SITE_BASE_URL = 'https://edward-stapleton.github.io/wedding/';
+const APP_CONFIG = window.__APP_CONFIG__ || {};
+const SUPABASE_URL = APP_CONFIG.supabaseUrl;
+const SUPABASE_ANON_KEY = APP_CONFIG.supabaseAnonKey;
+const SITE_BASE_URL = APP_CONFIG.siteBaseUrl;
 const RSVP_ROUTE_PATH = 'rsvp/';
 const RSVP_ROUTE_URL = new URL(RSVP_ROUTE_PATH, SITE_BASE_URL).toString();
 const isRsvpRoute = window.location.pathname.includes(`/${RSVP_ROUTE_PATH}`);
@@ -10,9 +11,8 @@ const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
 const RSVP_COMPLETED_KEY_PREFIX = 'weddingRsvpCompleted:';
 const RSVP_ACCESS_STORAGE_KEY = 'weddingRsvpAccessEmail';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
-const MAPBOX_TOKEN =
-  'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg';
-const MAPBOX_DEFAULT_STYLE = 'mapbox://styles/mapbox/standard?optimize=true';
+const MAPBOX_TOKEN = APP_CONFIG.mapboxToken;
+const MAPBOX_DEFAULT_STYLE = APP_CONFIG.mapboxStyle;
 const mapElement = document.getElementById('map');
 const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
 const CHURCH_COORDS = [-1.2684928, 51.7666909];
@@ -184,7 +184,7 @@ const ATTENDANCE_PROMPT = 'Able to come?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
 const INVITE_TYPE_QUERY_KEY = 'invite';
-const RSVP_PASSWORD = 'STARFORD';
+const RSVP_PASSWORD = APP_CONFIG.rsvpPassword;
 
 function createGuestProfile(email) {
   return {
