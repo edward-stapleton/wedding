@@ -58,19 +58,34 @@
                       Saturday 22 August 2026 &middot; Oxford. Please enter the password from your invitation to begin your
                       RSVP.
                     </p>
-                    <div class="form-field">
-                      <label for="rsvp-password">Password</label>
-                      <input
-                        id="rsvp-password"
-                        name="rsvp-password"
-                        type="password"
-                        autocomplete="off"
-                        class="form-control"
-                        placeholder="STARFORD"
-                        required
-                        data-initial-focus
-                      />
+                    <div class="form-grid">
+                      <div class="form-field">
+                        <label for="rsvp-password">Password</label>
+                        <input
+                          id="rsvp-password"
+                          name="rsvp-password"
+                          type="password"
+                          autocomplete="off"
+                          class="form-control"
+                          placeholder="STARFORD"
+                          required
+                          data-initial-focus
+                        />
+                      </div>
+                      <div class="form-field" data-returning-email hidden>
+                        <label for="rsvp-access-email">Email address</label>
+                        <input
+                          id="rsvp-access-email"
+                          name="rsvp-access-email"
+                          type="email"
+                          inputmode="email"
+                          autocomplete="email"
+                          class="form-control"
+                          placeholder="you@example.com"
+                        />
+                      </div>
                     </div>
+                    <button type="button" class="rsvp-access-link">Already RSVP&rsquo;d?</button>
                   </section>
 
                   <section class="rsvp-step" data-rsvp-step="2" hidden>
@@ -185,41 +200,6 @@
                       We&rsquo;ll use this to send confirmations and stay in touch. Address details are only needed for the
                       primary guest.
                     </p>
-                    <div class="rsvp-access">
-                      <h4 class="rsvp-access-title">Already RSVPed?</h4>
-                      <p class="rsvp-access-intro">
-                        Use the RSVP gate on this page to reopen your saved response. Enter the same email address you
-                        used before, along with the invitation password.
-                      </p>
-                      <div class="form-grid">
-                        <div class="form-field">
-                          <label for="rsvp-access-email">Email address</label>
-                          <input
-                            id="rsvp-access-email"
-                            name="rsvp-access-email"
-                            type="email"
-                            inputmode="email"
-                            autocomplete="email"
-                            class="form-control"
-                            placeholder="you@example.com"
-                          />
-                        </div>
-                        <div class="form-field">
-                          <label for="rsvp-access-password">Invitation password</label>
-                          <input
-                            id="rsvp-access-password"
-                            name="rsvp-access-password"
-                            type="password"
-                            autocomplete="off"
-                            class="form-control"
-                            placeholder="STARFORD"
-                          />
-                        </div>
-                      </div>
-                      <button type="button" class="secondary" id="rsvp-access-button">Load my RSVP</button>
-                      <p id="rsvp-access-feedback" role="status" aria-live="polite"></p>
-                    </div>
-
                     <div class="form-field">
                       <label for="rsvp-email">Email address</label>
                       <input
