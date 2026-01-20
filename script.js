@@ -442,6 +442,7 @@ function setReturningRsvpState(shouldReturn) {
   if (rsvpAccessEmailInput) {
     rsvpAccessEmailInput.required = shouldReturn;
     if (!shouldReturn) {
+      rsvpAccessEmailInput.removeAttribute('required');
       rsvpAccessEmailInput.removeAttribute('aria-invalid');
     }
   }
@@ -892,6 +893,7 @@ rsvpAccessEmailInput?.addEventListener('input', () => {
 });
 
 async function initAuth() {
+  setReturningRsvpState(false);
   resolveInviteToken();
   storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
   const allowDirectInvite = Boolean(inviteTypeOverride);
