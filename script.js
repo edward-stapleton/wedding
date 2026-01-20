@@ -162,20 +162,22 @@ let mapLoaded = false;
 let mapInstance;
 let routeBoundsCache = null;
 let initialCameraCache = null;
-let guestProfile = null;
-let inviteToken = null;
-let inviteDetails = null;
-let inviteTypeOverride = '';
-let inviteTypeFromUrl = '';
-let authenticatedEmail = '';
-let currentStep = 1;
-let invitationGroupId = '';
-let inviteLookupFailed = false;
-let storedEmail = '';
-let hasAppliedCompletionDismissal = false;
-let isReturningRsvp = false;
-let hasRequestedReturning = false;
-let hasCompletedRsvp = false;
+const rsvpState = {
+  guestProfile: null,
+  inviteDetails: null,
+  currentStep: 1,
+  inviteToken: null,
+  inviteTypeOverride: '',
+  inviteTypeFromUrl: '',
+  authenticatedEmail: '',
+  invitationGroupId: '',
+  inviteLookupFailed: false,
+  storedEmail: '',
+  hasAppliedCompletionDismissal: false,
+  isReturningRsvp: false,
+  hasRequestedReturning: false,
+  hasCompletedRsvp: false,
+};
 const rsvpCompletionCache = new Map();
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -290,11 +292,24 @@ function setInputValue(input, value) {
   input.value = value ?? '';
 }
 
+function setInviteDetails(invite) {
+  rsvpState.inviteDetails = invite;
+  if (invite?.id) {
+    rsvpState.invitationGroupId = invite.id;
+  }
+  updateStepIndicatorVisibility();
+}
+
+function setGuestProfile(profile) {
+  rsvpState.guestProfile = profile;
+  updateGuestUi(profile);
+  updateStepIndicatorVisibility();
+}
+
 function applyInviteDetailsToProfile(invite, emailFallback) {
   if (!invite) {
+    setInviteDetails(null);
     setGuestProfile(createGuestProfile(emailFallback));
-    inviteDetails = null;
-    updateStepIndicatorVisibility();
     return;
   }
 
@@ -303,8 +318,7 @@ function applyInviteDetailsToProfile(invite, emailFallback) {
   const primaryName = formatGuestName(primaryFirst, primaryLast, 'Guest 1');
   const hasPlusOne = invite.invite_type === 'plusone';
 
-  inviteDetails = invite;
-  invitationGroupId = invite.id || invitationGroupId;
+  setInviteDetails(invite);
   setGuestProfile({
     email: invite.primary_email || emailFallback,
     primary: {
@@ -320,7 +334,6 @@ function applyInviteDetailsToProfile(invite, emailFallback) {
         }
       : null,
   });
-  updateStepIndicatorVisibility();
 }
 
 function applyInviteTypeOverride(inviteType, emailFallback) {
@@ -335,13 +348,12 @@ function applyInviteTypeOverride(inviteType, emailFallback) {
     },
     emailFallback
   );
-  updateStepIndicatorVisibility();
   return true;
 }
 
 async function fetchInviteDetails(token) {
   if (!supabaseClient || !token) {
-    inviteDetails = null;
+    setInviteDetails(null);
     return null;
   }
 
@@ -352,13 +364,13 @@ async function fetchInviteDetails(token) {
     .maybeSingle();
 
   if (error || !data) {
-    inviteDetails = null;
-    inviteLookupFailed = true;
+    setInviteDetails(null);
+    rsvpState.inviteLookupFailed = true;
     return null;
   }
 
-  inviteDetails = data;
-  inviteLookupFailed = false;
+  setInviteDetails(data);
+  rsvpState.inviteLookupFailed = false;
   return data;
 }
 
@@ -412,7 +424,8 @@ function getRsvpStepSequence() {
 }
 
 function getRsvpNavigationSequence() {
-  const hasPlusOne = isPlusOneActive(guestProfile) || inviteDetails?.invite_type === 'plusone';
+  const hasPlusOne =
+    isPlusOneActive(rsvpState.guestProfile) || rsvpState.inviteDetails?.invite_type === 'plusone';
   return hasPlusOne ? [1, 2, 3, 4, 5] : [1, 2, 4, 5];
 }
 
@@ -459,19 +472,20 @@ function updateStepIndicatorVisibility() {
     indicator => indicator.dataset.stepIndicator === '2'
   );
   if (!plusOneIndicator) return;
-  const hasPlusOne = inviteDetails?.invite_type === 'plusone' || isPlusOneActive(guestProfile);
+  const hasPlusOne =
+    rsvpState.inviteDetails?.invite_type === 'plusone' || isPlusOneActive(rsvpState.guestProfile);
   const shouldHide = !hasPlusOne;
   plusOneIndicator.hidden = shouldHide;
   plusOneIndicator.setAttribute('aria-hidden', String(shouldHide));
 }
 
 function getStepOneButtonLabel() {
-  return isReturningRsvp ? 'Enter' : 'RSVP';
+  return rsvpState.isReturningRsvp ? 'Enter' : 'RSVP';
 }
 
 function setReturningRsvpState(shouldReturn) {
-  const canReturn = Boolean(shouldReturn && hasRequestedReturning);
-  isReturningRsvp = canReturn;
+  const canReturn = Boolean(shouldReturn && rsvpState.hasRequestedReturning);
+  rsvpState.isReturningRsvp = canReturn;
   if (returningEmailField) {
     returningEmailField.hidden = !canReturn;
   }
@@ -493,19 +507,19 @@ function setReturningRsvpState(shouldReturn) {
       : stepOneIntroDefault;
   }
 
-  if (currentStep === 1 && stepNextButton) {
+  if (rsvpState.currentStep === 1 && stepNextButton) {
     stepNextButton.textContent = getStepOneButtonLabel();
   }
 }
 
 function resetReturningRsvpRequest() {
-  hasRequestedReturning = false;
+  rsvpState.hasRequestedReturning = false;
   setReturningRsvpState(false);
 }
 
-function showStep(step) {
+function setStep(step) {
   const resolvedStep = getNearestRsvpStep(step);
-  currentStep = resolvedStep;
+  rsvpState.currentStep = resolvedStep;
   stepSections.forEach(section => {
     const sectionStep = Number(section.dataset.rsvpStep);
     section.hidden = sectionStep !== resolvedStep;
@@ -543,8 +557,7 @@ function showStep(step) {
 
   updatePasswordGate();
 }
-
-
+ 
 function updateGuestUi(profile) {
   if (!profile) return;
 
@@ -651,11 +664,6 @@ function updateGuestUi(profile) {
   }
 }
 
-function setGuestProfile(profile) {
-  guestProfile = profile;
-  updateGuestUi(profile);
-}
-
 function isPlusOneActive(profile) {
   if (profile?.plusOne && profile.plusOne.name) {
     return true;
@@ -673,7 +681,7 @@ function normalizeInviteType(value) {
 function resolveInviteToken() {
   const params = new URLSearchParams(window.location.search);
   const tokenFromUrl = params.get('i');
-  inviteTypeFromUrl = normalizeInviteType(params.get(INVITE_TYPE_QUERY_KEY));
+  rsvpState.inviteTypeFromUrl = normalizeInviteType(params.get(INVITE_TYPE_QUERY_KEY));
   const storedToken = localStorage.getItem(INVITE_TOKEN_STORAGE_KEY);
   const activeToken = tokenFromUrl || storedToken || '';
   const storedInviteType = localStorage.getItem(INVITE_TYPE_STORAGE_KEY);
@@ -681,15 +689,15 @@ function resolveInviteToken() {
   if (tokenFromUrl) {
     localStorage.setItem(INVITE_TOKEN_STORAGE_KEY, tokenFromUrl);
   }
-  if (inviteTypeFromUrl) {
-    localStorage.setItem(INVITE_TYPE_STORAGE_KEY, inviteTypeFromUrl);
+  if (rsvpState.inviteTypeFromUrl) {
+    localStorage.setItem(INVITE_TYPE_STORAGE_KEY, rsvpState.inviteTypeFromUrl);
   }
 
-  inviteToken = activeToken;
-  inviteTypeOverride = inviteTypeFromUrl || storedInviteType || '';
+  rsvpState.inviteToken = activeToken;
+  rsvpState.inviteTypeOverride = rsvpState.inviteTypeFromUrl || storedInviteType || '';
 
   if (inviteTokenField) {
-    inviteTokenField.value = inviteToken;
+    inviteTokenField.value = rsvpState.inviteToken;
   }
 }
 
@@ -710,7 +718,7 @@ function populateRsvpFromGuests(guestRows, email) {
   const primary = guestRows.find(row => row.role === 'primary') || guestRows[0];
   const plusOne = guestRows.find(row => row.role === 'plusone') || null;
 
-  invitationGroupId = primary?.invitation_group_id || invitationGroupId;
+  rsvpState.invitationGroupId = primary?.invitation_group_id || rsvpState.invitationGroupId;
 
   setInputValue(primaryFirstNameInput, primary?.first_name);
   setInputValue(primaryLastNameInput, primary?.last_name);
@@ -754,17 +762,18 @@ function populateRsvpFromGuests(guestRows, email) {
       : null,
   });
 
-  inviteDetails =
-    inviteDetails ||
-    (invitationGroupId
-      ? {
-          id: invitationGroupId,
-          invite_type: plusOne ? 'plusone' : 'single',
-          primary_email: email || primary?.email || '',
-          primary_first_name: primary?.first_name || '',
-          primary_last_name: primary?.last_name || '',
-        }
-      : null);
+  setInviteDetails(
+    rsvpState.inviteDetails ||
+      (rsvpState.invitationGroupId
+        ? {
+            id: rsvpState.invitationGroupId,
+            invite_type: plusOne ? 'plusone' : 'single',
+            primary_email: email || primary?.email || '',
+            primary_first_name: primary?.first_name || '',
+            primary_last_name: primary?.last_name || '',
+          }
+        : null)
+  );
 }
 
 async function loadGuestRowsByEmail(email) {
@@ -810,9 +819,9 @@ async function enforceRsvpGate() {
 
 function getActiveRsvpEmail() {
   return (
-    authenticatedEmail ||
-    guestProfile?.email ||
-    storedEmail ||
+    rsvpState.authenticatedEmail ||
+    rsvpState.guestProfile?.email ||
+    rsvpState.storedEmail ||
     rsvpEmailField?.value ||
     rsvpAccessEmailInput?.value ||
     ''
@@ -838,7 +847,7 @@ function setRsvpSectionVisibility(shouldShow) {
 }
 
 async function applyRsvpCompletionDismissal() {
-  if (hasAppliedCompletionDismissal) {
+  if (rsvpState.hasAppliedCompletionDismissal) {
     await updateRsvpTriggerLabels();
     return;
   }
@@ -848,18 +857,18 @@ async function applyRsvpCompletionDismissal() {
   if (completed) {
     setRsvpSectionVisibility(false);
   }
-  hasAppliedCompletionDismissal = true;
+  rsvpState.hasAppliedCompletionDismissal = true;
 }
 
 async function setAuthEmail(email) {
-  authenticatedEmail = email;
+  rsvpState.authenticatedEmail = email;
   if (email) {
     localStorage.setItem(EMAIL_STORAGE_KEY, email);
   }
-  if (inviteDetails) {
+  if (rsvpState.inviteDetails) {
     const updatedInvite = {
-      ...inviteDetails,
-      primary_email: email || inviteDetails.primary_email,
+      ...rsvpState.inviteDetails,
+      primary_email: email || rsvpState.inviteDetails.primary_email,
     };
     applyInviteDetailsToProfile(updatedInvite, email);
   } else {
@@ -889,9 +898,9 @@ function setRsvpAccessLinkState(canAccess) {
 }
 
 function applyRsvpCompletionGateState(completed) {
-  hasCompletedRsvp = Boolean(completed);
-  setRsvpAccessLinkState(hasCompletedRsvp);
-  if (!hasCompletedRsvp && isReturningRsvp) {
+  rsvpState.hasCompletedRsvp = Boolean(completed);
+  setRsvpAccessLinkState(rsvpState.hasCompletedRsvp);
+  if (!rsvpState.hasCompletedRsvp && rsvpState.isReturningRsvp) {
     setReturningRsvpState(false);
   }
 }
@@ -972,38 +981,38 @@ rsvpAccessEmailInput?.addEventListener('input', () => {
 async function initAuth() {
   resetReturningRsvpRequest();
   resolveInviteToken();
-  storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
-  const allowDirectInvite = Boolean(inviteTypeOverride);
-  const shouldAutoOpenInvite = Boolean(inviteTypeFromUrl);
+  rsvpState.storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
+  const allowDirectInvite = Boolean(rsvpState.inviteTypeOverride);
+  const shouldAutoOpenInvite = Boolean(rsvpState.inviteTypeFromUrl);
   const storedAccessEmail = getStoredRsvpAccessEmail();
 
-  if (rsvpAccessEmailInput && storedEmail) {
-    rsvpAccessEmailInput.value = storedEmail;
+  if (rsvpAccessEmailInput && rsvpState.storedEmail) {
+    rsvpAccessEmailInput.value = rsvpState.storedEmail;
   }
-  await refreshRsvpCompletionGate(storedAccessEmail || storedEmail);
+  await refreshRsvpCompletionGate(storedAccessEmail || rsvpState.storedEmail);
 
   if (!supabaseClient) {
-    if (inviteTypeOverride) {
-      applyInviteTypeOverride(inviteTypeOverride, storedEmail);
+    if (rsvpState.inviteTypeOverride) {
+      applyInviteTypeOverride(rsvpState.inviteTypeOverride, rsvpState.storedEmail);
     } else {
-      applyInviteDetailsToProfile(null, storedEmail);
+      applyInviteDetailsToProfile(null, rsvpState.storedEmail);
     }
     await applyRsvpCompletionDismissal();
     return;
   }
 
-  if (inviteToken) {
-    const invite = await fetchInviteDetails(inviteToken);
+  if (rsvpState.inviteToken) {
+    const invite = await fetchInviteDetails(rsvpState.inviteToken);
     if (invite) {
-      applyInviteDetailsToProfile(invite, storedEmail);
-    } else if (!applyInviteTypeOverride(inviteTypeOverride, storedEmail)) {
-      applyInviteDetailsToProfile(null, storedEmail);
+      applyInviteDetailsToProfile(invite, rsvpState.storedEmail);
+    } else if (!applyInviteTypeOverride(rsvpState.inviteTypeOverride, rsvpState.storedEmail)) {
+      applyInviteDetailsToProfile(null, rsvpState.storedEmail);
       setRsvpAccessFeedback(
         'This invite link looks invalid or has expired. Please contact us for a fresh link.'
       );
     }
-  } else if (!applyInviteTypeOverride(inviteTypeOverride, storedEmail)) {
-    applyInviteDetailsToProfile(null, storedEmail);
+  } else if (!applyInviteTypeOverride(rsvpState.inviteTypeOverride, rsvpState.storedEmail)) {
+    applyInviteDetailsToProfile(null, rsvpState.storedEmail);
   }
 
   if (storedAccessEmail) {
@@ -1011,15 +1020,15 @@ async function initAuth() {
     const guestRows = await loadGuestRowsByEmail(storedAccessEmail);
     populateRsvpFromGuests(guestRows, storedAccessEmail);
   } else if (allowDirectInvite) {
-    applyInviteDetailsToProfile(inviteDetails, storedEmail);
+    applyInviteDetailsToProfile(rsvpState.inviteDetails, rsvpState.storedEmail);
     if (shouldAutoOpenInvite) {
       openModal();
     }
   } else {
-    applyInviteDetailsToProfile(inviteDetails, storedEmail);
-    if (storedEmail && (await fetchRsvpCompletionStatus(storedEmail))) {
-      const guestRows = await loadGuestRowsByEmail(storedEmail);
-      populateRsvpFromGuests(guestRows, storedEmail);
+    applyInviteDetailsToProfile(rsvpState.inviteDetails, rsvpState.storedEmail);
+    if (rsvpState.storedEmail && (await fetchRsvpCompletionStatus(rsvpState.storedEmail))) {
+      const guestRows = await loadGuestRowsByEmail(rsvpState.storedEmail);
+      populateRsvpFromGuests(guestRows, rsvpState.storedEmail);
     }
   }
 
@@ -1032,18 +1041,22 @@ enforceRsvpGate().then(shouldInit => {
   }
 });
 
-rsvpAccessLink?.addEventListener('click', async event => {
-  event.preventDefault();
+async function handleReturningRsvpRequest() {
   const activeEmail = getActiveRsvpEmail();
   const canReturn = await refreshRsvpCompletionGate(activeEmail, { showFeedback: true });
   if (!canReturn) {
     return;
   }
-  hasRequestedReturning = true;
+  rsvpState.hasRequestedReturning = true;
   setReturningRsvpState(true);
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
+}
+
+rsvpAccessLink?.addEventListener('click', event => {
+  event.preventDefault();
+  void handleReturningRsvpRequest();
 });
 
 function setupGuideCarousel() {
@@ -1480,15 +1493,16 @@ async function openRsvpSection() {
     rsvpFeedback.textContent = '';
   }
 
-  if (!guestProfile) {
-    const fallbackEmail = rsvpEmailField?.value.trim() || rsvpAccessEmailInput?.value.trim() || storedEmail || '';
+  if (!rsvpState.guestProfile) {
+    const fallbackEmail =
+      rsvpEmailField?.value.trim() || rsvpAccessEmailInput?.value.trim() || rsvpState.storedEmail || '';
     setGuestProfile(createGuestProfile(fallbackEmail));
   } else {
-    updateGuestUi(guestProfile);
+    updateGuestUi(rsvpState.guestProfile);
   }
 
   const initialStep = await getInitialRsvpStep();
-  showStep(initialStep);
+  setStep(initialStep);
   resetGuestSectionState();
 }
 
@@ -1505,13 +1519,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!isRsvpRoute && !rsvpSection) return;
   setRsvpSectionVisibility(true);
   resetReturningRsvpRequest();
-  showStep(1);
+  setStep(1);
   void openRsvpSection();
 });
 
 function validateStep(step, formData, profile) {
   const errors = [];
-  const activeProfile = profile || createGuestProfile(rsvpEmailField?.value.trim() || storedEmail || '');
+  const activeProfile =
+    profile || createGuestProfile(rsvpEmailField?.value.trim() || rsvpState.storedEmail || '');
   const primaryName = activeProfile.primary?.name || 'Guest 1';
   const plusOneName = activeProfile.plusOne?.name || 'Guest 2';
   const hasPlusOne = isPlusOneActive(activeProfile);
@@ -1524,7 +1539,7 @@ function validateStep(step, formData, profile) {
       errors.push('The RSVP password is incorrect. Please check your invitation.');
     }
 
-    if (isReturningRsvp && hasRequestedReturning) {
+    if (rsvpState.isReturningRsvp && rsvpState.hasRequestedReturning) {
       const returningEmail = formData.get('rsvp-access-email')?.toString().trim() || '';
       if (!returningEmail || !returningEmail.includes('@')) {
         errors.push('Please enter a valid email address to continue.');
@@ -1603,7 +1618,7 @@ function isRsvpPasswordValid(value) {
 
 function updatePasswordGate() {
   if (!stepNextButton) return;
-  if (currentStep !== 1) {
+  if (rsvpState.currentStep !== 1) {
     stepNextButton.disabled = false;
     return;
   }
@@ -1616,17 +1631,24 @@ function updatePasswordGate() {
   }
 }
 
-stepNextButton?.addEventListener('click', async () => {
+rsvpPasswordInput?.addEventListener('input', () => {
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+  updatePasswordGate();
+});
+
+async function handleStepAdvance() {
   if (!rsvpForm) return;
   const formData = new FormData(rsvpForm);
-  const errors = validateStep(currentStep, formData, guestProfile);
+  const errors = validateStep(rsvpState.currentStep, formData, rsvpState.guestProfile);
   if (errors.length > 0) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent = errors.join(' ');
     }
     return;
   }
-  if (currentStep === 1 && isReturningRsvp) {
+  if (rsvpState.currentStep === 1 && rsvpState.isReturningRsvp) {
     const wasLoaded = await handleRsvpAccessSubmit();
     if (!wasLoaded) {
       return;
@@ -1635,21 +1657,22 @@ stepNextButton?.addEventListener('click', async () => {
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
-  showStep(getRsvpStepByOffset(currentStep, 1));
+  setStep(getRsvpStepByOffset(rsvpState.currentStep, 1));
+}
+
+function handleStepBack() {
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+  setStep(getRsvpStepByOffset(rsvpState.currentStep, -1));
+}
+
+stepNextButton?.addEventListener('click', () => {
+  void handleStepAdvance();
 });
 
 stepPrevButton?.addEventListener('click', () => {
-  if (rsvpFeedback) {
-    rsvpFeedback.textContent = '';
-  }
-  showStep(getRsvpStepByOffset(currentStep, -1));
-});
-
-rsvpPasswordInput?.addEventListener('input', () => {
-  if (rsvpFeedback) {
-    rsvpFeedback.textContent = '';
-  }
-  updatePasswordGate();
+  handleStepBack();
 });
 
 async function submitRsvp(event) {
@@ -1661,7 +1684,8 @@ async function submitRsvp(event) {
   if (!rsvpForm) return;
 
   const formData = new FormData(rsvpForm);
-  const profile = guestProfile || createGuestProfile(formData.get('guest-email')?.trim() || '');
+  const profile =
+    rsvpState.guestProfile || createGuestProfile(formData.get('guest-email')?.trim() || '');
   const errors = validateForm(formData, profile);
 
   if (errors.length > 0) {
@@ -1678,27 +1702,27 @@ async function submitRsvp(event) {
     return;
   }
 
-  const token = (formData.get('invite-token') || inviteToken || '').trim();
-  if (token && (!inviteDetails || inviteDetails.token !== token)) {
+  const token = (formData.get('invite-token') || rsvpState.inviteToken || '').trim();
+  if (token && (!rsvpState.inviteDetails || rsvpState.inviteDetails.token !== token)) {
     await fetchInviteDetails(token);
   }
 
-  if (!inviteDetails && inviteTypeOverride) {
-    applyInviteTypeOverride(inviteTypeOverride, profile.email);
+  if (!rsvpState.inviteDetails && rsvpState.inviteTypeOverride) {
+    applyInviteTypeOverride(rsvpState.inviteTypeOverride, profile.email);
   }
 
-  if (!inviteDetails && !invitationGroupId) {
+  if (!rsvpState.inviteDetails && !rsvpState.invitationGroupId) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent =
-        inviteLookupFailed
+        rsvpState.inviteLookupFailed
           ? 'This invite link looks invalid or expired. Please contact us for a fresh link.'
           : 'We could not detect your invite details. Please use your invite link or contact us for help.';
     }
     return;
   }
 
-  const email = (formData.get('guest-email') || profile.email || authenticatedEmail || '').trim();
-  if (authenticatedEmail && email && authenticatedEmail !== email) {
+  const email = (formData.get('guest-email') || profile.email || rsvpState.authenticatedEmail || '').trim();
+  if (rsvpState.authenticatedEmail && email && rsvpState.authenticatedEmail !== email) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent =
         'Please use the same email you signed in with so we can keep your RSVP linked correctly.';
@@ -1706,14 +1730,15 @@ async function submitRsvp(event) {
     return;
   }
   const now = new Date().toISOString();
-  const inviteType = inviteDetails?.invite_type || (isPlusOneActive(profile) ? 'plusone' : 'single');
+  const inviteType =
+    rsvpState.inviteDetails?.invite_type || (isPlusOneActive(profile) ? 'plusone' : 'single');
   const includesPlusOne = inviteType === 'plusone';
   const primaryAttendance = normalizeAttendance(formData.get('primary-attendance'));
   const plusOneAttendance = normalizeAttendance(formData.get('plusone-attendance'));
-  let groupId = inviteDetails?.id || invitationGroupId;
+  let groupId = rsvpState.inviteDetails?.id || rsvpState.invitationGroupId;
   if (!groupId) {
     groupId = crypto.randomUUID();
-    invitationGroupId = groupId;
+    rsvpState.invitationGroupId = groupId;
   }
 
   const guestRows = [
@@ -1761,14 +1786,14 @@ async function submitRsvp(event) {
       throw error;
     }
 
-    if (inviteDetails?.id) {
+    if (rsvpState.inviteDetails?.id) {
       const { error: inviteError } = await supabaseClient
         .from('invites')
         .update({
           redeemed_at: now,
-          primary_email: inviteDetails.primary_email || email,
+          primary_email: rsvpState.inviteDetails.primary_email || email,
         })
-        .eq('id', inviteDetails.id);
+        .eq('id', rsvpState.inviteDetails.id);
 
       if (inviteError) {
         throw inviteError;
@@ -1804,13 +1829,13 @@ async function submitRsvp(event) {
     if (thankYouPersonalEl) {
       thankYouPersonalEl.textContent = personalMessage;
     }
-    storedEmail = email;
+    rsvpState.storedEmail = email;
     localStorage.setItem(EMAIL_STORAGE_KEY, email);
     setRsvpAccessEmail(email);
     setRsvpCompleted(email);
     applyRsvpCompletionGateState(true);
     await updateRsvpTriggerLabels();
-    showStep(5);
+    setStep(5);
     dismissRsvpSection();
   } catch (error) {
     if (rsvpFeedback) {
