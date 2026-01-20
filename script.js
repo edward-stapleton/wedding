@@ -171,6 +171,7 @@ let inviteLookupFailed = false;
 let storedEmail = '';
 let hasAppliedCompletionDismissal = false;
 let isReturningRsvp = false;
+let hasRequestedReturning = false;
 let hasCompletedRsvp = false;
 const rsvpCompletionCache = new Map();
 
@@ -451,7 +452,7 @@ function getStepOneButtonLabel() {
 }
 
 function setReturningRsvpState(shouldReturn) {
-  const canReturn = shouldReturn && hasCompletedRsvp;
+  const canReturn = Boolean(shouldReturn && hasRequestedReturning && hasCompletedRsvp);
   isReturningRsvp = canReturn;
   if (returningEmailField) {
     returningEmailField.hidden = !canReturn;
@@ -477,6 +478,11 @@ function setReturningRsvpState(shouldReturn) {
   if (currentStep === 1 && stepNextButton) {
     stepNextButton.textContent = getStepOneButtonLabel();
   }
+}
+
+function resetReturningRsvpRequest() {
+  hasRequestedReturning = false;
+  setReturningRsvpState(false);
 }
 
 function showStep(step) {
@@ -946,7 +952,7 @@ rsvpAccessEmailInput?.addEventListener('input', () => {
 });
 
 async function initAuth() {
-  setReturningRsvpState(false);
+  resetReturningRsvpRequest();
   resolveInviteToken();
   storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
   const allowDirectInvite = Boolean(inviteTypeOverride);
@@ -1011,6 +1017,7 @@ enforceRsvpGate().then(shouldInit => {
 
 rsvpAccessLink?.addEventListener('click', async event => {
   event.preventDefault();
+  hasRequestedReturning = true;
   const activeEmail = getActiveRsvpEmail();
   const canReturn = await refreshRsvpCompletionGate(activeEmail, { showFeedback: true });
   if (!canReturn) {
@@ -1480,7 +1487,7 @@ rsvpTriggers.forEach(trigger => {
 document.addEventListener('DOMContentLoaded', () => {
   if (!isRsvpRoute && !rsvpSection) return;
   setRsvpSectionVisibility(true);
-  setReturningRsvpState(false);
+  resetReturningRsvpRequest();
   showStep(1);
   void openRsvpSection();
 });
@@ -1500,7 +1507,7 @@ function validateStep(step, formData, profile) {
       errors.push('The RSVP password is incorrect. Please check your invitation.');
     }
 
-    if (isReturningRsvp) {
+    if (isReturningRsvp && hasRequestedReturning) {
       const returningEmail = formData.get('rsvp-access-email')?.toString().trim() || '';
       if (!returningEmail || !returningEmail.includes('@')) {
         errors.push('Please enter a valid email address to continue.');
