@@ -990,6 +990,17 @@ body.nav-open {
   gap: 0.75rem;
 }
 
+.rsvp-access-link {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .rsvp-access-title {
   margin: 0;
   font-size: 1.05rem;
