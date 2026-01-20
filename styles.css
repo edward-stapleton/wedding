@@ -1034,6 +1034,7 @@ body.nav-open {
   display: flex;
   flex-wrap: nowrap;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 0.5rem;
   padding: 0;
   margin: 0;
@@ -1043,8 +1044,8 @@ body.nav-open {
   content: '';
   position: absolute;
   top: 0.3rem;
-  left: 0.3rem;
-  right: 0.3rem;
+  left: 0;
+  right: 0;
   height: 1px;
   background: rgba(255, 255, 255, 0.25);
   z-index: 0;
@@ -1056,6 +1057,7 @@ body.nav-open {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1 1 0;
   gap: 0.35rem;
   padding: 0;
   min-height: 1.6rem;
@@ -1077,7 +1079,24 @@ body.nav-open {
 
 .rsvp-step-label {
   display: block;
+  width: 100%;
   text-align: center;
+}
+
+.rsvp-step-indicator:first-child {
+  align-items: flex-start;
+}
+
+.rsvp-step-indicator:last-child {
+  align-items: flex-end;
+}
+
+.rsvp-step-indicator:first-child .rsvp-step-label {
+  text-align: left;
+}
+
+.rsvp-step-indicator:last-child .rsvp-step-label {
+  text-align: right;
 }
 
 .rsvp-step-indicator.is-active {
@@ -1099,10 +1118,6 @@ body.nav-open {
 }
 
 @media (max-width: 600px) {
-  .rsvp-steps {
-    justify-content: space-between;
-  }
-
   .rsvp-step-indicator {
     min-width: 1.8rem;
     min-height: 1.8rem;
