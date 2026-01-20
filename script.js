@@ -6,6 +6,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
 const SITE_BASE_URL = 'https://edward-stapleton.github.io/wedding/';
 const RSVP_ROUTE_PATH = 'rsvp/';
 const RSVP_ROUTE_URL = new URL(RSVP_ROUTE_PATH, SITE_BASE_URL).toString();
+const HEADER_TEMPLATE_PATH = 'partials/site-header.html';
+const HEADER_TEMPLATE_URL = new URL(HEADER_TEMPLATE_PATH, SITE_BASE_URL).toString();
 const isRsvpRoute = window.location.pathname.includes(`/${RSVP_ROUTE_PATH}`);
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
 const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
@@ -57,10 +59,10 @@ const stepPrevButton = document.querySelector('[data-step-prev]');
 const stepNextButton = document.querySelector('[data-step-next]');
 const stepSubmitButton = document.querySelector('[data-step-submit]');
 const mapContainer = document.querySelector('[data-map-container]');
-const siteNav = document.querySelector('.site-nav');
-const navToggle = document.querySelector('.nav-toggle');
-const navLinks = document.querySelectorAll('.nav-links a');
-const header = document.querySelector('.site-header');
+let siteNav = document.querySelector('.site-nav');
+let navToggle = document.querySelector('.nav-toggle');
+let navLinks = Array.from(document.querySelectorAll('.nav-links a'));
+let header = document.querySelector('.site-header');
 const mobileModalMedia = window.matchMedia('(max-width: 600px)');
 const mapReplayButton = document.querySelector('[data-map-replay]');
 const thankYouMessageEl = document.getElementById('rsvp-thank-you-message');
@@ -69,6 +71,13 @@ const stepOneTitleDefault = stepOneTitle?.textContent?.trim() || 'Welcome';
 const stepOneIntroDefault =
   stepOneIntro?.textContent?.trim() ||
   'Saturday 22 August 2026 · Oxford. Please enter the password from your invitation to begin your RSVP.';
+const NAV_LINK_TARGETS = {
+  home: `${SITE_BASE_URL}#home`,
+  rsvp: new URL('rsvp/index.html', SITE_BASE_URL).toString(),
+  schedule: `${SITE_BASE_URL}#schedule`,
+  guide: `${SITE_BASE_URL}#guide`,
+  faqs: `${SITE_BASE_URL}#faqs`,
+};
 
 let mapLoaded = false;
 let mapInstance;
@@ -99,6 +108,44 @@ const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
 const INVITE_TYPE_QUERY_KEY = 'invite';
 const RSVP_PASSWORD = APP_CONFIG.rsvpPassword;
+
+function refreshNavigationElements() {
+  siteNav = document.querySelector('.site-nav');
+  navToggle = document.querySelector('.nav-toggle');
+  navLinks = Array.from(document.querySelectorAll('.nav-links a'));
+  header = document.querySelector('.site-header');
+}
+
+function applySharedNavLinks(root = document) {
+  const links = root.querySelectorAll('[data-nav-link]');
+  links.forEach(link => {
+    const key = link.dataset.navLink;
+    const target = NAV_LINK_TARGETS[key];
+    if (target) {
+      link.setAttribute('href', target);
+    }
+  });
+}
+
+async function loadSharedHeader() {
+  const host = document.querySelector('[data-shared-header]');
+  if (!host) return;
+
+  try {
+    const response = await fetch(HEADER_TEMPLATE_URL, { cache: 'no-store' });
+    if (!response.ok) return;
+    const templateMarkup = await response.text();
+    const parsed = new DOMParser().parseFromString(templateMarkup, 'text/html');
+    const template = parsed.querySelector('#site-header-template');
+    if (!template) return;
+    const fragment = template.content.cloneNode(true);
+    host.replaceWith(fragment);
+    applySharedNavLinks(document);
+    refreshNavigationElements();
+  } catch (error) {
+    console.warn('Unable to load shared header template', error);
+  }
+}
 
 function createGuestProfile(email) {
   return {
@@ -1325,6 +1372,32 @@ function setupFadeSections() {
 
 setupFadeSections();
 
+const sharedHeaderPromise = loadSharedHeader();
+sharedHeaderPromise.finally(() => {
+  setupNavigation();
+});
+
+let navigationInitialized = false;
+
+function setupNavigation() {
+  refreshNavigationElements();
+  if (navigationInitialized) return;
+  if (navToggle) {
+    navToggle.addEventListener('click', () => toggleNavigation());
+  }
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      if (siteNav?.classList.contains('open')) {
+        toggleNavigation(false);
+      }
+    });
+  });
+
+  navigationInitialized = true;
+  updateHeaderOffset();
+}
+
 function toggleNavigation(force) {
   if (!siteNav || !navToggle) return;
   const isOpen =
@@ -1334,18 +1407,6 @@ function toggleNavigation(force) {
   document.body.classList.toggle('nav-open', isOpen);
   requestAnimationFrame(updateHeaderOffset);
 }
-
-if (navToggle) {
-  navToggle.addEventListener('click', () => toggleNavigation());
-}
-
-navLinks.forEach(link => {
-  link.addEventListener('click', () => {
-    if (siteNav?.classList.contains('open')) {
-      toggleNavigation(false);
-    }
-  });
-});
 
 const desktopMedia = window.matchMedia('(min-width: 768px)');
 const handleDesktopChange = event => {
