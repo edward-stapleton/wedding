@@ -948,7 +948,6 @@ async function initAuth() {
   if (rsvpAccessEmailInput && rsvpState.storedEmail) {
     rsvpAccessEmailInput.value = rsvpState.storedEmail;
   }
-  await refreshRsvpCompletionGate(storedAccessEmail || rsvpState.storedEmail);
 
   if (!supabaseClient) {
     if (rsvpState.inviteTypeOverride) {
@@ -956,7 +955,9 @@ async function initAuth() {
     } else {
       applyInviteDetailsToProfile(null, rsvpState.storedEmail);
     }
-    await applyRsvpCompletionDismissal();
+    if (rsvpState.hasRequestedReturning) {
+      await applyRsvpCompletionDismissal();
+    }
     return;
   }
 
@@ -974,7 +975,7 @@ async function initAuth() {
     applyInviteDetailsToProfile(null, rsvpState.storedEmail);
   }
 
-  if (storedAccessEmail) {
+  if (storedAccessEmail && rsvpState.hasRequestedReturning) {
     await setAuthEmail(storedAccessEmail);
     const guestRows = await loadGuestRowsByEmail(storedAccessEmail);
     populateRsvpFromGuests(guestRows, storedAccessEmail);
@@ -985,13 +986,19 @@ async function initAuth() {
     }
   } else {
     applyInviteDetailsToProfile(rsvpState.inviteDetails, rsvpState.storedEmail);
-    if (rsvpState.storedEmail && (await fetchRsvpCompletionStatus(rsvpState.storedEmail))) {
+    if (
+      rsvpState.hasRequestedReturning &&
+      rsvpState.storedEmail &&
+      (await fetchRsvpCompletionStatus(rsvpState.storedEmail))
+    ) {
       const guestRows = await loadGuestRowsByEmail(rsvpState.storedEmail);
       populateRsvpFromGuests(guestRows, rsvpState.storedEmail);
     }
   }
 
-  await applyRsvpCompletionDismissal();
+  if (rsvpState.hasRequestedReturning) {
+    await applyRsvpCompletionDismissal();
+  }
 }
 
 enforceRsvpGate().then(shouldInit => {
@@ -1442,6 +1449,9 @@ function dismissRsvpSection() {
 }
 
 async function getInitialRsvpStep() {
+  if (!rsvpState.hasRequestedReturning) {
+    return 1;
+  }
   const email = getActiveRsvpEmail();
   const completed = await fetchRsvpCompletionStatus(email);
   return completed ? 2 : 1;
