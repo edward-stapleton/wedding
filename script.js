@@ -391,7 +391,8 @@ function resetGuestSectionState() {
 }
 
 function getRsvpStepSequence() {
-  return [1, 2, 3, 4, 5];
+  const hasPlusOne = isPlusOneActive(guestProfile) || inviteDetails?.invite_type === 'plusone';
+  return hasPlusOne ? [1, 2, 3, 4, 5] : [1, 2, 4, 5];
 }
 
 function getNearestRsvpStep(step) {
@@ -462,6 +463,9 @@ function updateGuestUi(profile) {
   const primaryName = profile.primary?.name || 'Guest 1';
   const plusOneName = profile.plusOne?.name || 'Guest 2';
   const hasPlusOne = Boolean(profile.plusOne && profile.plusOne.name);
+  const plusOneIndicator = Array.from(stepIndicators).find(
+    indicator => indicator.dataset.stepIndicator === '3'
+  );
 
   if (primaryNameEl) {
     primaryNameEl.textContent = primaryName;
@@ -489,6 +493,10 @@ function updateGuestUi(profile) {
         setGuestSectionState(section, false);
       }
     });
+  }
+
+  if (plusOneIndicator) {
+    plusOneIndicator.hidden = !hasPlusOne;
   }
 
   if (hasPlusOne) {
