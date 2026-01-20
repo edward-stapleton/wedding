@@ -867,10 +867,10 @@ function setRsvpAccessFeedback(message) {
 function setRsvpAccessLinkState(canAccess) {
   if (!rsvpAccessLink) return;
   const isEnabled = Boolean(canAccess);
-  rsvpAccessLink.hidden = !isEnabled;
-  rsvpAccessLink.setAttribute('aria-hidden', String(!isEnabled));
+  rsvpAccessLink.hidden = false;
+  rsvpAccessLink.setAttribute('aria-hidden', 'false');
   rsvpAccessLink.setAttribute('aria-disabled', String(!isEnabled));
-  rsvpAccessLink.tabIndex = isEnabled ? 0 : -1;
+  rsvpAccessLink.tabIndex = 0;
 }
 
 function applyRsvpCompletionGateState(completed) {
@@ -962,7 +962,6 @@ async function initAuth() {
   const shouldAutoOpenInvite = Boolean(inviteTypeFromUrl);
   const storedAccessEmail = getStoredRsvpAccessEmail();
 
-  setRsvpAccessLinkState(false);
   if (rsvpAccessEmailInput && storedEmail) {
     rsvpAccessEmailInput.value = storedEmail;
   }
