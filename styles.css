@@ -1041,6 +1041,10 @@ body.nav-open {
   margin: 0;
 }
 
+.rsvp-steps[hidden] {
+  display: none;
+}
+
 .rsvp-steps::before {
   content: '';
   position: absolute;
@@ -1158,6 +1162,10 @@ body.nav-open {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+.form-field[hidden] {
+  display: none;
 }
 
 .form-field label {
