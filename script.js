@@ -1,3 +1,6 @@
+import { CHURCH_FOOTPRINT, GARDEN_FOOTPRINT, WALKING_ROUTE } from './data/map.js';
+import { GUIDE_CATEGORY_INTROS } from './data/guide.js';
+
 const SUPABASE_URL = 'https://ipxbndockmhkfuwjyevi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
 const SITE_BASE_URL = 'https://edward-stapleton.github.io/wedding/';
@@ -16,96 +19,6 @@ const MAPBOX_DEFAULT_STYLE = 'mapbox://styles/mapbox/standard?optimize=true';
 const mapElement = document.getElementById('map');
 const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
 const CHURCH_COORDS = [-1.2684928, 51.7666909];
-const WALKING_ROUTE = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'LineString',
-        coordinates: [
-          [-1.268910374597823, 51.76645696949447],
-          [-1.2692626919094323, 51.76765240358776],
-          [-1.2757564118993514, 51.76682913633243],
-          [-1.2758821253287351, 51.76461556119929],
-          [-1.279199506591283, 51.762487079908624],
-          [-1.2801810281823407, 51.76384317739718],
-          [-1.2805189580681429, 51.76376221749646],
-          [-1.2803336416793627, 51.763438376441684],
-        ],
-      },
-    },
-  ],
-};
-
-const CHURCH_FOOTPRINT = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-1.2684455873902891, 51.766878097709906],
-            [-1.268418708679235, 51.76682661078229],
-            [-1.2687681319231956, 51.76677116325658],
-            [-1.268747652905546, 51.76673234994786],
-            [-1.2687719717386017, 51.76672680518672],
-            [-1.2687374133956553, 51.766657099560405],
-            [-1.268715654439518, 51.76665947589035],
-            [-1.2686990152373028, 51.76661670193235],
-            [-1.2687284538253039, 51.76661036504598],
-            [-1.268702855053732, 51.76656283837164],
-            [-1.2686170991655956, 51.76657709637948],
-            [-1.2686337383678108, 51.76662224670696],
-            [-1.2684993448124544, 51.76664680212909],
-            [-1.2684878253651561, 51.76662779148094],
-            [-1.268234397518171, 51.766667396989305],
-            [-1.2682612762292536, 51.76673472627388],
-            [-1.2682036789916822, 51.76674423157644],
-            [-1.268248476842416, 51.766833739745124],
-            [-1.2683188734668533, 51.76682265024709],
-            [-1.2683367926075562, 51.76685908715885],
-            [-1.2683035142040637, 51.76686700822279],
-            [-1.2683175935283373, 51.76689948456996],
-            [-1.2684455873902891, 51.766878097709906],
-          ],
-        ],
-      },
-    },
-  ],
-};
-
-const GARDEN_FOOTPRINT = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: {
-        name: 'The Medley Walled Garden',
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-1.2802992622484908, 51.76347306334887],
-            [-1.2805981364095942, 51.76335837809077],
-            [-1.2804885492170115, 51.7632547911563],
-            [-1.2810125752451142, 51.7630426838337],
-            [-1.280522421622038, 51.76256420551704],
-            [-1.2798748609405095, 51.76280221211758],
-            [-1.2801637726291517, 51.76319189897248],
-            [-1.2801518176624995, 51.76321902894463],
-            [-1.2802992622484908, 51.76347306334887],
-          ],
-        ],
-      },
-    },
-  ],
-};
 
 const rsvpAccessEmailInput = document.getElementById('rsvp-access-email');
 const rsvpAccessLink = document.querySelector('.rsvp-access-link');
@@ -1076,17 +989,6 @@ function setupGuideCarousel() {
   carousel.dataset.carouselInitialised = 'true';
   carousel.setAttribute('tabindex', '0');
 
-  const categoryIntros = {
-    accommodation: 'Aside from Airbnb and Booking.com, here are some tips for accommodation:',
-    coffee: "These are the places that we tend to pick up a flat white when we're in Oxford:",
-    pubs:
-      "There's a great mix of historic watering holes in central Oxford, with craft beer places further out of town:",
-    restaurants:
-      "If you're looking for a nice spot for a meal, consider these places:",
-    sightseeing:
-      "If you're out for a stroll or jog, try to swing past these places:",
-  };
-
   if (dotsContainer) {
     dotsContainer.innerHTML = '';
     dotsContainer.setAttribute('role', 'tablist');
@@ -1182,8 +1084,8 @@ function setupGuideCarousel() {
       scrollTabIntoView(activeTab);
     }
 
-    if (guideIntro && categoryIntros[category]) {
-      guideIntro.textContent = categoryIntros[category];
+    if (guideIntro && GUIDE_CATEGORY_INTROS[category]) {
+      guideIntro.textContent = GUIDE_CATEGORY_INTROS[category];
     }
 
     if (typeof activeIndex === 'number') {
