@@ -111,6 +111,9 @@ const rsvpAccessEmailInput = document.getElementById('rsvp-access-email');
 const rsvpAccessLink = document.querySelector('.rsvp-access-link');
 const rsvpAccessFeedback = document.getElementById('rsvp-access-feedback');
 const returningEmailField = document.querySelector('[data-returning-email]');
+if (returningEmailField) {
+  returningEmailField.hidden = true;
+}
 const stepOneSection = document.querySelector('[data-rsvp-step="1"]');
 const stepOneTitle = stepOneSection?.querySelector('.rsvp-step-title');
 const stepOneIntro = stepOneSection?.querySelector('.rsvp-step-intro');
@@ -452,7 +455,7 @@ function getStepOneButtonLabel() {
 }
 
 function setReturningRsvpState(shouldReturn) {
-  const canReturn = Boolean(shouldReturn && hasRequestedReturning && hasCompletedRsvp);
+  const canReturn = Boolean(shouldReturn && hasRequestedReturning);
   isReturningRsvp = canReturn;
   if (returningEmailField) {
     returningEmailField.hidden = !canReturn;
