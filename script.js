@@ -156,7 +156,7 @@ function createGuestProfile(email) {
   return {
     email,
     primary: { name: 'Guest 1', firstName: '', lastName: '' },
-    plusOne: { name: 'Guest 2', firstName: '', lastName: '' },
+    plusOne: null,
   };
 }
 
