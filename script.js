@@ -1019,13 +1019,13 @@ enforceRsvpGate().then(shouldInit => {
 
 rsvpAccessLink?.addEventListener('click', async event => {
   event.preventDefault();
-  hasRequestedReturning = true;
   const activeEmail = getActiveRsvpEmail();
   const canReturn = await refreshRsvpCompletionGate(activeEmail, { showFeedback: true });
   if (!canReturn) {
     return;
   }
-  setReturningRsvpState(!isReturningRsvp);
+  hasRequestedReturning = true;
+  setReturningRsvpState(true);
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
