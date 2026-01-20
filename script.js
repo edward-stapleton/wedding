@@ -1,9 +1,14 @@
 import { CHURCH_FOOTPRINT, GARDEN_FOOTPRINT, WALKING_ROUTE } from './data/map.js';
 import { GUIDE_CATEGORY_INTROS } from './data/guide.js';
 
-const SUPABASE_URL = 'https://ipxbndockmhkfuwjyevi.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
-const SITE_BASE_URL = 'https://edward-stapleton.github.io/wedding/';
+const APP_CONFIG = window.__APP_CONFIG__ ?? window.APP_CONFIG ?? {};
+const SUPABASE_URL =
+  APP_CONFIG.supabaseUrl ?? 'https://ipxbndockmhkfuwjyevi.supabase.co';
+const SUPABASE_ANON_KEY =
+  APP_CONFIG.supabaseAnonKey ??
+  'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
+const SITE_BASE_URL =
+  APP_CONFIG.siteBaseUrl ?? 'https://edward-stapleton.github.io/wedding/';
 const RSVP_ROUTE_PATH = 'rsvp/';
 const RSVP_ROUTE_URL = new URL(RSVP_ROUTE_PATH, SITE_BASE_URL).toString();
 const HEADER_TEMPLATE_PATH = 'partials/site-header.html';
@@ -107,7 +112,7 @@ const ATTENDANCE_PROMPT = 'Able to come?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
 const INVITE_TYPE_QUERY_KEY = 'invite';
-const RSVP_PASSWORD = APP_CONFIG.rsvpPassword;
+const RSVP_PASSWORD = APP_CONFIG.rsvpPassword ?? 'STARFORD';
 
 function refreshNavigationElements() {
   siteNav = document.querySelector('.site-nav');
