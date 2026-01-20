@@ -7,3 +7,4 @@ window.__APP_CONFIG__ = {
     'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg',
   mapboxStyle: 'mapbox://styles/mapbox/standard?optimize=true',
 };
+window.APP_CONFIG = window.__APP_CONFIG__;
