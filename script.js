@@ -136,6 +136,7 @@ const inviteTokenField = document.getElementById('invite-token');
 const rsvpTriggers = document.querySelectorAll('[data-rsvp-trigger]');
 const guestSections = document.querySelectorAll('.guest-response');
 const stepIndicators = document.querySelectorAll('[data-step-indicator]');
+const rsvpProgress = document.querySelector('.rsvp-steps.rsvp-progress');
 const stepSections = document.querySelectorAll('[data-rsvp-step]');
 const stepPrevButton = document.querySelector('[data-step-prev]');
 const stepNextButton = document.querySelector('[data-step-next]');
@@ -473,6 +474,12 @@ function showStep(step) {
   });
 
   updateStepIndicators(resolvedStep);
+
+  if (rsvpProgress) {
+    const shouldHideProgress = resolvedStep === 1 || resolvedStep === 5;
+    rsvpProgress.hidden = shouldHideProgress;
+    rsvpProgress.setAttribute('aria-hidden', String(shouldHideProgress));
+  }
 
   if (stepPrevButton) {
     stepPrevButton.hidden = resolvedStep === 1 || resolvedStep === 5;
