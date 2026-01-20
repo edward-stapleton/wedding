@@ -408,12 +408,16 @@ function resetGuestSectionState() {
 }
 
 function getRsvpStepSequence() {
+  return [2, 3, 4];
+}
+
+function getRsvpNavigationSequence() {
   const hasPlusOne = isPlusOneActive(guestProfile) || inviteDetails?.invite_type === 'plusone';
   return hasPlusOne ? [1, 2, 3, 4, 5] : [1, 2, 4, 5];
 }
 
 function getNearestRsvpStep(step) {
-  const sequence = getRsvpStepSequence();
+  const sequence = getRsvpNavigationSequence();
   if (sequence.includes(step)) {
     return step;
   }
@@ -422,7 +426,7 @@ function getNearestRsvpStep(step) {
 }
 
 function getRsvpStepByOffset(step, offset) {
-  const sequence = getRsvpStepSequence();
+  const sequence = getRsvpNavigationSequence();
   const currentIndex = sequence.indexOf(step);
   if (currentIndex === -1) {
     return sequence[0];
@@ -432,16 +436,27 @@ function getRsvpStepByOffset(step, offset) {
 }
 
 function updateStepIndicators(activeStep) {
+  const sequence = getRsvpStepSequence();
+  const activeIndex = sequence.indexOf(activeStep);
+  const maxStep = sequence[sequence.length - 1];
+  const isAfterProgress = activeIndex === -1 && activeStep > maxStep;
+
   stepIndicators.forEach(indicator => {
-    const indicatorStep = Number(indicator.dataset.stepIndicator);
-    indicator.classList.toggle('is-active', indicatorStep === activeStep);
-    indicator.classList.toggle('is-complete', indicatorStep < activeStep);
+    const indicatorIndex = Number(indicator.dataset.stepIndicator) - 1;
+    const indicatorStep = sequence[indicatorIndex];
+    const isActive = indicatorStep === activeStep;
+    const isComplete =
+      typeof indicatorStep === 'number' &&
+      ((activeIndex !== -1 && indicatorIndex < activeIndex) || (isAfterProgress && indicatorStep <= maxStep));
+
+    indicator.classList.toggle('is-active', Boolean(isActive));
+    indicator.classList.toggle('is-complete', Boolean(isComplete));
   });
 }
 
 function updateStepIndicatorVisibility() {
   const plusOneIndicator = Array.from(stepIndicators).find(
-    indicator => indicator.dataset.stepIndicator === '3'
+    indicator => indicator.dataset.stepIndicator === '2'
   );
   if (!plusOneIndicator) return;
   const hasPlusOne = inviteDetails?.invite_type === 'plusone' || isPlusOneActive(guestProfile);
