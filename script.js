@@ -290,6 +290,7 @@ function applyInviteDetailsToProfile(invite, emailFallback) {
   if (!invite) {
     setGuestProfile(createGuestProfile(emailFallback));
     inviteDetails = null;
+    updateStepIndicatorVisibility();
     return;
   }
 
@@ -315,6 +316,7 @@ function applyInviteDetailsToProfile(invite, emailFallback) {
         }
       : null,
   });
+  updateStepIndicatorVisibility();
 }
 
 function applyInviteTypeOverride(inviteType, emailFallback) {
@@ -329,6 +331,7 @@ function applyInviteTypeOverride(inviteType, emailFallback) {
     },
     emailFallback
   );
+  updateStepIndicatorVisibility();
   return true;
 }
 
@@ -432,6 +435,17 @@ function updateStepIndicators(activeStep) {
   });
 }
 
+function updateStepIndicatorVisibility() {
+  const plusOneIndicator = Array.from(stepIndicators).find(
+    indicator => indicator.dataset.stepIndicator === '3'
+  );
+  if (!plusOneIndicator) return;
+  const hasPlusOne = inviteDetails?.invite_type === 'plusone' || isPlusOneActive(guestProfile);
+  const shouldHide = !hasPlusOne;
+  plusOneIndicator.hidden = shouldHide;
+  plusOneIndicator.setAttribute('aria-hidden', String(shouldHide));
+}
+
 function getStepOneButtonLabel() {
   return isReturningRsvp ? 'Enter' : 'RSVP';
 }
@@ -474,6 +488,7 @@ function showStep(step) {
   });
 
   updateStepIndicators(resolvedStep);
+  updateStepIndicatorVisibility();
 
   if (rsvpProgress) {
     const shouldHideProgress = resolvedStep === 1 || resolvedStep === 5;
@@ -512,9 +527,6 @@ function updateGuestUi(profile) {
   const primaryName = profile.primary?.name || 'Guest 1';
   const plusOneName = profile.plusOne?.name || 'Guest 2';
   const hasPlusOne = Boolean(profile.plusOne && profile.plusOne.name);
-  const plusOneIndicator = Array.from(stepIndicators).find(
-    indicator => indicator.dataset.stepIndicator === '3'
-  );
 
   if (primaryNameEl) {
     primaryNameEl.textContent = primaryName;
@@ -542,10 +554,6 @@ function updateGuestUi(profile) {
         setGuestSectionState(section, false);
       }
     });
-  }
-
-  if (plusOneIndicator) {
-    plusOneIndicator.hidden = !hasPlusOne;
   }
 
   if (hasPlusOne) {
