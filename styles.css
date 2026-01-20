@@ -1199,8 +1199,8 @@ textarea.form-control {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  border-radius: 12px;
-  background: rgba(79, 117, 42, 0.6);
+  border-radius: 0;
+  background: transparent;
 }
 
 #rsvp-form fieldset label {
@@ -1214,21 +1214,21 @@ textarea.form-control {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  padding: 1rem;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
   transition: background 0.3s ease, border-color 0.3s ease;
   overflow: hidden;
 }
 
 .guest-response.collapsed {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: transparent;
+  border-color: transparent;
 }
 
 .guest-response__header {
-  margin: -0.25rem -0.25rem 0;
+  margin: 0;
 }
 
 .guest-title {
