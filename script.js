@@ -90,6 +90,7 @@ const stepSections = document.querySelectorAll('[data-rsvp-step]');
 const stepPrevButton = document.querySelector('[data-step-prev]');
 const stepNextButton = document.querySelector('[data-step-next]');
 const stepSubmitButton = document.querySelector('[data-step-submit]');
+const stepEnterButton = document.querySelector('[data-step-enter]');
 const mapContainer = document.querySelector('[data-map-container]');
 let siteNav = document.querySelector('.site-nav');
 let navToggle = document.querySelector('.nav-toggle');
@@ -570,6 +571,10 @@ function setStep(step) {
 
   if (stepSubmitButton) {
     stepSubmitButton.hidden = resolvedStep !== 4;
+  }
+
+  if (stepEnterButton) {
+    stepEnterButton.hidden = resolvedStep !== 5;
   }
 
   const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === resolvedStep);
@@ -1957,6 +1962,10 @@ async function submitRsvp(event) {
 }
 
 rsvpForm?.addEventListener('submit', submitRsvp);
+
+stepEnterButton?.addEventListener('click', () => {
+  window.location.assign(SITE_BASE_URL);
+});
 
 function loadMapboxResources() {
   return new Promise((resolve, reject) => {
