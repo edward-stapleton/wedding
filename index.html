@@ -14,6 +14,7 @@
       rel="stylesheet"
     />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -67,28 +68,17 @@
         </section>
 
         <div data-site-content>
-          <section id="home" class="section hero-section fade-section" data-section>
+        <section id="home" class="section hero-section fade-section" data-section>
           <img class="hero-image" src="assets/hero-image.jpg" alt="Hero Image" />
           <div class="hero-content">
             <p class="hero-date">The Wedding of</p>
             <p class="hero-names">Edward Stapleton &amp; Laura Harford</p>
             <p class="hero-date">Saturday 22 August 2026</p>
             <p class="hero-location">Oxford</p>
+            <a class="primary" href="rsvp/index.html" data-rsvp-trigger>Edit RSVP</a>
           </div>
           <div class="scroll-invite" aria-hidden="true">&#8595;</div>
           <p class="visually-hidden">Scroll for the schedule and details.</p>
-        </section>
-
-        <section id="rsvp" class="section alt fade-section" data-section>
-          <div class="section-content">
-            <h2>RSVP</h2>
-            <p>
-              Our RSVP form now lives on its own page so you can save and return to your responses at any time.
-            </p>
-            <p>
-              <a class="primary" href="rsvp/index.html">Go to the RSVP form</a>
-            </p>
-          </div>
         </section>
 
         <section id="schedule" class="section alt fade-section" data-section>
@@ -728,6 +718,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="config.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js" defer></script>
     <script src="script.js" type="module"></script>
   </body>
 </html>
