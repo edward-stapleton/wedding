@@ -1809,6 +1809,8 @@ stepPrevButton?.addEventListener('click', () => {
 
 async function submitRsvp(event) {
   event.preventDefault();
+  if (event?.stopImmediatePropagation) event.stopImmediatePropagation();
+  if (event?.stopPropagation) event.stopPropagation();
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
@@ -1937,20 +1939,37 @@ async function submitRsvp(event) {
       },
     });
 
-    setRsvpCompleted(primaryRow.email);
-    await setAuthEmail(primaryRow.email);
+    // Persist completion + allow returning access.
+    const normalizedEmail = normalizeEmailForStorage(primaryRow.email);
+    setRsvpCompleted(normalizedEmail);
+    setRsvpAccessEmail(normalizedEmail);
+
+    // Mark as authenticated for this session/UI.
+    await setAuthEmail(normalizedEmail);
 
     // Refresh UI from server response.
     if (Array.isArray(result.guests)) {
-      populateRsvpFromGuests(result.guests, primaryRow.email);
+      populateRsvpFromGuests(result.guests, normalizedEmail);
     }
+
+    // Ensure UI knows we've completed (nav + "Edit RSVP" behave).
+    applyRsvpCompletionGateState(true);
+
+    // Clear any returning-mode flags so we don't bounce to Step 1.
+    rsvpState.hasRequestedReturning = false;
+    setReturningRsvpState(false);
 
     if (rsvpFeedback) {
       rsvpFeedback.textContent = 'Thanks! Your RSVP has been saved.';
     }
 
-    // Move to final step.
+    // Move to the thank-you step (with the Enter button).
     setStep(5);
+
+    // Keep RSVP section visible and update nav state.
+    setRsvpSectionVisibility(true);
+    updateRsvpNavigationVisibility();
+
     return;
   } catch (error) {
     if (rsvpFeedback) {
