@@ -1167,6 +1167,30 @@ body.site-locked .site-header {
   gap: 1rem;
 }
 
+.rsvp-step[data-rsvp-step='1'] {
+  align-items: center;
+  text-align: center;
+}
+
+.rsvp-step[data-rsvp-step='1'] .form-grid {
+  width: 100%;
+  justify-items: center;
+}
+
+.rsvp-step[data-rsvp-step='1'] .form-field {
+  width: min(100%, 360px);
+  align-items: center;
+  text-align: center;
+}
+
+.rsvp-step[data-rsvp-step='1'] .form-field label {
+  text-align: center;
+}
+
+.rsvp-step[data-rsvp-step='1'] .form-control {
+  text-align: center;
+}
+
 [data-rsvp-step][hidden] {
   display: none;
 }
@@ -1195,6 +1219,15 @@ body.site-locked .site-header {
   flex-wrap: wrap;
   gap: 0.75rem;
   justify-content: flex-start;
+}
+
+#rsvp-form.rsvp-step-one .rsvp-actions {
+  justify-content: center;
+}
+
+#rsvp-form.rsvp-step-one .rsvp-actions [data-step-next],
+#rsvp-form.rsvp-step-one .rsvp-actions [data-step-submit] {
+  margin-left: 0;
 }
 
 .rsvp-actions [data-step-next],
@@ -1357,6 +1390,11 @@ textarea.form-control {
   min-height: 1.5rem;
   font-size: 0.95rem;
   color: var(--text-color);
+}
+
+.rsvp-access-footer {
+  display: flex;
+  justify-content: center;
 }
 
 .fade-section {

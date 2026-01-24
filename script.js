@@ -80,6 +80,7 @@ const plusOneDietaryInput = document.getElementById('plusone-dietary');
 const plusOneFirstNameInput = document.getElementById('plusone-first-name');
 const plusOneLastNameInput = document.getElementById('plusone-last-name');
 const rsvpPasswordInput = document.getElementById('rsvp-password');
+const rsvpPasswordField = rsvpPasswordInput?.closest('.form-field');
 const rsvpEmailField = document.getElementById('rsvp-email');
 const inviteTokenField = document.getElementById('invite-token');
 const rsvpTriggers = document.querySelectorAll('[data-rsvp-trigger]');
@@ -104,6 +105,9 @@ const stepOneTitleDefault = stepOneTitle?.textContent?.trim() || 'Welcome';
 const stepOneIntroDefault =
   stepOneIntro?.textContent?.trim() ||
   'Saturday 22 August 2026 · Oxford. Please enter the password from your invitation to begin your RSVP.';
+const rsvpAccessLinkDefaultLabel =
+  rsvpAccessLink?.textContent?.trim() || "Already RSVP'd?";
+const rsvpAccessLinkReturnLabel = 'Not RSVP’d yet?';
 const NAV_LINK_TARGETS = {
   home: `${SITE_BASE_URL}#home`,
   rsvp: new URL('rsvp/index.html', SITE_BASE_URL).toString(),
@@ -539,6 +543,22 @@ function setReturningRsvpState(shouldReturn) {
       rsvpAccessEmailInput.removeAttribute('aria-invalid');
     }
   }
+  if (rsvpPasswordField) {
+    rsvpPasswordField.hidden = canReturn;
+  }
+  if (rsvpPasswordInput) {
+    if (canReturn) {
+      rsvpPasswordInput.value = '';
+      rsvpPasswordInput.removeAttribute('aria-invalid');
+      rsvpPasswordInput.removeAttribute('required');
+    } else {
+      rsvpPasswordInput.setAttribute('required', 'true');
+    }
+  }
+
+  if (rsvpAccessLink) {
+    rsvpAccessLink.textContent = canReturn ? rsvpAccessLinkReturnLabel : rsvpAccessLinkDefaultLabel;
+  }
 
   if (stepOneTitle) {
     stepOneTitle.textContent = canReturn ? 'Welcome back' : stepOneTitleDefault;
@@ -546,13 +566,14 @@ function setReturningRsvpState(shouldReturn) {
 
   if (stepOneIntro) {
     stepOneIntro.textContent = canReturn
-      ? 'Enter the email address you used before along with the invitation password to reopen your RSVP.'
+      ? 'Enter the email address you used before to return to the main website.'
       : stepOneIntroDefault;
   }
 
   if (rsvpState.currentStep === 1 && stepNextButton) {
     stepNextButton.textContent = getStepOneButtonLabel();
   }
+  updatePasswordGate();
 }
 
 function resetReturningRsvpRequest() {
@@ -568,8 +589,13 @@ function setStep(step) {
     section.hidden = sectionStep !== resolvedStep;
   });
 
+  if (rsvpForm) {
+    rsvpForm.classList.toggle('rsvp-step-one', resolvedStep === 1);
+  }
+
   updateStepIndicators(resolvedStep);
   updateStepIndicatorVisibility();
+  updateRsvpAccessLinkVisibility(resolvedStep);
 
   if (rsvpProgress) {
     const shouldHideProgress = resolvedStep === 1 || resolvedStep === 5;
@@ -940,21 +966,23 @@ function setRsvpAccessFeedback(message) {
   }
 }
 
-function setRsvpAccessLinkState(canAccess) {
+function updateRsvpAccessLinkVisibility(step = rsvpState.currentStep) {
   if (!rsvpAccessLink) return;
-  const isEnabled = Boolean(canAccess);
-  rsvpAccessLink.hidden = false;
-  rsvpAccessLink.setAttribute('aria-hidden', 'false');
-  rsvpAccessLink.setAttribute('aria-disabled', String(!isEnabled));
+  const shouldShow = step === 1;
+  rsvpAccessLink.hidden = !shouldShow;
+  rsvpAccessLink.setAttribute('aria-hidden', String(!shouldShow));
+}
+
+function setRsvpAccessLinkState() {
+  if (!rsvpAccessLink) return;
+  rsvpAccessLink.setAttribute('aria-disabled', 'false');
   rsvpAccessLink.tabIndex = 0;
+  updateRsvpAccessLinkVisibility();
 }
 
 function applyRsvpCompletionGateState(completed) {
   rsvpState.hasCompletedRsvp = Boolean(completed);
-  setRsvpAccessLinkState(rsvpState.hasCompletedRsvp);
-  if (!rsvpState.hasCompletedRsvp && rsvpState.isReturningRsvp) {
-    setReturningRsvpState(false);
-  }
+  setRsvpAccessLinkState();
   updateRsvpNavigationVisibility();
 }
 
@@ -963,7 +991,7 @@ async function refreshRsvpCompletionGate(email, { showFeedback = false } = {}) {
   if (!normalizedEmail) {
     applyRsvpCompletionGateState(false);
     if (showFeedback) {
-      setRsvpAccessFeedback('Please RSVP first to unlock the returning option.');
+      setRsvpAccessFeedback('Please enter your email address to continue.');
     }
     return false;
   }
@@ -971,24 +999,18 @@ async function refreshRsvpCompletionGate(email, { showFeedback = false } = {}) {
   const completed = await fetchRsvpCompletionStatus(normalizedEmail);
   applyRsvpCompletionGateState(completed);
   if (!completed && showFeedback) {
-    setRsvpAccessFeedback('We could not find a completed RSVP for that email yet.');
+    setRsvpAccessFeedback('We could not find an RSVP for that email address yet.');
   }
   return completed;
 }
 
 async function handleRsvpAccessSubmit() {
-  if (!rsvpAccessEmailInput || !rsvpPasswordInput) return false;
-  if (!supabaseClient) {
-    setRsvpAccessFeedback('RSVP access is unavailable right now. Please try again later.');
-    return false;
-  }
+  if (!rsvpAccessEmailInput) return false;
 
   setRsvpAccessFeedback('');
   rsvpAccessEmailInput.removeAttribute('aria-invalid');
-  rsvpPasswordInput.removeAttribute('aria-invalid');
 
   const emailValue = rsvpAccessEmailInput.value.trim();
-  const passwordValue = rsvpPasswordInput.value.trim().toUpperCase();
 
   if (!emailValue || !emailValue.includes('@')) {
     setRsvpAccessFeedback('Please enter a valid email address to continue.');
@@ -997,32 +1019,19 @@ async function handleRsvpAccessSubmit() {
     return false;
   }
 
-  if (!passwordValue || passwordValue !== RSVP_PASSWORD) {
-    setRsvpAccessFeedback('Please enter the invitation password to continue.');
-    rsvpPasswordInput.setAttribute('aria-invalid', 'true');
-    rsvpPasswordInput.focus();
-    return false;
-  }
-
   setRsvpAccessFeedback('Checking your RSVP...');
-  const completed = await fetchRsvpCompletionStatus(emailValue);
-  if (!completed) {
+  const exists = await doesGuestExist(emailValue);
+  if (!exists) {
     setRsvpAccessFeedback('We could not find an RSVP for that email address.');
     rsvpAccessEmailInput.setAttribute('aria-invalid', 'true');
     rsvpAccessEmailInput.focus();
     return false;
   }
 
-  const guestRows = await loadGuestRowsByEmail(emailValue);
-  if (!guestRows.length) {
-    setRsvpAccessFeedback('We could not load your RSVP right now. Please try again soon.');
-    return false;
-  }
-  localStorage.setItem(EMAIL_STORAGE_KEY, emailValue);
-  setRsvpAccessEmail(emailValue);
-  await setAuthEmail(emailValue);
-  populateRsvpFromGuests(guestRows, emailValue);
-  setRsvpAccessFeedback('Welcome back! We have loaded your saved RSVP.');
+  const normalizedEmail = normalizeEmailForStorage(emailValue);
+  localStorage.setItem(EMAIL_STORAGE_KEY, normalizedEmail);
+  setRsvpAccessEmail(normalizedEmail);
+  window.location.assign(SITE_BASE_URL);
   return true;
 }
 
@@ -1156,13 +1165,12 @@ enforceSiteGate().then(shouldInit => {
 });
 
 async function handleReturningRsvpRequest() {
-  const activeEmail = getActiveRsvpEmail();
-  const canReturn = await refreshRsvpCompletionGate(activeEmail, { showFeedback: true });
-  if (!canReturn) {
-    return;
+  if (rsvpState.isReturningRsvp) {
+    resetReturningRsvpRequest();
+  } else {
+    rsvpState.hasRequestedReturning = true;
+    setReturningRsvpState(true);
   }
-  rsvpState.hasRequestedReturning = true;
-  setReturningRsvpState(true);
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
@@ -1674,17 +1682,17 @@ function validateStep(step, formData, profile) {
   const hasPlusOne = isPlusOneActive(activeProfile);
 
   if (step === 1) {
-    const passwordValue = formData.get('rsvp-password')?.toString().trim().toUpperCase() || '';
-    if (!passwordValue) {
-      errors.push('Please enter the RSVP password from your invitation.');
-    } else if (passwordValue !== RSVP_PASSWORD) {
-      errors.push('The RSVP password is incorrect. Please check your invitation.');
-    }
-
     if (rsvpState.isReturningRsvp && rsvpState.hasRequestedReturning) {
       const returningEmail = formData.get('rsvp-access-email')?.toString().trim() || '';
       if (!returningEmail || !returningEmail.includes('@')) {
         errors.push('Please enter a valid email address to continue.');
+      }
+    } else {
+      const passwordValue = formData.get('rsvp-password')?.toString().trim().toUpperCase() || '';
+      if (!passwordValue) {
+        errors.push('Please enter the RSVP password from your invitation.');
+      } else if (passwordValue !== RSVP_PASSWORD) {
+        errors.push('The RSVP password is incorrect. Please check your invitation.');
       }
     }
   }
@@ -1760,6 +1768,10 @@ function updatePasswordGate() {
     stepNextButton.disabled = false;
     return;
   }
+  if (rsvpState.isReturningRsvp) {
+    stepNextButton.disabled = false;
+    return;
+  }
   const passwordValue = rsvpPasswordInput?.value || '';
   const isValid = isRsvpPasswordValid(passwordValue);
   stepNextButton.disabled = !isValid;
@@ -1791,6 +1803,7 @@ async function handleStepAdvance() {
     if (!wasLoaded) {
       return;
     }
+    return;
   }
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
