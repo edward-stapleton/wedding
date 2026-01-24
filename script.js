@@ -1135,6 +1135,24 @@ function isGuestRsvpComplete(guestRows) {
   return guestRows.some(guest => typeof guest.attendance === 'string' && guest.attendance.trim() !== '');
 }
 
+async function loadAndApplyRsvpForEmail(email) {
+  const normalizedEmail = normalizeEmailForStorage(email);
+  if (!normalizedEmail) {
+    return { hasData: false, completed: false };
+  }
+
+  const guestRows = await loadGuestRowsByEmail(normalizedEmail);
+  if (!guestRows.length) {
+    return { hasData: false, completed: false };
+  }
+
+  populateRsvpFromGuests(guestRows, normalizedEmail);
+  const completed = isGuestRsvpComplete(guestRows);
+  applyRsvpCompletionGateState(completed);
+
+  return { hasData: true, completed };
+}
+
 async function enforceSiteGate() {
   if (isRsvpRoute) return true;
   if (!siteAccessSection || !siteContent) return true;
@@ -1289,7 +1307,19 @@ async function handleRsvpAccessSubmit() {
   const normalizedEmail = normalizeEmailForStorage(emailValue);
   localStorage.setItem(EMAIL_STORAGE_KEY, normalizedEmail);
   setRsvpAccessEmail(normalizedEmail);
-  window.location.assign(SITE_BASE_URL);
+
+  // Mark this email as the active RSVP identity for this session.
+  await setAuthEmail(normalizedEmail);
+
+  // Load and apply any existing RSVP details so the form is pre-populated.
+  await loadAndApplyRsvpForEmail(normalizedEmail);
+
+  // Move straight to the editable details step for returning guests.
+  rsvpState.hasRequestedReturning = true;
+  setReturningRsvpState(true);
+  setStep(2);
+
+  setRsvpAccessFeedback('');
   return true;
 }
 
@@ -1355,10 +1385,11 @@ siteAccessPasswordInput?.addEventListener('input', () => {
 async function initAuth() {
   resetReturningRsvpRequest();
   resolveInviteToken();
-  rsvpState.storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
+  const storedAccessEmail = getStoredRsvpAccessEmail();
+  const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
+  rsvpState.storedEmail = storedAccessEmail || storedEmail;
   const allowDirectInvite = Boolean(rsvpState.inviteTypeOverride);
   const shouldAutoOpenInvite = Boolean(rsvpState.inviteTypeFromUrl);
-  const storedAccessEmail = getStoredRsvpAccessEmail();
 
   if (rsvpAccessEmailInput && rsvpState.storedEmail) {
     rsvpAccessEmailInput.value = rsvpState.storedEmail;
@@ -1922,11 +1953,11 @@ function handleRsvpFormKeydown(event) {
 }
 
 async function getInitialRsvpStep() {
-  if (!rsvpState.hasRequestedReturning) {
+  const email = getActiveRsvpEmail();
+  const { hasData, completed } = await loadAndApplyRsvpForEmail(email);
+  if (!hasData) {
     return 1;
   }
-  const email = getActiveRsvpEmail();
-  const completed = await fetchRsvpCompletionStatus(email);
   return completed ? 2 : 1;
 }
 
@@ -1953,10 +1984,13 @@ async function openRsvpSection() {
 
 rsvpTriggers.forEach(trigger => {
   trigger.addEventListener('click', event => {
-    if (trigger instanceof HTMLAnchorElement) {
-      event.preventDefault();
+    const hasInlineRsvp = Boolean(rsvpSection);
+    if (hasInlineRsvp) {
+      if (trigger instanceof HTMLAnchorElement) {
+        event.preventDefault();
+      }
+      void openRsvpSection();
     }
-    void openRsvpSection();
   });
 });
 
