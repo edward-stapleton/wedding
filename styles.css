@@ -295,12 +295,22 @@ body.site-locked .site-header {
   font-weight: 600;
   font-family: 'Stack Sans Headline', system-ui, sans-serif;
   transition: opacity 0.3s ease, transform 0.3s ease;
+  text-decoration: none;
+}
+
+.primary:visited {
+  text-decoration: none;
 }
 
 .primary:focus,
 .primary:hover {
   opacity: 0.85;
   transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.primary:focus-visible {
+  text-decoration: none;
 }
 
 .secondary {
