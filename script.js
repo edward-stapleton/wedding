@@ -1813,6 +1813,10 @@ stepPrevButton?.addEventListener('click', () => {
   handleStepBack();
 });
 
+stepEnterButton?.addEventListener('click', () => {
+  dismissRsvpSection();
+});
+
 async function submitRsvp(event) {
   event.preventDefault();
   if (event?.stopImmediatePropagation) event.stopImmediatePropagation();
