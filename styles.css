@@ -1155,6 +1155,41 @@ body.site-locked .site-header {
   font-size: 1.2rem;
 }
 
+.rsvp-invite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.rsvp-invite p {
+  margin: 0;
+}
+
+.rsvp-invite-kicker {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.rsvp-invite-title {
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.rsvp-invite-names {
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.rsvp-invite-date,
+.rsvp-invite-location {
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
 .rsvp-step-intro {
   margin: 0;
   font-size: 0.95rem;
