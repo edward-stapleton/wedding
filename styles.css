@@ -1155,6 +1155,41 @@ body.site-locked .site-header {
   font-size: 1.2rem;
 }
 
+.rsvp-invite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.rsvp-invite p {
+  margin: 0;
+}
+
+.rsvp-invite-kicker {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.rsvp-invite-title {
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.rsvp-invite-names {
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.rsvp-invite-date,
+.rsvp-invite-location {
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
 .rsvp-step-intro {
   margin: 0;
   font-size: 0.95rem;
@@ -1165,6 +1200,30 @@ body.site-locked .site-header {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.rsvp-step[data-rsvp-step='1'] {
+  align-items: center;
+  text-align: center;
+}
+
+.rsvp-step[data-rsvp-step='1'] .form-grid {
+  width: 100%;
+  justify-items: center;
+}
+
+.rsvp-step[data-rsvp-step='1'] .form-field {
+  width: min(100%, 360px);
+  align-items: center;
+  text-align: center;
+}
+
+.rsvp-step[data-rsvp-step='1'] .form-field label {
+  text-align: center;
+}
+
+.rsvp-step[data-rsvp-step='1'] .form-control {
+  text-align: center;
 }
 
 [data-rsvp-step][hidden] {
@@ -1195,6 +1254,15 @@ body.site-locked .site-header {
   flex-wrap: wrap;
   gap: 0.75rem;
   justify-content: flex-start;
+}
+
+#rsvp-form.rsvp-step-one .rsvp-actions {
+  justify-content: center;
+}
+
+#rsvp-form.rsvp-step-one .rsvp-actions [data-step-next],
+#rsvp-form.rsvp-step-one .rsvp-actions [data-step-submit] {
+  margin-left: 0;
 }
 
 .rsvp-actions [data-step-next],
@@ -1357,6 +1425,11 @@ textarea.form-control {
   min-height: 1.5rem;
   font-size: 0.95rem;
   color: var(--text-color);
+}
+
+.rsvp-access-footer {
+  display: flex;
+  justify-content: center;
 }
 
 .fade-section {
