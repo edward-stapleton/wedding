@@ -1879,6 +1879,11 @@ function dismissRsvpSection() {
   }
 }
 
+function handleRsvpEnter() {
+  const targetUrl = NAV_LINK_TARGETS.home || SITE_BASE_URL;
+  window.location.assign(targetUrl);
+}
+
 async function getInitialRsvpStep() {
   if (!rsvpState.hasRequestedReturning) {
     return 1;
@@ -2086,7 +2091,7 @@ stepPrevButton?.addEventListener('click', () => {
 });
 
 stepEnterButton?.addEventListener('click', () => {
-  dismissRsvpSection();
+  handleRsvpEnter();
 });
 
 async function submitRsvp(event) {
