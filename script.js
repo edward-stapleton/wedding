@@ -137,6 +137,33 @@ const rsvpCompletionCache = new Map();
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// --- Supabase Edge Functions (RSVP) ---
+const EDGE_FUNCTION_BASE_URL = `${SUPABASE_URL}/functions/v1`;
+const RSVP_LOOKUP_FUNCTION_URL = `${EDGE_FUNCTION_BASE_URL}/rsvp-lookup`;
+const RSVP_SUBMIT_FUNCTION_URL = `${EDGE_FUNCTION_BASE_URL}/rsvp-submit`;
+
+async function callRsvpFunction(url, payload) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  let json;
+  try {
+    json = await response.json();
+  } catch {
+    throw new Error('RSVP service returned an invalid response.');
+  }
+
+  if (!response.ok || !json?.ok) {
+    const message = json?.details || json?.message || json?.error || 'RSVP service error.';
+    throw new Error(message);
+  }
+
+  return json;
+}
+
 const ATTENDANCE_PROMPT = 'Able to come?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
@@ -223,37 +250,30 @@ async function fetchRsvpCompletionStatus(email) {
     return rsvpCompletionCache.get(normalizedEmail);
   }
 
-  if (!supabaseClient) {
-    const cachedCompletion = isRsvpCompleted(normalizedEmail);
-    rsvpCompletionCache.set(normalizedEmail, cachedCompletion);
-    return cachedCompletion;
-  }
+  // Fallback to local storage if Edge Functions are unreachable.
+  try {
+    const result = await callRsvpFunction(RSVP_LOOKUP_FUNCTION_URL, {
+      email: normalizedEmail,
+      sitePassword: RSVP_PASSWORD,
+      inviteToken: rsvpState.inviteToken || '',
+    });
 
-  const { data, error } = await supabaseClient
-    .from('guests')
-    .select('attendance')
-    .eq('email', normalizedEmail);
+    const completed = Boolean(result.rsvp_completed);
 
-  if (error) {
-    const cachedCompletion = isRsvpCompleted(normalizedEmail);
-    rsvpCompletionCache.set(normalizedEmail, cachedCompletion);
-    return cachedCompletion;
-  }
-
-  const completed =
-    data?.some(guest => typeof guest.attendance === 'string' && guest.attendance.trim() !== '') ?? false;
-
-  if (completed) {
-    setRsvpCompleted(normalizedEmail);
-  } else {
-    const key = getRsvpCompletionKey(normalizedEmail);
-    if (key) {
-      localStorage.removeItem(key);
+    if (completed) {
+      setRsvpCompleted(normalizedEmail);
+    } else {
+      const key = getRsvpCompletionKey(normalizedEmail);
+      if (key) localStorage.removeItem(key);
     }
-  }
 
-  rsvpCompletionCache.set(normalizedEmail, completed);
-  return completed;
+    rsvpCompletionCache.set(normalizedEmail, completed);
+    return completed;
+  } catch (error) {
+    const cachedCompletion = isRsvpCompleted(normalizedEmail);
+    rsvpCompletionCache.set(normalizedEmail, cachedCompletion);
+    return cachedCompletion;
+  }
 }
 
 function setRsvpAccessEmail(email) {
@@ -285,16 +305,20 @@ function setSiteAccessVisibility(shouldShow) {
 }
 
 async function doesGuestExist(email) {
-  if (!supabaseClient || !email) return false;
+  if (!email) return false;
   const normalized = normalizeEmailForStorage(email);
   if (!normalized) return false;
-  const { data, error } = await supabaseClient
-    .from('guests')
-    .select('email')
-    .eq('email', normalized)
-    .limit(1);
-  if (error) return false;
-  return (data?.length ?? 0) > 0;
+
+  try {
+    const result = await callRsvpFunction(RSVP_LOOKUP_FUNCTION_URL, {
+      email: normalized,
+      sitePassword: RSVP_PASSWORD,
+      inviteToken: rsvpState.inviteToken || '',
+    });
+    return (result.guests?.length ?? 0) > 0;
+  } catch {
+    return false;
+  }
 }
 
 function formatGuestName(firstName, lastName, fallback) {
@@ -378,26 +402,19 @@ function applyInviteTypeOverride(inviteType, emailFallback) {
 }
 
 async function fetchInviteDetails(token) {
-  if (!supabaseClient || !token) {
+  // With strict RLS, we do not query invites from the browser.
+  // Keep the token in state; Edge Functions will validate it when we lookup/submit.
+  if (!token) {
     setInviteDetails(null);
     return null;
   }
 
-  const { data, error } = await supabaseClient
-    .from('invites')
-    .select('id, token, invite_type, primary_email, primary_first_name, primary_last_name')
-    .eq('token', token)
-    .maybeSingle();
+  rsvpState.inviteToken = token;
+  if (inviteTokenField) inviteTokenField.value = token;
 
-  if (error || !data) {
-    setInviteDetails(null);
-    rsvpState.inviteLookupFailed = true;
-    return null;
-  }
-
-  setInviteDetails(data);
+  // We can still drive UI from route overrides.
   rsvpState.inviteLookupFailed = false;
-  return data;
+  return null;
 }
 
 function setGuestSectionState(section, expanded) {
@@ -812,22 +829,21 @@ function populateRsvpFromGuests(guestRows, email) {
 }
 
 async function loadGuestRowsByEmail(email) {
-  if (!supabaseClient || !email) return [];
-  const { data, error } = await supabaseClient
-    .from('guests')
-    .select(
-      'invitation_group_id, role, first_name, last_name, email, attendance, dietary, address_line_1, address_line_2, city, postcode, country'
-    )
-    .eq('email', email);
+  if (!email) return [];
 
-  if (error) {
+  try {
+    const result = await callRsvpFunction(RSVP_LOOKUP_FUNCTION_URL, {
+      email: normalizeEmailForStorage(email),
+      sitePassword: RSVP_PASSWORD,
+      inviteToken: rsvpState.inviteToken || '',
+    });
+    return result.guests || [];
+  } catch (error) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent = 'We could not load your saved RSVP yet. Please try again soon.';
     }
     return [];
   }
-
-  return data || [];
 }
 
 function isGuestRsvpComplete(guestRows) {
@@ -1811,12 +1827,7 @@ async function submitRsvp(event) {
     return;
   }
 
-  if (!supabaseClient) {
-    if (rsvpFeedback) {
-      rsvpFeedback.textContent = 'We could not connect to the RSVP service. Please try again later.';
-    }
-    return;
-  }
+  // We submit via Edge Functions (no browser-to-DB writes).
 
   const token = (formData.get('invite-token') || rsvpState.inviteToken || '').trim();
   if (token && (!rsvpState.inviteDetails || rsvpState.inviteDetails.token !== token)) {
@@ -1884,555 +1895,67 @@ async function submitRsvp(event) {
       email,
       attendance: plusOneAttendance,
       dietary: formData.get('plusone-dietary')?.trim() ?? '',
-      address_line_1: null,
-      address_line_2: null,
-      city: null,
-      postcode: null,
-      country: null,
+      address_line_1: formData.get('address-line-1')?.trim() ?? '',
+      address_line_2: formData.get('address-line-2')?.trim() ?? '',
+      city: formData.get('address-city')?.trim() ?? '',
+      postcode: formData.get('address-postcode')?.trim() ?? '',
+      country: formData.get('address-country')?.trim() ?? '',
       updated_at: now,
     });
   }
 
   try {
-    const { error } = await supabaseClient
-      .from('guests')
-      .upsert(guestRows, { onConflict: 'invitation_group_id,role' });
-
-    if (error) {
-      throw error;
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = 'Submitting your RSVP...';
     }
 
-    if (rsvpState.inviteDetails?.id) {
-      const { error: inviteError } = await supabaseClient
-        .from('invites')
-        .update({
-          redeemed_at: now,
-          primary_email: rsvpState.inviteDetails.primary_email || email,
-        })
-        .eq('id', rsvpState.inviteDetails.id);
+    const primaryRow = guestRows.find(row => row.role === 'primary') || guestRows[0];
+    const plusOneRow = guestRows.find(row => row.role === 'plusone') || null;
 
-      if (inviteError) {
-        throw inviteError;
-      }
+    const result = await callRsvpFunction(RSVP_SUBMIT_FUNCTION_URL, {
+      email: primaryRow.email,
+      sitePassword: RSVP_PASSWORD,
+      inviteToken: rsvpState.inviteToken || '',
+      first_name: primaryRow.first_name,
+      last_name: primaryRow.last_name,
+      address_line_1: primaryRow.address_line_1,
+      address_line_2: primaryRow.address_line_2,
+      city: primaryRow.city,
+      postcode: primaryRow.postcode,
+      country: primaryRow.country,
+      rsvp: {
+        attending: primaryRow.attendance,
+        dietary_requirements: primaryRow.dietary,
+        plusone: plusOneRow
+          ? {
+              first_name: plusOneRow.first_name,
+              last_name: plusOneRow.last_name,
+              attending: plusOneRow.attendance,
+              dietary_requirements: plusOneRow.dietary,
+            }
+          : null,
+      },
+    });
+
+    setRsvpCompleted(primaryRow.email);
+    await setAuthEmail(primaryRow.email);
+
+    // Refresh UI from server response.
+    if (Array.isArray(result.guests)) {
+      populateRsvpFromGuests(result.guests, primaryRow.email);
     }
 
-    rsvpForm.reset();
-    updateGuestUi(profile);
-    const primaryFirstName = formData.get('primary-first-name')?.trim() ?? '';
-    const plusOneFirstName = formData.get('plusone-first-name')?.trim() ?? '';
-    const formattedName = formatGuestName(
-      primaryFirstName,
-      formData.get('primary-last-name'),
-      profile.primary?.name || 'there'
-    );
-    const nameParts = [primaryFirstName || formattedName].filter(Boolean);
-    if (includesPlusOne && plusOneFirstName) {
-      nameParts.push(plusOneFirstName);
+    if (rsvpFeedback) {
+      rsvpFeedback.textContent = 'Thanks! Your RSVP has been saved.';
     }
-    const greetingName = nameParts.join(' and ');
-    const thankYouNameSegment = greetingName ? `, ${greetingName}` : '';
-    const thankYouMessage =
-      primaryAttendance === 'yes'
-        ? `Thank you for your RSVP${thankYouNameSegment} — we can't wait to celebrate with you!`
-        : "Thank you for letting us know. We're sure we'll see you soon.";
-    const personalMessage =
-      primaryAttendance === 'yes'
-        ? `We’re so excited to celebrate with you${thankYouNameSegment}.`
-        : `We’ll miss you${thankYouNameSegment}.`;
-    if (thankYouMessageEl) {
-      thankYouMessageEl.textContent = thankYouMessage;
-    }
-    if (thankYouPersonalEl) {
-      thankYouPersonalEl.textContent = personalMessage;
-    }
-    rsvpState.storedEmail = email;
-    localStorage.setItem(EMAIL_STORAGE_KEY, email);
-    setRsvpAccessEmail(email);
-    setRsvpCompleted(email);
-    applyRsvpCompletionGateState(true);
-    await updateRsvpTriggerLabels();
+
+    // Move to final step.
     setStep(5);
-    dismissRsvpSection();
+    return;
   } catch (error) {
     if (rsvpFeedback) {
-      rsvpFeedback.textContent =
-        'We could not send your response. Please try again later or contact us directly.';
+      rsvpFeedback.textContent = error?.message || 'We could not save your RSVP right now. Please try again.';
     }
-  }
-}
-
-rsvpForm?.addEventListener('submit', submitRsvp);
-
-stepEnterButton?.addEventListener('click', () => {
-  window.location.assign(SITE_BASE_URL);
-});
-
-function loadMapboxResources() {
-  return new Promise((resolve, reject) => {
-    if (mapLoaded) {
-      resolve();
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js';
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Map could not load.'));
-
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css';
-
-    document.head.appendChild(link);
-    document.head.appendChild(script);
-  });
-}
-
-function addLocationLayers(map) {
-  if (!map.getSource('medley-footprint')) {
-    map.addSource('medley-footprint', {
-      type: 'geojson',
-      data: GARDEN_FOOTPRINT,
-    });
-  } else {
-    map.getSource('medley-footprint').setData(GARDEN_FOOTPRINT);
-  }
-
-  if (!map.getLayer('medley-extrusion')) {
-    map.addLayer({
-      id: 'medley-extrusion',
-      type: 'fill-extrusion',
-      source: 'medley-footprint',
-      paint: {
-        'fill-extrusion-color': '#4ba87d',
-        'fill-extrusion-height': 14,
-        'fill-extrusion-base': 0,
-        'fill-extrusion-opacity': 0.95,
-        'fill-extrusion-vertical-gradient': true,
-      },
-    });
-  }
-
-  if (!map.getLayer('medley-label')) {
-    map.addLayer({
-      id: 'medley-label',
-      type: 'symbol',
-      source: 'medley-footprint',
-      layout: {
-        'text-field': ['get', 'name'],
-        'text-offset': [0, 1.1],
-        'text-anchor': 'top',
-        'text-size': 13,
-        'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      },
-      paint: {
-        'text-color': '#ffffff',
-        'text-halo-color': 'rgba(75, 168, 125, 0.85)',
-        'text-halo-width': 1.8,
-      },
-    });
-  }
-
-  if (!map.getSource('st-margarets-footprint')) {
-    map.addSource('st-margarets-footprint', {
-      type: 'geojson',
-      data: CHURCH_FOOTPRINT,
-    });
-  } else {
-    map.getSource('st-margarets-footprint').setData(CHURCH_FOOTPRINT);
-  }
-
-  if (!map.getLayer('st-margarets-extrusion')) {
-    map.addLayer({
-      id: 'st-margarets-extrusion',
-      type: 'fill-extrusion',
-      source: 'st-margarets-footprint',
-      paint: {
-        'fill-extrusion-color': '#f05a7e',
-        'fill-extrusion-height': 16,
-        'fill-extrusion-base': 0,
-        'fill-extrusion-opacity': 0.95,
-        'fill-extrusion-vertical-gradient': true,
-      },
-    });
-  }
-
-  if (!map.getLayer('st-margarets-label')) {
-    map.addLayer({
-      id: 'st-margarets-label',
-      type: 'symbol',
-      source: 'st-margarets-footprint',
-      layout: {
-        'text-field': "St Margaret's Church",
-        'text-offset': [0, 1.1],
-        'text-anchor': 'top',
-        'text-size': 13,
-        'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      },
-      paint: {
-        'text-color': '#ffffff',
-        'text-halo-color': 'rgba(240, 90, 126, 0.85)',
-        'text-halo-width': 1.8,
-      },
-    });
-  }
-}
-
-function addWalkingRoute(map) {
-  const sourceId = 'wedding-walking-route';
-  const lineData = WALKING_ROUTE;
-
-  if (!map.getSource(sourceId)) {
-    map.addSource(sourceId, {
-      type: 'geojson',
-      data: lineData,
-      lineMetrics: true,
-    });
-  } else {
-    const existingSource = map.getSource(sourceId);
-    existingSource.setData(lineData);
-  }
-
-  if (!map.getLayer('wedding-walking-route-glow')) {
-    map.addLayer({
-      id: 'wedding-walking-route-glow',
-      type: 'line',
-      source: sourceId,
-      layout: {
-        'line-cap': 'round',
-        'line-join': 'round',
-      },
-      paint: {
-        'line-color': 'rgba(255, 255, 255, 0.55)',
-        'line-width': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          12,
-          4,
-          16,
-          18,
-        ],
-        'line-blur': 6,
-        'line-opacity': 0.6,
-      },
-    });
-  }
-
-  if (!map.getLayer('wedding-walking-route-line')) {
-    map.addLayer({
-      id: 'wedding-walking-route-line',
-      type: 'line',
-      source: sourceId,
-      layout: {
-        'line-cap': 'round',
-        'line-join': 'round',
-      },
-      paint: {
-        'line-color': '#ffffff',
-        'line-width': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          12,
-          3,
-          17,
-          10,
-        ],
-        'line-gradient': [
-          'interpolate',
-          ['linear'],
-          ['line-progress'],
-          0,
-          'rgba(255, 255, 255, 0.6)',
-          1,
-          '#ffffff',
-        ],
-        'line-opacity': 0.95,
-      },
-    });
-  }
-}
-
-function getRouteBounds() {
-  const coordinates = WALKING_ROUTE.features?.[0]?.geometry?.coordinates;
-
-  if (typeof mapboxgl === 'undefined' || !Array.isArray(coordinates) || coordinates.length === 0) {
-    return null;
-  }
-
-  return coordinates.reduce((bounds, coord) => {
-    if (!Array.isArray(coord) || coord.length < 2) {
-      return bounds;
-    }
-
-    if (!bounds) {
-      return new mapboxgl.LngLatBounds(coord, coord);
-    }
-
-    return bounds.extend(coord);
-  }, null);
-}
-
-function animateRouteFlyover(map, routeBounds, initialCamera) {
-  const coordinates = WALKING_ROUTE.features?.[0]?.geometry?.coordinates;
-  if (!Array.isArray(coordinates) || coordinates.length === 0) return;
-
-  const bounds = routeBounds || getRouteBounds();
-
-  const southeastBearing = 135;
-
-  if (bounds) {
-    map.fitBounds(bounds, {
-      padding: { top: 120, bottom: 160, left: 160, right: 160 },
-      duration: 2000,
-      pitch: 68,
-      bearing: southeastBearing,
-      essential: true,
-    });
-  }
-
-  let stepIndex = 0;
-  const stepDuration = 1600;
-
-  function advanceAlongRoute() {
-    if (stepIndex >= coordinates.length) return;
-    const current = coordinates[stepIndex];
-
-    map.easeTo({
-      center: current,
-      zoom: 16.2,
-      pitch: 72,
-      bearing: southeastBearing,
-      duration: stepDuration,
-      essential: true,
-    });
-
-    stepIndex += 1;
-
-    if (stepIndex < coordinates.length) {
-      map.once('moveend', () => {
-        setTimeout(advanceAlongRoute, 150);
-      });
-    } else {
-      map.once('moveend', () => {
-        map.easeTo({
-          center: coordinates[coordinates.length - 1],
-          zoom: 15.8,
-          pitch: 64,
-          bearing: southeastBearing,
-          duration: 1800,
-          essential: true,
-        });
-
-        if (initialCamera) {
-          map.once('moveend', () => {
-            map.easeTo({
-              center: initialCamera.center,
-              zoom: initialCamera.zoom,
-              pitch: initialCamera.pitch,
-              bearing: initialCamera.bearing,
-              duration: 2200,
-              essential: true,
-            });
-          });
-        }
-      });
-    }
-  }
-
-  map.once('moveend', () => {
-    setTimeout(advanceAlongRoute, 400);
-  });
-}
-
-function addTerrainAndBuildings(map) {
-  if (!map.getSource('mapbox-dem')) {
-    map.addSource('mapbox-dem', {
-      type: 'raster-dem',
-      url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-      tileSize: 512,
-      maxzoom: 14,
-    });
-  }
-
-  map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.3 });
-
-  const style = map.getStyle();
-  const layers = style?.layers ?? [];
-  const labelLayerId = layers.find(
-    layer => layer.type === 'symbol' && layer.layout && layer.layout['text-field']
-  )?.id;
-
-  if (map.getLayer('3d-buildings')) {
     return;
   }
-
-  const sourceId = style?.sources?.composite
-    ? 'composite'
-    : style?.sources?.basemap
-    ? 'basemap'
-    : null;
-
-  if (!sourceId) {
-    return;
-  }
-
-  map.addLayer(
-    {
-      id: '3d-buildings',
-      source: sourceId,
-      'source-layer': 'building',
-      filter: ['==', 'extrude', 'true'],
-      type: 'fill-extrusion',
-      minzoom: 15,
-      paint: {
-        'fill-extrusion-color': '#d4d4d4',
-        'fill-extrusion-height': ['get', 'height'],
-        'fill-extrusion-base': ['get', 'min_height'],
-        'fill-extrusion-opacity': 0.6,
-      },
-    },
-    labelLayerId
-  );
 }
-
-function initialiseMap() {
-  if (mapLoaded) return;
-  if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes('YOUR_MAPBOX_ACCESS_TOKEN')) {
-    if (mapElement) {
-      mapElement.textContent = 'Add your Mapbox token in script.js to display the map.';
-    }
-    mapLoaded = true;
-    return;
-  }
-
-  mapboxgl.accessToken = MAPBOX_TOKEN;
-  mapInstance = new mapboxgl.Map({
-    container: mapElement || 'map',
-    style: MAPBOX_STYLE,
-    center: CHURCH_COORDS,
-    zoom: 15.4,
-    pitch: 64,
-    bearing: 135,
-    antialias: true,
-    attributionControl: false,
-  });
-
-  mapInstance.addControl(new mapboxgl.FullscreenControl(), 'top-right');
-
-  mapInstance.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right');
-
-  const routeBounds = getRouteBounds();
-
-  mapInstance.on('load', () => {
-    addTerrainAndBuildings(mapInstance);
-    addLocationLayers(mapInstance);
-    addWalkingRoute(mapInstance);
-
-    if (routeBounds) {
-      mapInstance.fitBounds(routeBounds, {
-        padding: { top: 120, bottom: 160, left: 160, right: 160 },
-        duration: 0,
-        pitch: 64,
-        bearing: 135,
-        essential: true,
-      });
-    }
-
-    const initialCamera = {
-      center: mapInstance.getCenter(),
-      zoom: mapInstance.getZoom(),
-      pitch: mapInstance.getPitch(),
-      bearing: mapInstance.getBearing(),
-    };
-
-    routeBoundsCache = routeBounds;
-    initialCameraCache = initialCamera;
-
-    animateRouteFlyover(mapInstance, routeBounds, initialCamera);
-
-    if (mapReplayButton) {
-      mapReplayButton.disabled = false;
-    }
-  });
-
-  mapLoaded = true;
-}
-
-function observeMap() {
-  if (!mapContainer) return;
-  const observer = new IntersectionObserver(
-    entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          loadMapboxResources()
-            .then(initialiseMap)
-            .catch(() => {
-              if (mapElement) {
-                mapElement.textContent = 'The map is unavailable right now.';
-              }
-            });
-          observer.disconnect();
-        }
-      });
-    },
-    { threshold: 0.2 }
-  );
-
-  observer.observe(mapContainer);
-}
-
-observeMap();
-
-if (mapReplayButton) {
-  mapReplayButton.disabled = true;
-  mapReplayButton.addEventListener('click', () => {
-    if (!mapInstance || !routeBoundsCache || !initialCameraCache) {
-      return;
-    }
-
-    mapInstance.stop();
-    animateRouteFlyover(mapInstance, routeBoundsCache, initialCameraCache);
-  });
-}
-
-function setupAccordion() {
-  const buttons = document.querySelectorAll('.accordion-item button');
-  buttons.forEach(button => {
-    const panel = button.nextElementSibling;
-    if (!panel) return;
-    panel.style.maxHeight = '0px';
-    panel.addEventListener('transitionend', event => {
-      if (event.propertyName !== 'max-height') return;
-      if (button.getAttribute('aria-expanded') === 'true') {
-        panel.style.maxHeight = 'none';
-      } else {
-        panel.hidden = true;
-      }
-    });
-    button.addEventListener('click', () => {
-      const isExpanded = button.getAttribute('aria-expanded') === 'true';
-      const nextState = !isExpanded;
-      button.setAttribute('aria-expanded', String(nextState));
-      if (nextState) {
-        panel.hidden = false;
-        panel.classList.add('open');
-        panel.style.maxHeight = '0px';
-        requestAnimationFrame(() => {
-          panel.style.maxHeight = panel.scrollHeight + 'px';
-        });
-      } else {
-        panel.classList.remove('open');
-        if (panel.style.maxHeight === 'none') {
-          panel.style.maxHeight = panel.scrollHeight + 'px';
-        }
-        requestAnimationFrame(() => {
-          panel.style.maxHeight = '0px';
-        });
-      }
-    });
-  });
-}
-
-setupAccordion();
