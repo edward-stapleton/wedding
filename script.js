@@ -1884,6 +1884,43 @@ function handleRsvpEnter() {
   window.location.assign(targetUrl);
 }
 
+function handleRsvpFormKeydown(event) {
+  if (!rsvpForm) return;
+  if (event.key !== 'Enter' || event.defaultPrevented) return;
+
+  const target = event.target;
+
+  // Let buttons, links, and textareas keep their native Enter behaviour.
+  if (
+    target instanceof HTMLButtonElement ||
+    target instanceof HTMLAnchorElement ||
+    target instanceof HTMLTextAreaElement
+  ) {
+    return;
+  }
+
+  // Only intercept typical form fields.
+  const isField =
+    target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement;
+  if (!isField) return;
+
+  // Prevent the browser's default "submit the whole form" behaviour.
+  event.preventDefault();
+
+  if (rsvpState.currentStep >= 1 && rsvpState.currentStep <= 3) {
+    void handleStepAdvance();
+    return;
+  }
+
+  if (rsvpState.currentStep === 4) {
+    if (typeof rsvpForm.requestSubmit === 'function') {
+      rsvpForm.requestSubmit();
+    } else {
+      rsvpForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    }
+  }
+}
+
 async function getInitialRsvpStep() {
   if (!rsvpState.hasRequestedReturning) {
     return 1;
@@ -1925,6 +1962,7 @@ rsvpTriggers.forEach(trigger => {
 
 document.addEventListener('DOMContentLoaded', () => {
   if (rsvpForm) {
+    rsvpForm.addEventListener('keydown', handleRsvpFormKeydown);
     rsvpForm.addEventListener('submit', event => {
       event.preventDefault();
       void submitRsvp(event);
