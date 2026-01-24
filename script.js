@@ -32,20 +32,25 @@ const isRsvpCoupleRoute = currentPath === `/${RSVP_COUPLE_ROUTE_PATH}`;
 const isRsvpRoute = isRsvpSingleRoute || isRsvpCoupleRoute;
 const isHomeRoute = currentPath === '/';
 const allowedRoutes = new Set(['/', `/${RSVP_ROUTE_PATH}`, `/${RSVP_COUPLE_ROUTE_PATH}`]);
-if (!allowedRoutes.has(currentPath)) {
-  window.location.replace(SITE_BASE_URL);
-}
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
 const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
 const RSVP_COMPLETED_KEY_PREFIX = 'weddingRsvpCompleted:';
 const RSVP_ACCESS_STORAGE_KEY = 'weddingRsvpAccessEmail';
+const SITE_ACCESS_GRANTED_KEY = 'weddingSiteAccessGranted';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN = APP_CONFIG.mapboxToken;
 const MAPBOX_DEFAULT_STYLE = APP_CONFIG.mapboxStyle;
 const mapElement = document.getElementById('map');
 const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
 const CHURCH_COORDS = [-1.2684928, 51.7666909];
+const hasSiteAccessGranted = () => localStorage.getItem(SITE_ACCESS_GRANTED_KEY) === 'true';
+if (isHomeRoute && !hasSiteAccessGranted()) {
+  window.location.replace(RSVP_ROUTE_URL);
+}
+if (!allowedRoutes.has(currentPath)) {
+  window.location.replace(SITE_BASE_URL);
+}
 
 const rsvpAccessEmailInput = document.getElementById('rsvp-access-email');
 const rsvpAccessLink = document.querySelector('.rsvp-access-link');
@@ -284,6 +289,14 @@ function setRsvpAccessEmail(email) {
 
 function getStoredRsvpAccessEmail() {
   return localStorage.getItem(RSVP_ACCESS_STORAGE_KEY) || '';
+}
+
+function setSiteAccessGranted(granted = true) {
+  if (granted) {
+    localStorage.setItem(SITE_ACCESS_GRANTED_KEY, 'true');
+  } else {
+    localStorage.removeItem(SITE_ACCESS_GRANTED_KEY);
+  }
 }
 
 function setSiteAccessFeedback(message) {
@@ -854,6 +867,10 @@ function isGuestRsvpComplete(guestRows) {
 async function enforceSiteGate() {
   if (isRsvpRoute) return true;
   if (!siteAccessSection || !siteContent) return true;
+  if (hasSiteAccessGranted()) {
+    setSiteAccessVisibility(false);
+    return true;
+  }
   if (!isHomeRoute) {
     window.location.replace(SITE_BASE_URL);
     return false;
@@ -1020,6 +1037,7 @@ async function handleRsvpAccessSubmit() {
   }
   localStorage.setItem(EMAIL_STORAGE_KEY, emailValue);
   setRsvpAccessEmail(emailValue);
+  setSiteAccessGranted(true);
   await setAuthEmail(emailValue);
   populateRsvpFromGuests(guestRows, emailValue);
   setRsvpAccessFeedback('Welcome back! We have loaded your saved RSVP.');
@@ -1065,6 +1083,7 @@ async function handleSiteAccessSubmit() {
 
   localStorage.setItem(EMAIL_STORAGE_KEY, normalizeEmailForStorage(emailValue));
   setRsvpAccessEmail(emailValue);
+  setSiteAccessGranted(true);
   setSiteAccessVisibility(false);
   setSiteAccessFeedback('');
   return true;
@@ -1953,6 +1972,7 @@ async function submitRsvp(event) {
     const normalizedEmail = normalizeEmailForStorage(primaryRow.email);
     setRsvpCompleted(normalizedEmail);
     setRsvpAccessEmail(normalizedEmail);
+    setSiteAccessGranted(true);
 
     // Mark as authenticated for this session/UI.
     await setAuthEmail(normalizedEmail);
