@@ -1210,6 +1210,7 @@ body.site-locked .site-header {
 .rsvp-step[data-rsvp-step='1'] .form-grid {
   width: 100%;
   justify-items: center;
+  grid-template-columns: 1fr;
 }
 
 .rsvp-step[data-rsvp-step='1'] .form-field {
