@@ -1652,6 +1652,12 @@ rsvpTriggers.forEach(trigger => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (rsvpForm) {
+    rsvpForm.addEventListener('submit', event => {
+      event.preventDefault();
+      void submitRsvp(event);
+    });
+  }
   if (!isRsvpRoute && !rsvpSection) return;
   setRsvpSectionVisibility(true);
   resetReturningRsvpRequest();
