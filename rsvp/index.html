@@ -25,7 +25,6 @@
           <div class="section-content">
             <div class="rsvp-panel">
               <div class="rsvp-body">
-                <h2 id="rsvp-title">RSVP</h2>
                 <form id="rsvp-form" novalidate>
                   <ol class="rsvp-steps rsvp-progress" aria-label="RSVP progress">
                     <li class="rsvp-step-indicator" data-step-indicator="1">
@@ -40,20 +39,23 @@
                   </ol>
 
                   <section class="rsvp-step" data-rsvp-step="1">
-                    <h3 class="rsvp-step-title">Welcome</h3>
-                    <p class="rsvp-step-intro">
-                      Saturday 22 August 2026 &middot; Oxford. Please enter the password from your invitation to begin your
-                      RSVP.
-                    </p>
+                    <div class="rsvp-invite">
+                      <p class="rsvp-invite-kicker">You&rsquo;re invited to</p>
+                      <p class="rsvp-invite-title">The Wedding of</p>
+                      <p class="rsvp-invite-names">Edward Stapleton &amp; Laura Harford</p>
+                      <p class="rsvp-invite-date">Saturday 22 August 2026</p>
+                      <p class="rsvp-invite-location">Oxford</p>
+                    </div>
                     <div class="form-grid">
                       <div class="form-field">
-                        <label for="rsvp-password">Password</label>
                         <input
                           id="rsvp-password"
                           name="rsvp-password"
                           type="password"
                           autocomplete="off"
                           class="form-control"
+                          placeholder="Password"
+                          aria-label="Password"
                           required
                           data-initial-focus
                         />
