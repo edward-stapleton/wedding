@@ -1197,6 +1197,25 @@ async function enforceSiteGate() {
     return false;
   }
 
+  const storedAccessEmail = getStoredRsvpAccessEmail();
+  const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
+  const activeEmail = storedAccessEmail || storedEmail || getActiveRsvpEmail();
+  const normalizedEmail = normalizeEmailForStorage(activeEmail);
+
+  if (storedAccessEmail && storedAccessEmail.includes('@')) {
+    return true;
+  }
+
+  if (normalizedEmail) {
+    if (isRsvpCompleted(normalizedEmail)) {
+      return true;
+    }
+    const completed = await fetchRsvpCompletionStatus(normalizedEmail);
+    if (completed) {
+      return true;
+    }
+  }
+
   const redirectUrl = new URL(RSVP_ROUTE_PATH, SITE_BASE_URL);
   redirectUrl.searchParams.set(RETURNING_QUERY_KEY, '1');
   window.location.replace(redirectUrl.toString());
