@@ -121,6 +121,7 @@ const NAV_LINK_TARGETS = {
   guide: `${SITE_BASE_URL}#guide`,
   faqs: `${SITE_BASE_URL}#faqs`,
 };
+const RETURNING_QUERY_KEY = 'returning';
 
 let mapLoaded = false;
 let mapInstance;
@@ -143,6 +144,7 @@ const rsvpState = {
   isReturningRsvp: false,
   hasRequestedReturning: false,
   hasCompletedRsvp: false,
+  forceReturning: false,
 };
 const rsvpCompletionCache = new Map();
 
@@ -833,6 +835,15 @@ function setReturningRsvpState(shouldReturn) {
 }
 
 function resetReturningRsvpRequest() {
+  if (rsvpState.forceReturning) {
+    rsvpState.hasRequestedReturning = true;
+    setReturningRsvpState(true);
+    if (rsvpAccessLink) {
+      rsvpAccessLink.hidden = true;
+      rsvpAccessLink.setAttribute('aria-hidden', 'true');
+    }
+    return;
+  }
   rsvpState.hasRequestedReturning = false;
   setReturningRsvpState(false);
 }
@@ -1014,6 +1025,7 @@ function resolveInviteToken() {
   const params = new URLSearchParams(window.location.search);
   const tokenFromUrl = params.get('i');
   rsvpState.inviteTypeFromUrl = normalizeInviteType(params.get(INVITE_TYPE_QUERY_KEY));
+  rsvpState.forceReturning = params.get(RETURNING_QUERY_KEY) === '1';
   const storedToken = localStorage.getItem(INVITE_TOKEN_STORAGE_KEY);
   const activeToken = tokenFromUrl || storedToken || '';
   const storedInviteType = localStorage.getItem(INVITE_TYPE_STORAGE_KEY);
@@ -1159,13 +1171,9 @@ async function enforceSiteGate() {
     return false;
   }
 
-  const email = getStoredRsvpAccessEmail();
-  if (email && (await doesGuestExist(email))) {
-    setSiteAccessVisibility(false);
-    return true;
-  }
-
-  setSiteAccessVisibility(true);
+  const redirectUrl = new URL(RSVP_ROUTE_PATH, SITE_BASE_URL);
+  redirectUrl.searchParams.set(RETURNING_QUERY_KEY, '1');
+  window.location.replace(redirectUrl.toString());
   return false;
 }
 
@@ -1390,8 +1398,8 @@ siteAccessPasswordInput?.addEventListener('input', () => {
 });
 
 async function initAuth() {
-  resetReturningRsvpRequest();
   resolveInviteToken();
+  resetReturningRsvpRequest();
   const storedAccessEmail = getStoredRsvpAccessEmail();
   const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
   rsvpState.storedEmail = storedAccessEmail || storedEmail;
@@ -1461,6 +1469,9 @@ enforceSiteGate().then(shouldInit => {
 });
 
 async function handleReturningRsvpRequest() {
+  if (rsvpState.forceReturning) {
+    return;
+  }
   if (rsvpState.isReturningRsvp) {
     resetReturningRsvpRequest();
   } else {
