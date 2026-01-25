@@ -2367,7 +2367,7 @@ async function submitRsvp(event) {
     setReturningRsvpState(false);
 
     if (rsvpFeedback) {
-      rsvpFeedback.textContent = 'Thanks! Your RSVP has been saved.';
+      rsvpFeedback.textContent = '';
     }
 
     // Move to the thank-you step (with the Enter button).
