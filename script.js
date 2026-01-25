@@ -150,6 +150,31 @@ const rsvpCompletionCache = new Map();
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+function setupPasswordToggles() {
+  const toggleButtons = document.querySelectorAll('[data-password-toggle]');
+  toggleButtons.forEach(button => {
+    if (!(button instanceof HTMLButtonElement)) return;
+    const container = button.closest('.password-input') || button.parentElement;
+    const input = container?.querySelector('input');
+    if (!input) return;
+    const icon = button.querySelector('.material-icons');
+    const updateState = () => {
+      const isVisible = input.type === 'text';
+      button.setAttribute('aria-pressed', String(isVisible));
+      button.setAttribute('aria-label', isVisible ? 'Hide password' : 'Show password');
+      if (icon) {
+        icon.textContent = isVisible ? 'visibility_off' : 'visibility';
+      }
+    };
+    updateState();
+    button.addEventListener('click', () => {
+      input.type = input.type === 'password' ? 'text' : 'password';
+      updateState();
+      input.focus();
+    });
+  });
+}
+
 function getFeatureCenter(featureCollection, fallback = CHURCH_COORDS) {
   const feature = featureCollection?.features?.[0];
   if (!feature) return fallback;
@@ -2013,6 +2038,7 @@ rsvpTriggers.forEach(trigger => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  setupPasswordToggles();
   if (rsvpForm) {
     rsvpForm.addEventListener('keydown', handleRsvpFormKeydown);
     rsvpForm.addEventListener('submit', event => {
