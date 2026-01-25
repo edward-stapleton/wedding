@@ -1180,8 +1180,7 @@ body.site-locked .site-header {
 
 .rsvp-invite-kicker {
   font-size: clamp(0.95rem, 3.5vw, 1.25rem);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .rsvp-invite-title {
@@ -1612,6 +1611,12 @@ html.no-js .fade-section {
 
   .rsvp-panel {
     max-height: calc(100dvh - var(--header-height) - 7rem);
+  }
+}
+
+@media (min-width: 900px) {
+  .rsvp-panel {
+    width: min(100%, 760px);
   }
 }
 
