@@ -1216,9 +1216,7 @@ async function enforceSiteGate() {
     }
   }
 
-  const redirectUrl = new URL(RSVP_ROUTE_PATH, SITE_BASE_URL);
-  redirectUrl.searchParams.set(RETURNING_QUERY_KEY, '1');
-  window.location.replace(redirectUrl.toString());
+  setSiteAccessVisibility(true);
   return false;
 }
 
