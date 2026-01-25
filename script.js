@@ -883,6 +883,7 @@ function setStep(step) {
 
   if (rsvpForm) {
     rsvpForm.classList.toggle('rsvp-step-one', resolvedStep === 1);
+    rsvpForm.classList.toggle('rsvp-step-five', resolvedStep === 5);
   }
 
   updateStepIndicators(resolvedStep);
@@ -2366,7 +2367,7 @@ async function submitRsvp(event) {
     setReturningRsvpState(false);
 
     if (rsvpFeedback) {
-      rsvpFeedback.textContent = 'Thanks! Your RSVP has been saved.';
+      rsvpFeedback.textContent = '';
     }
 
     // Move to the thank-you step (with the Enter button).
