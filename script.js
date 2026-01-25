@@ -883,6 +883,7 @@ function setStep(step) {
 
   if (rsvpForm) {
     rsvpForm.classList.toggle('rsvp-step-one', resolvedStep === 1);
+    rsvpForm.classList.toggle('rsvp-step-five', resolvedStep === 5);
   }
 
   updateStepIndicators(resolvedStep);
