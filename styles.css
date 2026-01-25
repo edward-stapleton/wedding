@@ -1312,6 +1312,14 @@ body.site-locked .site-header {
   margin-left: 0;
 }
 
+#rsvp-form.rsvp-step-five .rsvp-step {
+  gap: 0.5rem;
+}
+
+#rsvp-form.rsvp-step-five .rsvp-step p {
+  margin: 0;
+}
+
 .rsvp-actions [data-step-next],
 .rsvp-actions [data-step-submit] {
   margin-left: auto;
