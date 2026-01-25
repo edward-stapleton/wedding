@@ -40,6 +40,7 @@ const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
 const RSVP_COMPLETED_KEY_PREFIX = 'weddingRsvpCompleted:';
 const RSVP_ACCESS_STORAGE_KEY = 'weddingRsvpAccessEmail';
+const SITE_ACCESS_SESSION_KEY = 'weddingSiteAccessSession';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN = APP_CONFIG.mapboxToken;
 const MAPBOX_DEFAULT_STYLE = APP_CONFIG.mapboxStyle;
@@ -1201,18 +1202,20 @@ async function enforceSiteGate() {
   const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
   const activeEmail = storedAccessEmail || storedEmail || getActiveRsvpEmail();
   const normalizedEmail = normalizeEmailForStorage(activeEmail);
+  const hasSessionAccess = sessionStorage.getItem(SITE_ACCESS_SESSION_KEY) === '1';
 
-  if (storedAccessEmail && storedAccessEmail.includes('@')) {
+  if (activeEmail) {
+    setInputValueIfEmpty(siteAccessEmailInput, activeEmail);
+  }
+
+  if (hasSessionAccess) {
+    setSiteAccessVisibility(false);
     return true;
   }
 
   if (normalizedEmail) {
-    if (isRsvpCompleted(normalizedEmail)) {
-      return true;
-    }
-    const completed = await fetchRsvpCompletionStatus(normalizedEmail);
-    if (completed) {
-      return true;
+    if (!isRsvpCompleted(normalizedEmail)) {
+      await fetchRsvpCompletionStatus(normalizedEmail);
     }
   }
 
@@ -1419,6 +1422,7 @@ async function handleSiteAccessSubmit() {
 
   localStorage.setItem(EMAIL_STORAGE_KEY, normalizeEmailForStorage(emailValue));
   setRsvpAccessEmail(emailValue);
+  sessionStorage.setItem(SITE_ACCESS_SESSION_KEY, '1');
   setSiteAccessVisibility(false);
   setSiteAccessFeedback('');
   return true;
