@@ -1313,18 +1313,11 @@ body.site-locked .site-header {
 }
 
 #rsvp-form.rsvp-step-five .rsvp-step {
-  text-align: center;
+  gap: 0.5rem;
 }
 
-#rsvp-form.rsvp-step-five .rsvp-actions {
-  justify-content: center;
-}
-
-#rsvp-form.rsvp-step-five .rsvp-step-intro,
-#rsvp-form.rsvp-step-five #rsvp-thank-you-message,
-#rsvp-form.rsvp-step-five #rsvp-thank-you-personal,
-#rsvp-form.rsvp-step-five #rsvp-feedback {
-  text-align: center;
+#rsvp-form.rsvp-step-five .rsvp-step p {
+  margin: 0;
 }
 
 .rsvp-actions [data-step-next],
