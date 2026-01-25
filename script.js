@@ -802,16 +802,14 @@ function setReturningRsvpState(shouldReturn) {
     }
   }
   if (rsvpPasswordField) {
-    rsvpPasswordField.hidden = canReturn;
+    rsvpPasswordField.hidden = false;
   }
   if (rsvpPasswordInput) {
     if (canReturn) {
       rsvpPasswordInput.value = '';
       rsvpPasswordInput.removeAttribute('aria-invalid');
-      rsvpPasswordInput.removeAttribute('required');
-    } else {
-      rsvpPasswordInput.setAttribute('required', 'true');
     }
+    rsvpPasswordInput.setAttribute('required', 'true');
   }
 
   if (rsvpAccessLink) {
@@ -824,7 +822,7 @@ function setReturningRsvpState(shouldReturn) {
 
   if (stepOneIntro) {
     stepOneIntro.textContent = canReturn
-      ? 'Enter the email address you used before to return to the main website.'
+      ? 'Enter the password from your invitation and the email address you used before to return to the main website.'
       : stepOneIntroDefault;
   }
 
@@ -1287,11 +1285,19 @@ async function handleRsvpAccessSubmit() {
   rsvpAccessEmailInput.removeAttribute('aria-invalid');
 
   const emailValue = rsvpAccessEmailInput.value.trim();
+  const passwordValue = rsvpPasswordInput?.value?.trim().toUpperCase() || '';
 
   if (!emailValue || !emailValue.includes('@')) {
     setRsvpAccessFeedback('Please enter a valid email address to continue.');
     rsvpAccessEmailInput.setAttribute('aria-invalid', 'true');
     rsvpAccessEmailInput.focus();
+    return false;
+  }
+
+  if (!passwordValue || passwordValue !== RSVP_PASSWORD) {
+    setRsvpAccessFeedback('Please enter the website password to continue.');
+    rsvpPasswordInput?.setAttribute('aria-invalid', 'true');
+    rsvpPasswordInput?.focus();
     return false;
   }
 
@@ -1370,6 +1376,7 @@ async function handleSiteAccessSubmit() {
 rsvpAccessEmailInput?.addEventListener('input', () => {
   rsvpAccessEmailInput.removeAttribute('aria-invalid');
   setRsvpAccessFeedback('');
+  updatePasswordGate();
 });
 
 siteAccessEmailInput?.addEventListener('input', () => {
@@ -2018,17 +2025,17 @@ function validateStep(step, formData, profile) {
   const hasPlusOne = isPlusOneActive(activeProfile);
 
   if (step === 1) {
+    const passwordValue = formData.get('rsvp-password')?.toString().trim().toUpperCase() || '';
+    if (!passwordValue) {
+      errors.push('Please enter the RSVP password from your invitation.');
+    } else if (passwordValue !== RSVP_PASSWORD) {
+      errors.push('The RSVP password is incorrect. Please check your invitation.');
+    }
+
     if (rsvpState.isReturningRsvp && rsvpState.hasRequestedReturning) {
       const returningEmail = formData.get('rsvp-access-email')?.toString().trim() || '';
       if (!returningEmail || !returningEmail.includes('@')) {
         errors.push('Please enter a valid email address to continue.');
-      }
-    } else {
-      const passwordValue = formData.get('rsvp-password')?.toString().trim().toUpperCase() || '';
-      if (!passwordValue) {
-        errors.push('Please enter the RSVP password from your invitation.');
-      } else if (passwordValue !== RSVP_PASSWORD) {
-        errors.push('The RSVP password is incorrect. Please check your invitation.');
       }
     }
   }
@@ -2104,12 +2111,14 @@ function updatePasswordGate() {
     stepNextButton.disabled = false;
     return;
   }
-  if (rsvpState.isReturningRsvp) {
-    stepNextButton.disabled = false;
-    return;
-  }
   const passwordValue = rsvpPasswordInput?.value || '';
   const isValid = isRsvpPasswordValid(passwordValue);
+  if (rsvpState.isReturningRsvp) {
+    const emailValue = rsvpAccessEmailInput?.value?.trim() || '';
+    const hasValidEmail = emailValue.includes('@');
+    stepNextButton.disabled = !(isValid && hasValidEmail);
+    return;
+  }
   stepNextButton.disabled = !isValid;
   if (rsvpPasswordInput) {
     const shouldFlag = passwordValue.trim() !== '' && !isValid;
@@ -2121,6 +2130,7 @@ rsvpPasswordInput?.addEventListener('input', () => {
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
+  rsvpPasswordInput.removeAttribute('aria-invalid');
   updatePasswordGate();
 });
 
