@@ -1170,7 +1170,7 @@ body.site-locked .site-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
+  gap: 1.25rem;
   text-align: center;
 }
 
@@ -1179,26 +1179,31 @@ body.site-locked .site-header {
 }
 
 .rsvp-invite-kicker {
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
+  font-size: clamp(0.95rem, 3.5vw, 1.25rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .rsvp-invite-title {
-  font-size: 1rem;
-  letter-spacing: 0.04em;
-  text-transform: none;
+  font-size: clamp(0.95rem, 3.5vw, 1.25rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .rsvp-invite-names {
-  font-size: 1.4rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-size: clamp(2.4375rem, 7.5vw, 3.75rem);
+  font-weight: inherit;
+  line-height: 1.1;
 }
 
-.rsvp-invite-date,
+.rsvp-invite-date {
+  font-size: clamp(0.95rem, 3.5vw, 1.25rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .rsvp-invite-location {
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
+  font-size: clamp(1.05rem, 3.5vw, 1.35rem);
 }
 
 .rsvp-step-intro {
