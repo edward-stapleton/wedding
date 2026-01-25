@@ -1159,13 +1159,22 @@ async function enforceSiteGate() {
     return false;
   }
 
+  setSiteAccessVisibility(true);
   const email = getStoredRsvpAccessEmail();
-  if (email && (await doesGuestExist(email))) {
+  if (!email) {
+    window.location.replace(RSVP_ROUTE_URL);
+    return false;
+  }
+
+  if (siteAccessEmailInput && !siteAccessEmailInput.value) {
+    siteAccessEmailInput.value = email;
+  }
+
+  if (await doesGuestExist(email)) {
     setSiteAccessVisibility(false);
     return true;
   }
 
-  setSiteAccessVisibility(true);
   return false;
 }
 
