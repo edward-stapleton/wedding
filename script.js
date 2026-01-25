@@ -1974,7 +1974,7 @@ function dismissRsvpSection() {
 }
 
 function handleRsvpEnter() {
-  const targetUrl = NAV_LINK_TARGETS.home || SITE_BASE_URL;
+  const targetUrl = new URL('/', SITE_BASE_URL).toString();
   window.location.assign(targetUrl);
 }
 
@@ -2229,9 +2229,7 @@ stepPrevButton?.addEventListener('click', () => {
   handleStepBack();
 });
 
-stepEnterButton?.addEventListener('click', () => {
-  handleRsvpEnter();
-});
+stepEnterButton?.addEventListener('click', handleRsvpEnter);
 
 async function submitRsvp(event) {
   event.preventDefault();
