@@ -1304,10 +1304,16 @@ body.nav-open {
 
 #rsvp-form.rsvp-step-five .rsvp-step {
   gap: 0.5rem;
+  align-items: center;
+  text-align: center;
 }
 
 #rsvp-form.rsvp-step-five .rsvp-step p {
   margin: 0;
+}
+
+#rsvp-form.rsvp-step-five .rsvp-actions {
+  justify-content: center;
 }
 
 .rsvp-actions [data-step-next],
