@@ -2065,8 +2065,9 @@ function validateStep(step, formData, profile) {
   return errors;
 }
 
-function validateForm(formData, profile) {
-  const stepOneErrors = validateStep(1, formData, profile);
+function validateForm(formData, profile, options = {}) {
+  const skipStepOne = options?.skipStepOne === true;
+  const stepOneErrors = skipStepOne ? [] : validateStep(1, formData, profile);
   const stepTwoErrors = validateStep(2, formData, profile);
   const stepThreeErrors = validateStep(3, formData, profile);
   const stepFourErrors = validateStep(4, formData, profile);
@@ -2169,7 +2170,8 @@ async function submitRsvp(event) {
   const formData = new FormData(rsvpForm);
   const profile =
     rsvpState.guestProfile || createGuestProfile(formData.get('guest-email')?.trim() || '');
-  const errors = validateForm(formData, profile);
+  const skipStepOne = Boolean(rsvpState.hasRequestedReturning && rsvpState.authenticatedEmail);
+  const errors = validateForm(formData, profile, { skipStepOne });
 
   if (errors.length > 0) {
     if (rsvpFeedback) {
