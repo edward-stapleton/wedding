@@ -1319,7 +1319,7 @@ async function handleRsvpAccessSubmit() {
   // Move straight to the editable details step for returning guests.
   rsvpState.hasRequestedReturning = true;
   setReturningRsvpState(true);
-  setStep(2);
+  setStep(5);
 
   setRsvpAccessFeedback('');
   return true;
@@ -1864,6 +1864,7 @@ function handleRsvpEnter() {
   } else if (rsvpFeedback) {
     rsvpFeedback.textContent = confirmationMessage;
   }
+  window.location = NAV_LINK_TARGETS.home || SITE_BASE_URL;
 }
 
 function handleRsvpFormKeydown(event) {
