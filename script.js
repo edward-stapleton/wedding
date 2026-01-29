@@ -1344,7 +1344,7 @@ async function handleRsvpAccessSubmit() {
   // Move straight to the editable details step for returning guests.
   rsvpState.hasRequestedReturning = true;
   setReturningRsvpState(true);
-  setStep(5);
+  handleRsvpEnter();
 
   setRsvpAccessFeedback('');
   return true;
