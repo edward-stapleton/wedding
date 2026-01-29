@@ -31,10 +31,6 @@ const isRsvpSingleRoute = currentPath === `/${RSVP_ROUTE_PATH}`;
 const isRsvpCoupleRoute = currentPath === `/${RSVP_COUPLE_ROUTE_PATH}`;
 const isRsvpRoute = isRsvpSingleRoute || isRsvpCoupleRoute;
 const isHomeRoute = currentPath === '/';
-const allowedRoutes = new Set(['/', `/${RSVP_ROUTE_PATH}`, `/${RSVP_COUPLE_ROUTE_PATH}`]);
-if (!allowedRoutes.has(currentPath)) {
-  window.location.replace(SITE_BASE_URL);
-}
 const EMAIL_STORAGE_KEY = 'weddingGuestEmail';
 const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
