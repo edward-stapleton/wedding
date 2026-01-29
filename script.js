@@ -36,6 +36,7 @@ const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
 const RSVP_COMPLETED_KEY_PREFIX = 'weddingRsvpCompleted:';
 const RSVP_ACCESS_STORAGE_KEY = 'weddingRsvpAccessEmail';
+const SITE_GATE_STORAGE_KEY = 'weddingSiteGatePassed';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN = APP_CONFIG.mapboxToken;
 const MAPBOX_DEFAULT_STYLE = APP_CONFIG.mapboxStyle;
@@ -139,6 +140,16 @@ const rsvpState = {
 const rsvpCompletionCache = new Map();
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function setSiteGatePassed() {
+  if (typeof sessionStorage === 'undefined') return;
+  sessionStorage.setItem(SITE_GATE_STORAGE_KEY, 'true');
+}
+
+function hasSiteGatePassed() {
+  if (typeof sessionStorage === 'undefined') return false;
+  return sessionStorage.getItem(SITE_GATE_STORAGE_KEY) === 'true';
+}
 
 function setupPasswordToggles() {
   const toggleButtons = document.querySelectorAll('[data-password-toggle]');
@@ -1162,7 +1173,20 @@ async function loadAndApplyRsvpForEmail(email) {
 }
 
 async function enforceSiteGate() {
-  return true;
+  if (isRsvpRoute) return true;
+
+  if (hasSiteGatePassed()) {
+    return true;
+  }
+
+  const storedInviteType = localStorage.getItem(INVITE_TYPE_STORAGE_KEY);
+  const inviteTypeOverride = normalizeInviteType(storedInviteType || routeInviteTypeOverride);
+  const gatePath = inviteTypeOverride === 'plusone' ? RSVP_COUPLE_ROUTE_PATH : RSVP_ROUTE_PATH;
+  const gateUrl = new URL(gatePath, SITE_BASE_URL).toString();
+  if (window.location.href !== gateUrl) {
+    window.location.assign(gateUrl);
+  }
+  return false;
 }
 
 function getActiveRsvpEmail() {
@@ -1309,6 +1333,7 @@ async function handleRsvpAccessSubmit() {
   const normalizedEmail = normalizeEmailForStorage(emailValue);
   localStorage.setItem(EMAIL_STORAGE_KEY, normalizedEmail);
   setRsvpAccessEmail(normalizedEmail);
+  setSiteGatePassed();
 
   // Mark this email as the active RSVP identity for this session.
   await setAuthEmail(normalizedEmail);
@@ -2107,6 +2132,9 @@ async function handleStepAdvance() {
   }
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
+  }
+  if (rsvpState.currentStep === 1) {
+    setSiteGatePassed();
   }
   setStep(getRsvpStepByOffset(rsvpState.currentStep, 1));
 }
