@@ -1858,8 +1858,12 @@ function dismissRsvpSection() {
 }
 
 function handleRsvpEnter() {
-  const targetUrl = new URL('/', SITE_BASE_URL).toString();
-  window.location.assign(targetUrl);
+  const confirmationMessage = 'Thanks! Your RSVP is confirmed.';
+  if (thankYouMessageEl) {
+    thankYouMessageEl.textContent = confirmationMessage;
+  } else if (rsvpFeedback) {
+    rsvpFeedback.textContent = confirmationMessage;
+  }
 }
 
 function handleRsvpFormKeydown(event) {
@@ -1929,6 +1933,26 @@ async function openRsvpSection() {
   resetGuestSectionState();
 }
 
+async function initializeRsvpOnLoad() {
+  if (!rsvpSection) return;
+  setRsvpSectionVisibility(true);
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+
+  if (!rsvpState.guestProfile) {
+    const fallbackEmail =
+      rsvpEmailField?.value.trim() || rsvpAccessEmailInput?.value.trim() || rsvpState.storedEmail || '';
+    setGuestProfile(createGuestProfile(fallbackEmail));
+  } else {
+    updateGuestUi(rsvpState.guestProfile);
+  }
+
+  const initialStep = await getInitialRsvpStep();
+  setStep(initialStep);
+  resetGuestSectionState();
+}
+
 rsvpTriggers.forEach(trigger => {
   trigger.addEventListener('click', event => {
     const hasInlineRsvp = Boolean(rsvpSection);
@@ -1954,7 +1978,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setRsvpSectionVisibility(true);
   resetReturningRsvpRequest();
   setStep(1);
-  void openRsvpSection();
+  void initializeRsvpOnLoad();
 });
 
 function validateStep(step, formData, profile) {
