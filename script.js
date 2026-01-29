@@ -106,7 +106,7 @@ const rsvpAccessLinkDefaultLabel =
 const rsvpAccessLinkReturnLabel = 'Not RSVP’d yet?';
 const NAV_LINK_TARGETS = {
   home: `${SITE_BASE_URL}#home`,
-  rsvp: new URL('rsvp/index.html', SITE_BASE_URL).toString(),
+  rsvp: new URL('rsvp/', SITE_BASE_URL).toString(),
   schedule: `${SITE_BASE_URL}#schedule`,
   guide: `${SITE_BASE_URL}#guide`,
   faqs: `${SITE_BASE_URL}#faqs`,
@@ -1952,18 +1952,6 @@ async function initializeRsvpOnLoad() {
   setStep(initialStep);
   resetGuestSectionState();
 }
-
-rsvpTriggers.forEach(trigger => {
-  trigger.addEventListener('click', event => {
-    const hasInlineRsvp = Boolean(rsvpSection);
-    if (hasInlineRsvp) {
-      if (trigger instanceof HTMLAnchorElement) {
-        event.preventDefault();
-      }
-      void openRsvpSection();
-    }
-  });
-});
 
 document.addEventListener('DOMContentLoaded', () => {
   setupPasswordToggles();
