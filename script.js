@@ -36,7 +36,6 @@ const INVITE_TOKEN_STORAGE_KEY = 'weddingInviteToken';
 const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
 const RSVP_COMPLETED_KEY_PREFIX = 'weddingRsvpCompleted:';
 const RSVP_ACCESS_STORAGE_KEY = 'weddingRsvpAccessEmail';
-const SITE_ACCESS_SESSION_KEY = 'weddingSiteAccessSession';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN = APP_CONFIG.mapboxToken;
 const MAPBOX_DEFAULT_STYLE = APP_CONFIG.mapboxStyle;
@@ -54,12 +53,6 @@ const rsvpAccessEmailInput = document.getElementById('rsvp-access-email');
 const rsvpAccessLink = document.querySelector('.rsvp-access-link');
 const rsvpAccessFeedback = document.getElementById('rsvp-access-feedback');
 const returningEmailField = document.querySelector('[data-returning-email]');
-const siteAccessSection = document.querySelector('[data-site-access]');
-const siteContent = document.querySelector('[data-site-content]');
-const siteAccessForm = document.getElementById('site-access-form');
-const siteAccessEmailInput = document.getElementById('site-access-email');
-const siteAccessPasswordInput = document.getElementById('site-access-password');
-const siteAccessFeedback = document.getElementById('site-access-feedback');
 if (returningEmailField) {
   returningEmailField.hidden = true;
 }
@@ -570,24 +563,6 @@ function setRsvpAccessEmail(email) {
 
 function getStoredRsvpAccessEmail() {
   return localStorage.getItem(RSVP_ACCESS_STORAGE_KEY) || '';
-}
-
-function setSiteAccessFeedback(message) {
-  if (siteAccessFeedback) {
-    siteAccessFeedback.textContent = message;
-  }
-}
-
-function setSiteAccessVisibility(shouldShow) {
-  if (!siteAccessSection || !siteContent) return;
-  document.body.classList.toggle('site-locked', shouldShow);
-  siteAccessSection.hidden = !shouldShow;
-  siteAccessSection.setAttribute('aria-hidden', String(!shouldShow));
-  siteContent.hidden = shouldShow;
-  siteContent.setAttribute('aria-hidden', String(shouldShow));
-  if (shouldShow) {
-    siteAccessEmailInput?.focus();
-  }
 }
 
 async function doesGuestExist(email) {
@@ -1187,36 +1162,7 @@ async function loadAndApplyRsvpForEmail(email) {
 }
 
 async function enforceSiteGate() {
-  if (isRsvpRoute) return true;
-  if (!siteAccessSection || !siteContent) return true;
-  if (!isHomeRoute) {
-    window.location.replace(SITE_BASE_URL);
-    return false;
-  }
-
-  const storedAccessEmail = getStoredRsvpAccessEmail();
-  const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
-  const activeEmail = storedAccessEmail || storedEmail || getActiveRsvpEmail();
-  const normalizedEmail = normalizeEmailForStorage(activeEmail);
-  const hasSessionAccess = sessionStorage.getItem(SITE_ACCESS_SESSION_KEY) === '1';
-
-  if (activeEmail) {
-    setInputValueIfEmpty(siteAccessEmailInput, activeEmail);
-  }
-
-  if (hasSessionAccess) {
-    setSiteAccessVisibility(false);
-    return true;
-  }
-
-  if (normalizedEmail) {
-    if (!isRsvpCompleted(normalizedEmail)) {
-      await fetchRsvpCompletionStatus(normalizedEmail);
-    }
-  }
-
-  setSiteAccessVisibility(true);
-  return false;
+  return true;
 }
 
 function getActiveRsvpEmail() {
@@ -1379,65 +1325,10 @@ async function handleRsvpAccessSubmit() {
   return true;
 }
 
-async function handleSiteAccessSubmit() {
-  if (!siteAccessEmailInput || !siteAccessPasswordInput) return false;
-  if (!supabaseClient) {
-    setSiteAccessFeedback('Website access is unavailable right now. Please try again later.');
-    return false;
-  }
-
-  setSiteAccessFeedback('');
-  siteAccessEmailInput.removeAttribute('aria-invalid');
-  siteAccessPasswordInput.removeAttribute('aria-invalid');
-
-  const emailValue = siteAccessEmailInput.value.trim();
-  const passwordValue = siteAccessPasswordInput.value.trim().toUpperCase();
-
-  if (!emailValue || !emailValue.includes('@')) {
-    setSiteAccessFeedback('Please enter a valid email address to continue.');
-    siteAccessEmailInput.setAttribute('aria-invalid', 'true');
-    siteAccessEmailInput.focus();
-    return false;
-  }
-
-  if (!passwordValue || passwordValue !== RSVP_PASSWORD) {
-    setSiteAccessFeedback('Please enter the website password to continue.');
-    siteAccessPasswordInput.setAttribute('aria-invalid', 'true');
-    siteAccessPasswordInput.focus();
-    return false;
-  }
-
-  setSiteAccessFeedback('Checking your RSVP...');
-  const exists = await doesGuestExist(emailValue);
-  if (!exists) {
-    setSiteAccessFeedback('We could not find an RSVP for that email address.');
-    siteAccessEmailInput.setAttribute('aria-invalid', 'true');
-    siteAccessEmailInput.focus();
-    return false;
-  }
-
-  localStorage.setItem(EMAIL_STORAGE_KEY, normalizeEmailForStorage(emailValue));
-  setRsvpAccessEmail(emailValue);
-  sessionStorage.setItem(SITE_ACCESS_SESSION_KEY, '1');
-  setSiteAccessVisibility(false);
-  setSiteAccessFeedback('');
-  return true;
-}
-
 rsvpAccessEmailInput?.addEventListener('input', () => {
   rsvpAccessEmailInput.removeAttribute('aria-invalid');
   setRsvpAccessFeedback('');
   updatePasswordGate();
-});
-
-siteAccessEmailInput?.addEventListener('input', () => {
-  siteAccessEmailInput.removeAttribute('aria-invalid');
-  setSiteAccessFeedback('');
-});
-
-siteAccessPasswordInput?.addEventListener('input', () => {
-  siteAccessPasswordInput.removeAttribute('aria-invalid');
-  setSiteAccessFeedback('');
 });
 
 async function initAuth() {
@@ -1529,11 +1420,6 @@ async function handleReturningRsvpRequest() {
 rsvpAccessLink?.addEventListener('click', event => {
   event.preventDefault();
   void handleReturningRsvpRequest();
-});
-
-siteAccessForm?.addEventListener('submit', event => {
-  event.preventDefault();
-  void handleSiteAccessSubmit();
 });
 
 function setupGuideCarousel() {
