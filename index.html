@@ -24,7 +24,7 @@
       <main>
         <div data-site-content>
         <section id="home" class="section hero-section fade-section" data-section>
-          <img class="hero-image" src="assets/hero-image.jpg" alt="Hero Image" />
+          <img class="hero-image" src="assets/alternative-hero-image.jpeg" alt="Hero Image" />
           <div class="hero-content">
             <p class="hero-date">The Wedding of</p>
             <p class="hero-names">Edward Stapleton &amp; Laura Harford</p>
@@ -40,6 +40,13 @@
           <div class="section-content">
             <h2>Schedule</h2>
             <ol class="timeline" aria-label="Wedding schedule">
+              <li>
+                <time datetime="2026-08-21T15:00">15:00-19:00</time>
+                <div class="event-details">
+                  <span class="event-name">Cricket Match</span>
+                  <span class="event-location">Balliol College Master's Field, Jowett Walk, Oxford</span>
+                </div>
+              </li>
               <li>
                 <time datetime="2026-08-22T12:30">12:30</time>
                 <div class="event-details">
@@ -80,25 +87,12 @@
         <section id="map-section" class="section map-section fade-section" data-section>
           <div class="section-content">
             <div class="map-title-row">
-              <h2 class="section-title--center">Meadow Walk Route</h2>
-              <button
-                class="map-replay-button"
-                type="button"
-                aria-label="Replay meadow walk flyover"
-                data-map-replay
-              >
-                <svg
-                  class="map-replay-icon"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path
-                    d="M8 5v14l11-7z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </button>
+              <h2 class="section-title--center">Wedding Places &amp; Walk</h2>
+            </div>
+            <div class="map-poi-controls" role="group" aria-label="Focus map on wedding places" data-map-poi-controls>
+              <button class="map-poi-pill" type="button" data-map-poi="cricket" aria-pressed="false">Cricket Ground</button>
+              <button class="map-poi-pill" type="button" data-map-poi="church" aria-pressed="false">Church</button>
+              <button class="map-poi-pill" type="button" data-map-poi="venue" aria-pressed="false">Venue</button>
             </div>
           </div>
           <div class="map-container fade-section" data-map-container>

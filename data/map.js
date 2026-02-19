@@ -88,3 +88,36 @@ export const GARDEN_FOOTPRINT = {
     },
   ],
 };
+
+export const WEDDING_POIS = [
+  {
+    id: 'cricket',
+    label: "Balliol College Master's Field",
+    coords: [-1.25028, 51.75667],
+    zoom: 16.1,
+    pitch: 46,
+    bearing: -22,
+    popupHtml:
+      "<strong>Cricket Match</strong><br>Balliol College Master's Field<br>Jowett Walk, Oxford",
+  },
+  {
+    id: 'church',
+    label: "St Margaret's Church",
+    coords: [-1.2684928, 51.7666909],
+    zoom: 16.25,
+    pitch: 55,
+    bearing: 10,
+    popupHtml:
+      "<strong>Wedding Ceremony</strong><br>St Margaret's Church<br>St Margaret's Road, Oxford OX2 6RX",
+  },
+  {
+    id: 'venue',
+    label: 'The Medley Walled Garden',
+    coords: [-1.2803336, 51.7634384],
+    zoom: 16.5,
+    pitch: 55,
+    bearing: -70,
+    popupHtml:
+      '<strong>Wedding Reception</strong><br>The Medley Walled Garden<br>Medley Manor Farm, Oxford OX2 0NJ',
+  },
+];
