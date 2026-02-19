@@ -37,6 +37,8 @@ const INVITE_TYPE_STORAGE_KEY = 'weddingInviteType';
 const RSVP_COMPLETED_KEY_PREFIX = 'weddingRsvpCompleted:';
 const RSVP_ACCESS_STORAGE_KEY = 'weddingRsvpAccessEmail';
 const SITE_GATE_STORAGE_KEY = 'weddingSiteGatePassed';
+const ENTRY_FLOW_HINT_STORAGE_KEY = 'weddingEntryFlowHint';
+const INVITE_TYPE_QUERY_KEY = 'invite';
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 const MAPBOX_TOKEN = APP_CONFIG.mapboxToken;
 const MAPBOX_DEFAULT_STYLE = APP_CONFIG.mapboxStyle;
@@ -107,7 +109,6 @@ const rsvpAccessLinkDefaultLabel =
 const rsvpAccessLinkReturnLabel = 'Not RSVP’d yet?';
 const NAV_LINK_TARGETS = {
   home: `${SITE_BASE_URL}#home`,
-  rsvp: new URL('rsvp/', SITE_BASE_URL).toString(),
   schedule: `${SITE_BASE_URL}#schedule`,
   guide: `${SITE_BASE_URL}#guide`,
   faqs: `${SITE_BASE_URL}#faqs`,
@@ -151,6 +152,52 @@ function setSiteGatePassed() {
 function hasSiteGatePassed() {
   if (typeof sessionStorage === 'undefined') return false;
   return sessionStorage.getItem(SITE_GATE_STORAGE_KEY) === 'true';
+}
+
+function setEntryFlowHint(inviteType) {
+  const normalized = normalizeInviteType(inviteType);
+  if (!normalized) return;
+  localStorage.setItem(ENTRY_FLOW_HINT_STORAGE_KEY, normalized);
+}
+
+function getEntryFlowHint() {
+  return normalizeInviteType(localStorage.getItem(ENTRY_FLOW_HINT_STORAGE_KEY));
+}
+
+function hydrateInviteContextFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const tokenFromUrl = params.get('i');
+  const inviteTypeFromUrl = normalizeInviteType(params.get(INVITE_TYPE_QUERY_KEY));
+
+  if (tokenFromUrl) {
+    localStorage.setItem(INVITE_TOKEN_STORAGE_KEY, tokenFromUrl);
+  }
+  if (inviteTypeFromUrl) {
+    localStorage.setItem(INVITE_TYPE_STORAGE_KEY, inviteTypeFromUrl);
+  }
+
+  if (isRsvpSingleRoute) {
+    setEntryFlowHint('single');
+  } else if (isRsvpCoupleRoute) {
+    setEntryFlowHint('plusone');
+  }
+
+  if (inviteTypeFromUrl) {
+    setEntryFlowHint(inviteTypeFromUrl);
+  }
+}
+
+function resolveRsvpInviteType() {
+  const params = new URLSearchParams(window.location.search);
+  const inviteTypeFromUrl = normalizeInviteType(params.get(INVITE_TYPE_QUERY_KEY));
+  const entryFlowHint = getEntryFlowHint();
+  const storedInviteType = normalizeInviteType(localStorage.getItem(INVITE_TYPE_STORAGE_KEY));
+  return inviteTypeFromUrl || entryFlowHint || storedInviteType || 'single';
+}
+
+function resolveRsvpEntryUrl() {
+  const path = resolveRsvpInviteType() === 'plusone' ? RSVP_COUPLE_ROUTE_PATH : RSVP_ROUTE_PATH;
+  return new URL(path, SITE_BASE_URL).toString();
 }
 
 function setupPasswordToggles() {
@@ -483,7 +530,6 @@ async function callRsvpFunction(url, payload) {
 const ATTENDANCE_PROMPT = 'Able to come?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
-const INVITE_TYPE_QUERY_KEY = 'invite';
 const RSVP_PASSWORD = APP_CONFIG.rsvpPassword ?? 'STARFORD';
 const routeInviteTypeOverride = normalizeInviteType(document.body?.dataset.rsvpEntry) ||
   (isRsvpSingleRoute ? 'single' : isRsvpCoupleRoute ? 'plusone' : '');
@@ -499,7 +545,7 @@ function applySharedNavLinks(root = document) {
   const links = root.querySelectorAll('[data-nav-link]');
   links.forEach(link => {
     const key = link.dataset.navLink;
-    const target = NAV_LINK_TARGETS[key];
+    const target = key === 'rsvp' ? resolveRsvpEntryUrl() : NAV_LINK_TARGETS[key];
     if (target) {
       link.setAttribute('href', target);
     }
@@ -1198,19 +1244,14 @@ async function loadAndApplyRsvpForEmail(email) {
   return { hasData: true, completed };
 }
 
-async function enforceSiteGate() {
-  if (isRsvpRoute) return true;
-
+function enforceSiteGate() {
+  if (!isRsvpRoute) return true;
   if (hasSiteGatePassed()) {
     return true;
   }
-
-  const storedInviteType = localStorage.getItem(INVITE_TYPE_STORAGE_KEY);
-  const inviteTypeOverride = normalizeInviteType(storedInviteType || routeInviteTypeOverride);
-  const gatePath = inviteTypeOverride === 'plusone' ? RSVP_COUPLE_ROUTE_PATH : RSVP_ROUTE_PATH;
-  const gateUrl = new URL(gatePath, SITE_BASE_URL).toString();
-  if (window.location.href !== gateUrl) {
-    window.location.assign(gateUrl);
+  hydrateInviteContextFromUrl();
+  if (window.location.href !== SITE_BASE_URL) {
+    window.location.assign(SITE_BASE_URL);
   }
   return false;
 }
@@ -1447,11 +1488,11 @@ async function initAuth() {
   }
 }
 
-enforceSiteGate().then(shouldInit => {
-  if (shouldInit && isRsvpRoute) {
-    initAuth();
-  }
-});
+hydrateInviteContextFromUrl();
+const shouldInitRsvp = enforceSiteGate();
+if (shouldInitRsvp && isRsvpRoute) {
+  initAuth();
+}
 
 async function handleReturningRsvpRequest() {
   if (rsvpState.forceReturning) {
@@ -1472,6 +1513,26 @@ rsvpAccessLink?.addEventListener('click', event => {
   event.preventDefault();
   void handleReturningRsvpRequest();
 });
+
+function handleRsvpEntryClick(event) {
+  if (!(event.currentTarget instanceof HTMLAnchorElement)) return;
+  event.preventDefault();
+  setSiteGatePassed();
+  const targetUrl = resolveRsvpEntryUrl();
+  if (window.location.href !== targetUrl) {
+    window.location.assign(targetUrl);
+  }
+}
+
+function setupRsvpEntryTriggers(root = document) {
+  const links = root.querySelectorAll('[data-rsvp-trigger], [data-nav-link="rsvp"]');
+  links.forEach(link => {
+    if (!(link instanceof HTMLAnchorElement)) return;
+    if (link.dataset.rsvpEntryBound === 'true') return;
+    link.dataset.rsvpEntryBound = 'true';
+    link.addEventListener('click', handleRsvpEntryClick);
+  });
+}
 
 function setupGuideCarousel() {
   const carousel = document.querySelector('[data-guide-carousel]');
@@ -1827,6 +1888,7 @@ function setupFadeSections() {
 
 setupFadeSections();
 initMap();
+setupRsvpEntryTriggers();
 
 const sharedHeaderPromise = loadSharedHeader();
 sharedHeaderPromise.finally(() => {
@@ -1837,6 +1899,7 @@ let navigationInitialized = false;
 
 function setupNavigation() {
   refreshNavigationElements();
+  setupRsvpEntryTriggers(document);
   if (navigationInitialized) return;
   if (navToggle) {
     navToggle.addEventListener('click', () => toggleNavigation());
