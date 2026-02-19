@@ -1,4 +1,4 @@
-import { CHURCH_FOOTPRINT, GARDEN_FOOTPRINT, WALKING_ROUTE } from './data/map.js';
+import { CHURCH_FOOTPRINT, GARDEN_FOOTPRINT, WALKING_ROUTE, WEDDING_POIS } from './data/map.js';
 import { GUIDE_CATEGORY_INTROS } from './data/guide.js';
 
 const APP_CONFIG = window.__APP_CONFIG__ ?? window.APP_CONFIG ?? {};
@@ -90,12 +90,12 @@ const stepNextButton = document.querySelector('[data-step-next]');
 const stepSubmitButton = document.querySelector('[data-step-submit]');
 const stepEnterButton = document.querySelector('[data-step-enter]');
 const mapContainer = document.querySelector('[data-map-container]');
+const mapPoiButtons = Array.from(document.querySelectorAll('[data-map-poi]'));
 let siteNav = document.querySelector('.site-nav');
 let navToggle = document.querySelector('.nav-toggle');
 let navLinks = Array.from(document.querySelectorAll('.nav-links a'));
 let header = document.querySelector('.site-header');
 const mobileModalMedia = window.matchMedia('(max-width: 600px)');
-const mapReplayButton = document.querySelector('[data-map-replay]');
 const thankYouMessageEl = document.getElementById('rsvp-thank-you-message');
 const thankYouPersonalEl = document.getElementById('rsvp-thank-you-personal');
 const stepOneTitleDefault = stepOneTitle?.textContent?.trim() || 'Welcome';
@@ -117,8 +117,10 @@ const RETURNING_QUERY_KEY = 'returning';
 let mapLoaded = false;
 let mapInstance;
 let routeBoundsCache = null;
-let initialCameraCache = null;
 let activeFlyoverId = 0;
+const mapPoiState = {
+  markersById: new Map(),
+};
 const rsvpState = {
   guestProfile: null,
   inviteDetails: null,
@@ -207,40 +209,6 @@ function buildRouteBounds() {
   return bounds;
 }
 
-function getMapCameraState() {
-  if (!mapInstance) return null;
-  const center = mapInstance.getCenter();
-  return {
-    center: [center.lng, center.lat],
-    zoom: mapInstance.getZoom(),
-    bearing: mapInstance.getBearing(),
-    pitch: mapInstance.getPitch(),
-  };
-}
-
-function resetMapCamera() {
-  if (!mapInstance) return;
-  if (initialCameraCache) {
-    mapInstance.jumpTo(initialCameraCache);
-    return;
-  }
-  if (routeBoundsCache) {
-    mapInstance.fitBounds(routeBoundsCache, {
-      padding: 64,
-      duration: 0,
-      pitch: MAP_DEFAULTS.pitch,
-      bearing: MAP_DEFAULTS.bearing,
-    });
-    return;
-  }
-  mapInstance.jumpTo({
-    center: CHURCH_COORDS,
-    zoom: MAP_DEFAULTS.zoom,
-    pitch: MAP_DEFAULTS.pitch,
-    bearing: MAP_DEFAULTS.bearing,
-  });
-}
-
 function getFlyoverStops() {
   const midpoint = WALKING_ROUTE_COORDS[Math.floor(WALKING_ROUTE_COORDS.length / 2)] || CHURCH_COORDS;
   const gardenCenter = getFeatureCenter(GARDEN_FOOTPRINT, midpoint);
@@ -296,13 +264,44 @@ function playMapFlyover() {
   flyNext();
 }
 
-function replayMapFlyover() {
-  if (!mapInstance || !mapLoaded) return;
-  mapInstance.stop();
-  resetMapCamera();
-  requestAnimationFrame(() => {
-    playMapFlyover();
+function setActiveMapPoiButton(activeId) {
+  if (!mapPoiButtons.length) return;
+  mapPoiButtons.forEach(button => {
+    const isActive = button.dataset.mapPoi === activeId;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
   });
+}
+
+function focusMapPoi(poiId) {
+  if (!mapInstance || !mapLoaded) return;
+  const poi = WEDDING_POIS.find(item => item.id === poiId);
+  if (!poi) return;
+  activeFlyoverId += 1;
+  mapInstance.stop();
+  mapInstance.flyTo({
+    center: poi.coords,
+    zoom: poi.zoom,
+    pitch: poi.pitch,
+    bearing: poi.bearing,
+    speed: 0.75,
+    curve: 1.35,
+    essential: true,
+  });
+  mapPoiState.markersById.forEach((marker, markerId) => {
+    const popup = marker.getPopup();
+    if (!popup) return;
+    if (markerId === poiId) {
+      if (!popup.isOpen()) {
+        marker.togglePopup();
+      }
+      return;
+    }
+    if (popup.isOpen()) {
+      popup.remove();
+    }
+  });
+  setActiveMapPoiButton(poiId);
 }
 
 function addMapSourcesAndLayers(map) {
@@ -390,6 +389,36 @@ function addMapSourcesAndLayers(map) {
   }
 }
 
+function addMapPoiMarkers(map) {
+  if (!window.mapboxgl) return;
+  WEDDING_POIS.forEach(poi => {
+    if (mapPoiState.markersById.has(poi.id)) return;
+    const markerElement = document.createElement('span');
+    markerElement.className = `map-poi-marker map-poi-marker--${poi.id}`;
+    markerElement.setAttribute('title', poi.label);
+    markerElement.setAttribute('aria-hidden', 'true');
+    const popup = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: 20,
+    }).setHTML(poi.popupHtml);
+    const marker = new mapboxgl.Marker({ element: markerElement })
+      .setLngLat(poi.coords)
+      .setPopup(popup)
+      .addTo(map);
+    mapPoiState.markersById.set(poi.id, marker);
+  });
+}
+
+function bindMapPoiControls() {
+  if (!mapPoiButtons.length) return;
+  mapPoiButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      focusMapPoi(button.dataset.mapPoi);
+    });
+  });
+}
+
 function initMap() {
   if (!mapElement || !MAPBOX_TOKEN) return;
   if (!window.mapboxgl) {
@@ -409,6 +438,8 @@ function initMap() {
   mapInstance.on('load', () => {
     mapLoaded = true;
     addMapSourcesAndLayers(mapInstance);
+    addMapPoiMarkers(mapInstance);
+    bindMapPoiControls();
     routeBoundsCache = buildRouteBounds();
     if (routeBoundsCache) {
       mapInstance.fitBounds(routeBoundsCache, {
@@ -418,12 +449,7 @@ function initMap() {
         bearing: MAP_DEFAULTS.bearing,
       });
     }
-    initialCameraCache = getMapCameraState();
     playMapFlyover();
-  });
-
-  mapReplayButton?.addEventListener('click', () => {
-    replayMapFlyover();
   });
 }
 
