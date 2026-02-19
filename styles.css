@@ -375,6 +375,15 @@ body.nav-open {
   align-self: center;
 }
 
+.schedule-subtitle {
+  margin: 0;
+  width: min(100%, 520px);
+  align-self: center;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .timeline li {
   display: grid;
   grid-template-columns: minmax(4.25rem, auto) 1fr;
