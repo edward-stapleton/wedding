@@ -370,50 +370,54 @@ body.nav-open {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  width: min(100%, 520px);
-  text-align: left;
+  gap: 2rem;
+  width: min(100%, 640px);
+  text-align: center;
   align-self: center;
 }
 
 .schedule-subtitle {
   margin: 0;
-  width: min(100%, 520px);
+  width: min(100%, 640px);
   align-self: center;
   font-size: 1rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .timeline li {
-  display: grid;
-  grid-template-columns: minmax(4.25rem, auto) 1fr;
-  gap: 1rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .timeline time {
   font-weight: bold;
   letter-spacing: 0.05em;
-  justify-self: end;
+  display: inline;
+  margin-right: 0.45rem;
 }
 
 .event-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  align-items: flex-start;
-  text-align: left;
+  display: inline;
+  text-align: center;
+  max-width: min(100%, 40rem);
 }
 
 .event-name {
   font-size: 1.05rem;
   font-weight: 600;
+  display: inline;
 }
 
 .event-location {
   font-size: 0.95rem;
   line-height: 1.4;
+  display: block;
+  margin: 0.35rem auto 0;
+  max-width: min(100%, 36rem);
 }
 
 .map-section {
@@ -1624,10 +1628,6 @@ html.no-js .fade-section {
   .hero-content {
     align-items: center;
     text-align: center;
-  }
-
-  .timeline li {
-    grid-template-columns: 6rem 1fr;
   }
 
   #schedule .section-content {
