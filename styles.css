@@ -207,6 +207,7 @@ body.nav-open {
 }
 
 #schedule .section-content {
+  width: min(100%, var(--map-container-max-width));
   align-items: center;
   text-align: center;
 }
