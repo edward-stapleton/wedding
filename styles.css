@@ -420,6 +420,20 @@ body.nav-open {
   max-width: min(100%, 36rem);
 }
 
+@media (min-width: 768px) {
+  .timeline li {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+
+  .timeline time,
+  .event-name {
+    white-space: nowrap;
+  }
+}
+
 .map-section {
   padding-top: 2.5rem;
 }
