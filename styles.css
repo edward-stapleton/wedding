@@ -425,7 +425,11 @@ body.nav-open {
     flex-direction: row;
     align-items: baseline;
     justify-content: center;
-    gap: 0.45rem;
+    gap: 0;
+  }
+
+  .timeline time {
+    margin-right: 0.2ch;
   }
 
   .timeline time,
@@ -436,6 +440,10 @@ body.nav-open {
 
 .map-section {
   padding-top: 2.5rem;
+}
+
+#map-section .section-content {
+  width: min(100%, var(--map-container-max-width));
 }
 
 .map-section .section-content {
