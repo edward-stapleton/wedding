@@ -1,4 +1,10 @@
-import { CHURCH_FOOTPRINT, GARDEN_FOOTPRINT, WALKING_ROUTE, WEDDING_POIS } from './data/map.js';
+import {
+  CHURCH_FOOTPRINT,
+  CRICKET_FOOTPRINT,
+  GARDEN_FOOTPRINT,
+  WALKING_ROUTE,
+  WEDDING_POIS,
+} from './data/map.js';
 import { GUIDE_CATEGORY_INTROS } from './data/guide.js';
 
 const APP_CONFIG = window.__APP_CONFIG__ ?? window.APP_CONFIG ?? {};
@@ -119,8 +125,13 @@ let mapLoaded = false;
 let mapInstance;
 let routeBoundsCache = null;
 let activeFlyoverId = 0;
+const MAP_POI_FILL_LAYER_IDS = {
+  cricket: 'cricket-footprint-fill',
+  church: 'church-footprint-fill',
+  venue: 'garden-footprint-fill',
+};
 const mapPoiState = {
-  markersById: new Map(),
+  popupsById: new Map(),
 };
 const rsvpState = {
   guestProfile: null,
@@ -335,20 +346,43 @@ function focusMapPoi(poiId) {
     curve: 1.35,
     essential: true,
   });
-  mapPoiState.markersById.forEach((marker, markerId) => {
-    const popup = marker.getPopup();
-    if (!popup) return;
-    if (markerId === poiId) {
-      if (!popup.isOpen()) {
-        marker.togglePopup();
-      }
-      return;
-    }
-    if (popup.isOpen()) {
-      popup.remove();
-    }
-  });
+  openMapPoiPopup(poiId);
   setActiveMapPoiButton(poiId);
+}
+
+function getPoiPopupCenter(poiId) {
+  if (poiId === 'cricket') {
+    return getFeatureCenter(CRICKET_FOOTPRINT, WEDDING_POIS.find(item => item.id === poiId)?.coords);
+  }
+  if (poiId === 'church') {
+    return getFeatureCenter(CHURCH_FOOTPRINT, WEDDING_POIS.find(item => item.id === poiId)?.coords);
+  }
+  if (poiId === 'venue') {
+    return getFeatureCenter(GARDEN_FOOTPRINT, WEDDING_POIS.find(item => item.id === poiId)?.coords);
+  }
+  return WEDDING_POIS.find(item => item.id === poiId)?.coords ?? CHURCH_COORDS;
+}
+
+function closeMapPoiPopups() {
+  mapPoiState.popupsById.forEach(popup => popup.remove());
+}
+
+function openMapPoiPopup(poiId) {
+  if (!window.mapboxgl || !mapInstance) return;
+  const poi = WEDDING_POIS.find(item => item.id === poiId);
+  if (!poi) return;
+  closeMapPoiPopups();
+  let popup = mapPoiState.popupsById.get(poiId);
+  if (!popup) {
+    popup = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: 20,
+      className: 'wedding-map-popup',
+    }).setHTML(poi.popupHtml);
+    mapPoiState.popupsById.set(poiId, popup);
+  }
+  popup.setLngLat(getPoiPopupCenter(poiId)).addTo(mapInstance);
 }
 
 function addMapSourcesAndLayers(map) {
@@ -356,6 +390,12 @@ function addMapSourcesAndLayers(map) {
     map.addSource('walking-route', {
       type: 'geojson',
       data: WALKING_ROUTE,
+    });
+  }
+  if (!map.getSource('cricket-footprint')) {
+    map.addSource('cricket-footprint', {
+      type: 'geojson',
+      data: CRICKET_FOOTPRINT,
     });
   }
   if (!map.getSource('church-footprint')) {
@@ -383,6 +423,30 @@ function addMapSourcesAndLayers(map) {
       paint: {
         'line-color': '#0a6c7d',
         'line-width': 4,
+      },
+    });
+  }
+
+  if (!map.getLayer('cricket-footprint-fill')) {
+    map.addLayer({
+      id: 'cricket-footprint-fill',
+      type: 'fill',
+      source: 'cricket-footprint',
+      paint: {
+        'fill-color': '#227a4b',
+        'fill-opacity': 0.38,
+      },
+    });
+  }
+
+  if (!map.getLayer('cricket-footprint-outline')) {
+    map.addLayer({
+      id: 'cricket-footprint-outline',
+      type: 'line',
+      source: 'cricket-footprint',
+      paint: {
+        'line-color': '#1b633b',
+        'line-width': 2,
       },
     });
   }
@@ -436,24 +500,21 @@ function addMapSourcesAndLayers(map) {
   }
 }
 
-function addMapPoiMarkers(map) {
-  if (!window.mapboxgl) return;
-  WEDDING_POIS.forEach(poi => {
-    if (mapPoiState.markersById.has(poi.id)) return;
-    const markerElement = document.createElement('span');
-    markerElement.className = `map-poi-marker map-poi-marker--${poi.id}`;
-    markerElement.setAttribute('title', poi.label);
-    markerElement.setAttribute('aria-hidden', 'true');
-    const popup = new mapboxgl.Popup({
-      closeButton: false,
-      closeOnClick: false,
-      offset: 20,
-    }).setHTML(poi.popupHtml);
-    const marker = new mapboxgl.Marker({ element: markerElement })
-      .setLngLat(poi.coords)
-      .setPopup(popup)
-      .addTo(map);
-    mapPoiState.markersById.set(poi.id, marker);
+function bindMapPoiLayerInteractions(map) {
+  Object.entries(MAP_POI_FILL_LAYER_IDS).forEach(([poiId, layerId]) => {
+    if (!map.getLayer(layerId)) return;
+    map.on('click', layerId, () => {
+      activeFlyoverId += 1;
+      map.stop();
+      openMapPoiPopup(poiId);
+      setActiveMapPoiButton(poiId);
+    });
+    map.on('mouseenter', layerId, () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', layerId, () => {
+      map.getCanvas().style.cursor = '';
+    });
   });
 }
 
@@ -485,7 +546,7 @@ function initMap() {
   mapInstance.on('load', () => {
     mapLoaded = true;
     addMapSourcesAndLayers(mapInstance);
-    addMapPoiMarkers(mapInstance);
+    bindMapPoiLayerInteractions(mapInstance);
     bindMapPoiControls();
     routeBoundsCache = buildRouteBounds();
     if (routeBoundsCache) {
