@@ -134,8 +134,7 @@ export const WEDDING_POIS = [
     zoom: 16.1,
     pitch: 46,
     bearing: -22,
-    popupHtml:
-      "<strong>Cricket Match</strong><br>Balliol College Master's Field<br>Jowett Walk, Oxford",
+    popupHtml: '15.00 Warm-Up Cricket Match & Welcome Tea',
   },
   {
     id: 'church',
@@ -144,8 +143,7 @@ export const WEDDING_POIS = [
     zoom: 16.25,
     pitch: 55,
     bearing: 10,
-    popupHtml:
-      "<strong>Wedding Ceremony</strong><br>St Margaret's Church<br>St Margaret's Road, Oxford OX2 6RX",
+    popupHtml: '12:45 Wedding Ceremony',
   },
   {
     id: 'venue',
@@ -154,7 +152,6 @@ export const WEDDING_POIS = [
     zoom: 16.5,
     pitch: 55,
     bearing: -70,
-    popupHtml:
-      '<strong>Wedding Reception</strong><br>The Medley Walled Garden<br>Medley Manor Farm, Oxford OX2 0NJ',
+    popupHtml: '14:30 Wedding Reception',
   },
 ];
