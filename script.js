@@ -1930,6 +1930,60 @@ function setupGuideCarousel() {
 
 setupGuideCarousel();
 
+function setupFaqAccordion() {
+  const accordion = document.getElementById('faq-accordion');
+  if (!accordion) return;
+
+  const items = Array.from(accordion.querySelectorAll('.accordion-item'))
+    .map(item => {
+      const button = item.querySelector('button[aria-expanded]');
+      const panel = item.querySelector('.accordion-panel');
+      if (!button || !panel) return null;
+      return { button, panel };
+    })
+    .filter(Boolean);
+
+  if (!items.length) return;
+
+  const closeItem = ({ button, panel }) => {
+    button.setAttribute('aria-expanded', 'false');
+    panel.hidden = true;
+    panel.classList.remove('open');
+    panel.style.maxHeight = '';
+  };
+
+  const openItem = ({ button, panel }) => {
+    button.setAttribute('aria-expanded', 'true');
+    panel.hidden = false;
+    panel.classList.add('open');
+    panel.style.maxHeight = `${panel.scrollHeight}px`;
+  };
+
+  const closeAllItems = () => {
+    items.forEach(closeItem);
+  };
+
+  // Normalize initial state so aria and visual state always match.
+  closeAllItems();
+
+  items.forEach(item => {
+    item.button.addEventListener('click', () => {
+      const isExpanded = item.button.getAttribute('aria-expanded') === 'true';
+      closeAllItems();
+      if (!isExpanded) {
+        openItem(item);
+      }
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    const openPanel = items.find(item => item.button.getAttribute('aria-expanded') === 'true');
+    if (openPanel) {
+      openPanel.panel.style.maxHeight = `${openPanel.panel.scrollHeight}px`;
+    }
+  });
+}
+
 function setupFadeSections() {
   const sections = document.querySelectorAll('[data-section], [data-map-container]');
   const observer = new IntersectionObserver(
@@ -1948,6 +2002,7 @@ function setupFadeSections() {
 }
 
 setupFadeSections();
+setupFaqAccordion();
 initMap();
 setupRsvpEntryTriggers();
 
