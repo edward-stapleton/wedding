@@ -34,26 +34,7 @@ async function validateAccess(sitePassword?: string) {
   return { ok: false as const, reason: "bad_password" };
 }
 
-  if (inviteToken) {
-    // Adjust column names if needed
-    const { data, error } = await supabaseAdmin
-      .from("invites")
-      .select("primary_email, token, redeemed_at, expires_at")
-      .eq("token", inviteToken)
-      .maybeSingle();
-
-    if (error) return { ok: false as const, reason: "token_lookup_failed" };
-    if (!data) return { ok: false as const, reason: "invalid_token" };
-    if (normaliseEmail(data.primary_email) !== normaliseEmail(email))
-      return { ok: false as const, reason: "token_email_mismatch" };
-
-    return { ok: true as const };
-  }
-
-  return { ok: false as const, reason: "missing_credentials" };
-}
-
-Deno.serve(async (req) => {
+Deno.serve(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
@@ -73,7 +54,7 @@ Deno.serve(async (req) => {
   const email = normaliseEmail(payload.email ?? "");
   if (!email.includes("@")) return json(400, { error: "invalid_email" });
 
-  const access = await validateAccess(supabaseAdmin, email, payload.sitePassword, payload.inviteToken);
+  const access = await validateAccess(payload.sitePassword);
   if (!access.ok) return json(401, { error: "unauthorised", reason: access.reason });
 
   const { data: guests, error: guestsErr } = await supabaseAdmin
