@@ -76,6 +76,8 @@ const plusOneNameEl = document.querySelector('[data-guest-name="plusOne"]');
 const plusOneSections = document.querySelectorAll('[data-guest-section="plusOne"]');
 const primaryLegend = document.querySelector('[data-attendance-legend="primary"]');
 const plusOneLegend = document.querySelector('[data-attendance-legend="plusOne"]');
+const primaryCricketLegend = document.querySelector('[data-cricket-attendance-legend="primary"]');
+const plusOneCricketLegend = document.querySelector('[data-cricket-attendance-legend="plusOne"]');
 const primaryDietaryLabel = document.querySelector('[data-dietary-label="primary"]');
 const plusOneDietaryLabel = document.querySelector('[data-dietary-label="plusOne"]');
 const primaryFirstNameInput = document.getElementById('primary-first-name');
@@ -589,6 +591,8 @@ async function callRsvpFunction(url, payload) {
 }
 
 const ATTENDANCE_PROMPT = 'Able to come to the wedding?';
+const CRICKET_ATTENDANCE_PROMPT =
+  'Able to make it to our cricket match in central Oxford the afternoon before the wedding (Friday 21 August)?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
 const RSVP_PASSWORD = APP_CONFIG.rsvpPassword ?? 'STARFORD';
@@ -1055,6 +1059,10 @@ function updateGuestUi(profile) {
     primaryLegend.textContent = ATTENDANCE_PROMPT;
   }
 
+  if (primaryCricketLegend) {
+    primaryCricketLegend.textContent = CRICKET_ATTENDANCE_PROMPT;
+  }
+
   if (primaryDietaryLabel) {
     primaryDietaryLabel.textContent = DIETARY_LABEL_TEXT;
   }
@@ -1084,6 +1092,10 @@ function updateGuestUi(profile) {
       plusOneLegend.textContent = ATTENDANCE_PROMPT;
     }
 
+    if (plusOneCricketLegend) {
+      plusOneCricketLegend.textContent = CRICKET_ATTENDANCE_PROMPT;
+    }
+
     if (plusOneDietaryLabel) {
       plusOneDietaryLabel.textContent = DIETARY_LABEL_TEXT;
     }
@@ -1098,6 +1110,11 @@ function updateGuestUi(profile) {
     if (rsvpForm) {
       const plusOneRadios = rsvpForm.querySelectorAll('[name="plusone-attendance"]');
       plusOneRadios.forEach(input => {
+        input.disabled = false;
+        input.required = true;
+      });
+      const plusOneCricketRadios = rsvpForm.querySelectorAll('[name="plusone-cricket-attendance"]');
+      plusOneCricketRadios.forEach(input => {
         input.disabled = false;
         input.required = true;
       });
@@ -1116,6 +1133,12 @@ function updateGuestUi(profile) {
     if (rsvpForm) {
       const plusOneRadios = rsvpForm.querySelectorAll('[name="plusone-attendance"]');
       plusOneRadios.forEach(input => {
+        input.checked = false;
+        input.disabled = true;
+        input.required = false;
+      });
+      const plusOneCricketRadios = rsvpForm.querySelectorAll('[name="plusone-cricket-attendance"]');
+      plusOneCricketRadios.forEach(input => {
         input.checked = false;
         input.disabled = true;
         input.required = false;
@@ -1211,6 +1234,7 @@ function populateRsvpFromGuests(guestRows, email) {
   setInputValue(primaryFirstNameInput, primary?.first_name);
   setInputValue(primaryLastNameInput, primary?.last_name);
   setAttendanceValue('primary-attendance', primary?.attendance);
+  setAttendanceValue('primary-cricket-attendance', primary?.cricket_attendance);
   if (primaryDietaryInput) {
     primaryDietaryInput.value = primary?.dietary ?? '';
   }
@@ -1229,6 +1253,7 @@ function populateRsvpFromGuests(guestRows, email) {
     setInputValue(plusOneFirstNameInput, plusOne.first_name);
     setInputValue(plusOneLastNameInput, plusOne.last_name);
     setAttendanceValue('plusone-attendance', plusOne.attendance);
+    setAttendanceValue('plusone-cricket-attendance', plusOne.cricket_attendance);
     if (plusOneDietaryInput) {
       plusOneDietaryInput.value = plusOne.dietary ?? '';
     }
@@ -2232,6 +2257,10 @@ function validateStep(step, formData, profile) {
     if (!formData.get('plusone-attendance')) {
       errors.push(`Please let us know if ${plusOneName} can make it.`);
     }
+
+    if (!formData.get('plusone-cricket-attendance')) {
+      errors.push(`Please let us know if ${plusOneName} can make the cricket match.`);
+    }
   };
 
   if (step === 2) {
@@ -2241,6 +2270,10 @@ function validateStep(step, formData, profile) {
 
     if (!formData.get('primary-attendance')) {
       errors.push(`Please let us know if ${primaryName} can make it.`);
+    }
+
+    if (!formData.get('primary-cricket-attendance')) {
+      errors.push(`Please let us know if ${primaryName} can make the cricket match.`);
     }
   }
 
@@ -2419,7 +2452,9 @@ async function submitRsvp(event) {
     rsvpState.inviteDetails?.invite_type || (isPlusOneActive(profile) ? 'plusone' : 'single');
   const includesPlusOne = inviteType === 'plusone';
   const primaryAttendance = normalizeAttendance(formData.get('primary-attendance'));
+  const primaryCricketAttendance = normalizeAttendance(formData.get('primary-cricket-attendance'));
   const plusOneAttendance = normalizeAttendance(formData.get('plusone-attendance'));
+  const plusOneCricketAttendance = normalizeAttendance(formData.get('plusone-cricket-attendance'));
   let groupId = rsvpState.inviteDetails?.id || rsvpState.invitationGroupId;
   if (!groupId) {
     groupId = crypto.randomUUID();
@@ -2434,6 +2469,7 @@ async function submitRsvp(event) {
       last_name: formData.get('primary-last-name')?.trim() ?? '',
       email,
       attendance: primaryAttendance,
+      cricket_attendance: primaryCricketAttendance,
       dietary: formData.get('primary-dietary')?.trim() ?? '',
       address_line_1: formData.get('address-line-1')?.trim() ?? '',
       address_line_2: formData.get('address-line-2')?.trim() ?? '',
@@ -2452,6 +2488,7 @@ async function submitRsvp(event) {
       last_name: formData.get('plusone-last-name')?.trim() ?? '',
       email,
       attendance: plusOneAttendance,
+      cricket_attendance: plusOneCricketAttendance,
       dietary: formData.get('plusone-dietary')?.trim() ?? '',
       address_line_1: formData.get('address-line-1')?.trim() ?? '',
       address_line_2: formData.get('address-line-2')?.trim() ?? '',
@@ -2483,12 +2520,14 @@ async function submitRsvp(event) {
       country: primaryRow.country,
       rsvp: {
         attending: primaryRow.attendance,
+        cricket_attending: primaryRow.cricket_attendance,
         dietary_requirements: primaryRow.dietary,
         plusone: plusOneRow
           ? {
               first_name: plusOneRow.first_name,
               last_name: plusOneRow.last_name,
               attending: plusOneRow.attendance,
+              cricket_attending: plusOneRow.cricket_attendance,
               dietary_requirements: plusOneRow.dietary,
             }
           : null,
