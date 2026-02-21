@@ -588,7 +588,7 @@ async function callRsvpFunction(url, payload) {
   return json;
 }
 
-const ATTENDANCE_PROMPT = 'Able to come?';
+const ATTENDANCE_PROMPT = 'Able to come to the wedding?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
 const RSVP_PASSWORD = APP_CONFIG.rsvpPassword ?? 'STARFORD';
