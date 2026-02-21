@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const BUILD_ID = "rsvp-submit-2026-01-24a";
+const BUILD_ID = "rsvp-submit-2026-02-21a";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +26,7 @@ type SubmitPayload = {
   // legacy field (ignored)
   inviteToken?: string;
   debug?: boolean;
-  // these are required by our wedding flow
+  // required by this flow
   address_line_1?: string;
   city?: string;
   postcode?: string;
@@ -34,13 +34,29 @@ type SubmitPayload = {
   first_name?: string;
   last_name?: string;
   rsvp: {
-    attending: "yes" | "no" | "maybe";
+    attending: "yes" | "no";
+    cricket_attending: "yes" | "no";
     dietary_requirements?: string | null;
+    plusone?: {
+      first_name?: string;
+      last_name?: string;
+      attending: "yes" | "no";
+      cricket_attending: "yes" | "no";
+      dietary_requirements?: string | null;
+    } | null;
   };
 };
 
 function normaliseEmail(email: string) {
   return email.trim().toLowerCase();
+}
+
+function normaliseYesNo(value: unknown) {
+  const normalized = value?.toString().trim().toLowerCase();
+  if (normalized === "yes" || normalized === "no") {
+    return normalized;
+  }
+  return "";
 }
 
 async function validateAccess(sitePassword?: string) {
@@ -54,7 +70,7 @@ async function validateAccess(sitePassword?: string) {
   return { ok: false as const, reason: "bad_password" };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async req => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -78,7 +94,7 @@ Deno.serve(async (req) => {
   } catch {
     return json(400, { error: "invalid_json" });
   }
-  // DEBUG: echo back what the function received (before any DB calls)
+
   if (payload.debug === true || req.headers.get("x-debug") === "1") {
     return json(200, { ok: true, debug: { received: payload } });
   }
@@ -93,9 +109,28 @@ Deno.serve(async (req) => {
     return json(401, { error: "unauthorised", reason: access.reason });
   }
 
-  const attendance = payload.rsvp?.attending;
-  if (!["yes", "no", "maybe"].includes(attendance)) {
+  const primaryAttendance = normaliseYesNo(payload.rsvp?.attending);
+  const primaryCricketAttendance = normaliseYesNo(payload.rsvp?.cricket_attending);
+  if (!primaryAttendance) {
     return json(400, { error: "invalid_attendance_value" });
+  }
+  if (!primaryCricketAttendance) {
+    return json(400, { error: "invalid_cricket_attendance_value" });
+  }
+
+  const plusOnePayload = payload.rsvp?.plusone ?? null;
+  const includesPlusOne = plusOnePayload !== null;
+  const plusOneAttendance = includesPlusOne ? normaliseYesNo(plusOnePayload?.attending) : "";
+  const plusOneCricketAttendance = includesPlusOne
+    ? normaliseYesNo(plusOnePayload?.cricket_attending)
+    : "";
+
+  if (includesPlusOne && !plusOneAttendance) {
+    return json(400, { error: "invalid_plusone_attendance_value" });
+  }
+
+  if (includesPlusOne && !plusOneCricketAttendance) {
+    return json(400, { error: "invalid_plusone_cricket_attendance_value" });
   }
 
   const firstName = (payload.first_name ?? "").trim();
@@ -119,39 +154,114 @@ Deno.serve(async (req) => {
     });
   }
 
-  // 1) Look up existing guest rows by email
+  const now = new Date().toISOString();
+
   const { data: foundGuests, error: findErr } = await supabaseAdmin
     .from("guests")
-    .select("id, invitation_group_id, email")
+    .select("id, role, invitation_group_id")
     .eq("email", email);
 
   if (findErr) {
     return json(500, { error: "guest_lookup_failed", details: findErr.message });
   }
 
-  // Returning respondent: update any existing guest rows with this email
   if (foundGuests && foundGuests.length > 0) {
-    const { data: updatedGuests, error: updateErr } = await supabaseAdmin
+    const { error: primaryUpdateErr } = await supabaseAdmin
       .from("guests")
       .update({
-        attendance,
+        attendance: primaryAttendance,
+        cricket_attendance: primaryCricketAttendance,
         dietary: payload.rsvp?.dietary_requirements ?? null,
-        // If your guests table has NOT NULL first/last names, keep them consistent on update
         first_name: firstName,
         last_name: lastName,
-        updated_at: new Date().toISOString(),
+        address_line_1: addressLine1,
+        city,
+        postcode,
+        country,
+        updated_at: now,
       })
       .eq("email", email)
-      .select("*");
+      .eq("role", "primary");
 
-    if (updateErr) {
-      return json(500, { error: "guest_update_failed", details: updateErr.message });
+    if (primaryUpdateErr) {
+      return json(500, { error: "guest_update_failed", details: primaryUpdateErr.message });
     }
 
-    // mark invite as redeemed (if there is one for this email)
+    if (includesPlusOne) {
+      const { data: plusOneRow, error: plusOneLookupErr } = await supabaseAdmin
+        .from("guests")
+        .select("id")
+        .eq("email", email)
+        .eq("role", "plusone")
+        .maybeSingle();
+
+      if (plusOneLookupErr) {
+        return json(500, { error: "guest_lookup_failed", details: plusOneLookupErr.message });
+      }
+
+      if (plusOneRow?.id) {
+        const { error: plusOneUpdateErr } = await supabaseAdmin
+          .from("guests")
+          .update({
+            attendance: plusOneAttendance,
+            cricket_attendance: plusOneCricketAttendance,
+            dietary: plusOnePayload?.dietary_requirements ?? null,
+            first_name: (plusOnePayload?.first_name ?? "").trim(),
+            last_name: (plusOnePayload?.last_name ?? "").trim(),
+            address_line_1: addressLine1,
+            city,
+            postcode,
+            country,
+            updated_at: now,
+          })
+          .eq("id", plusOneRow.id);
+
+        if (plusOneUpdateErr) {
+          return json(500, { error: "guest_update_failed", details: plusOneUpdateErr.message });
+        }
+      } else {
+        const primaryGroupId = foundGuests.find(row => row.role === "primary")?.invitation_group_id;
+        if (!primaryGroupId) {
+          return json(500, { error: "missing_invitation_group" });
+        }
+
+        const { error: plusOneInsertErr } = await supabaseAdmin
+          .from("guests")
+          .insert({
+            invitation_group_id: primaryGroupId,
+            role: "plusone",
+            first_name: (plusOnePayload?.first_name ?? "").trim(),
+            last_name: (plusOnePayload?.last_name ?? "").trim(),
+            email,
+            attendance: plusOneAttendance,
+            cricket_attendance: plusOneCricketAttendance,
+            dietary: plusOnePayload?.dietary_requirements ?? null,
+            address_line_1: addressLine1,
+            city,
+            postcode,
+            country,
+            updated_at: now,
+          });
+
+        if (plusOneInsertErr) {
+          return json(500, { error: "guest_insert_failed", details: plusOneInsertErr.message });
+        }
+      }
+    }
+
+    const { data: updatedGuests, error: updatedSelectErr } = await supabaseAdmin
+      .from("guests")
+      .select("*")
+      .eq("email", email)
+      .order("role", { ascending: true });
+
+    if (updatedSelectErr) {
+      return json(500, { error: "guest_lookup_failed", details: updatedSelectErr.message });
+    }
+
     const { error: inviteErr } = await supabaseAdmin
       .from("invites")
-      .update({ redeemed_at: new Date().toISOString() })
+      .update({ redeemed_at: now })
       .eq("primary_email", email);
 
     if (inviteErr) {
@@ -166,7 +276,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // First-time respondent: find-or-create an invite, then create a primary guest row
   const { data: inviteExisting, error: inviteFindErr } = await supabaseAdmin
     .from("invites")
     .select("id")
@@ -185,7 +294,7 @@ Deno.serve(async (req) => {
       .insert({
         primary_email: email,
         token: crypto.randomUUID(),
-        invite_type: "single",
+        invite_type: includesPlusOne ? "plusone" : "single",
       })
       .select("id")
       .single();
@@ -197,42 +306,63 @@ Deno.serve(async (req) => {
     inviteId = inviteNew.id;
   }
 
-  const guestToInsert = {
-    invitation_group_id: inviteId,
-    role: "primary" as const,
-    first_name: firstName,
-    last_name: lastName,
-    address_line_1: addressLine1,
-    city,
-    postcode,
-    country,
-    email,
-    attendance,
-    dietary: payload.rsvp?.dietary_requirements ?? null,
-    updated_at: new Date().toISOString(),
-  };
+  const guestsToInsert: Array<Record<string, unknown>> = [
+    {
+      invitation_group_id: inviteId,
+      role: "primary",
+      first_name: firstName,
+      last_name: lastName,
+      address_line_1: addressLine1,
+      city,
+      postcode,
+      country,
+      email,
+      attendance: primaryAttendance,
+      cricket_attendance: primaryCricketAttendance,
+      dietary: payload.rsvp?.dietary_requirements ?? null,
+      updated_at: now,
+    },
+  ];
 
-  // TEMP DEBUG: set {"debug": true} in the JSON body to see what we'd insert
+  if (includesPlusOne) {
+    guestsToInsert.push({
+      invitation_group_id: inviteId,
+      role: "plusone",
+      first_name: (plusOnePayload?.first_name ?? "").trim(),
+      last_name: (plusOnePayload?.last_name ?? "").trim(),
+      address_line_1: addressLine1,
+      city,
+      postcode,
+      country,
+      email,
+      attendance: plusOneAttendance,
+      cricket_attendance: plusOneCricketAttendance,
+      dietary: plusOnePayload?.dietary_requirements ?? null,
+      updated_at: now,
+    });
+  }
+
   if (payload.debug === true) {
-    return json(200, { ok: true, debug: { guestToInsert } });
+    return json(200, { ok: true, debug: { guestsToInsert } });
   }
 
   const { data: insertedGuests, error: guestInsertErr } = await supabaseAdmin
     .from("guests")
-    .insert(guestToInsert)
-    .select("*");
+    .insert(guestsToInsert)
+    .select("*")
+    .order("role", { ascending: true });
 
   if (guestInsertErr) {
     return json(500, {
       error: "guest_insert_failed",
       details: guestInsertErr.message,
-      debug: { guestToInsert },
+      debug: { guestsToInsert },
     });
   }
 
   const { error: inviteRedeemErr } = await supabaseAdmin
     .from("invites")
-    .update({ redeemed_at: new Date().toISOString() })
+    .update({ redeemed_at: now })
     .eq("id", inviteId);
 
   if (inviteRedeemErr) {

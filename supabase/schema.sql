@@ -22,6 +22,7 @@ create table if not exists public.guests (
   last_name text not null,
   email text not null,
   attendance text not null check (attendance in ('yes', 'no')),
+  cricket_attendance text not null check (cricket_attendance in ('yes', 'no')),
   dietary text,
   address_line_1 text,
   address_line_2 text,
