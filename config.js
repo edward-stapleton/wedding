@@ -3,6 +3,7 @@ window.__APP_CONFIG__ = {
   supabaseAnonKey: 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT',
   siteBaseUrl: 'https://edlaura.com/',
   rsvpPassword: 'STARFORD',
+  debugRsvp: false,
   mapboxToken:
     'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg',
   mapboxStyle: 'mapbox://styles/mapbox/standard?optimize=true',

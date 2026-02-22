@@ -588,8 +588,13 @@ async function callRsvpFunction(url, payload) {
   }
 
   if (!response.ok || !json?.ok) {
+    const status = Number.isFinite(response.status) ? response.status : 0;
     const message = json?.details || json?.message || json?.error || 'RSVP service error.';
-    throw new Error(message);
+    const reasonSuffix = json?.reason ? ` (${json.reason})` : '';
+    const error = new Error(`${status}: ${message}${reasonSuffix}`);
+    error.rsvpStatus = status;
+    error.rsvpBody = json;
+    throw error;
   }
 
   return json;
@@ -601,6 +606,7 @@ const CRICKET_ATTENDANCE_PROMPT =
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
 const RSVP_PASSWORD = APP_CONFIG.rsvpPassword ?? 'STARFORD';
+const RSVP_DEBUG = APP_CONFIG.debugRsvp === true;
 const routeInviteTypeOverride = normalizeInviteType(document.body?.dataset.rsvpEntry) ||
   (isRsvpSingleRoute ? 'single' : isRsvpCoupleRoute ? 'plusone' : '');
 
@@ -718,10 +724,10 @@ function getStoredRsvpAccessEmail() {
   return localStorage.getItem(RSVP_ACCESS_STORAGE_KEY) || '';
 }
 
-async function doesGuestExist(email) {
-  if (!email) return false;
+async function lookupGuestByEmail(email) {
+  if (!email) return { status: 'not_found' };
   const normalized = normalizeEmailForStorage(email);
-  if (!normalized) return false;
+  if (!normalized) return { status: 'not_found' };
 
   try {
     const result = await callRsvpFunction(RSVP_LOOKUP_FUNCTION_URL, {
@@ -729,9 +735,30 @@ async function doesGuestExist(email) {
       sitePassword: RSVP_PASSWORD,
       inviteToken: rsvpState.inviteToken || '',
     });
-    return (result.guests?.length ?? 0) > 0;
-  } catch {
-    return false;
+    return {
+      status: (result.guests?.length ?? 0) > 0 ? 'found' : 'not_found',
+    };
+  } catch (error) {
+    const statusText = typeof error?.message === 'string' ? error.message.toLowerCase() : '';
+    const status =
+      statusText.includes('unauthorised') ||
+      statusText.includes('unauthorized') ||
+      statusText.includes('bad_password') ||
+      statusText.includes('server_password_not_set')
+        ? 'unauthorized'
+        : 'lookup_failed';
+    const details = typeof error?.message === 'string' ? error.message : 'unknown_error';
+
+    if (RSVP_DEBUG) {
+      console.error('RSVP lookup failed', {
+        endpoint: RSVP_LOOKUP_FUNCTION_URL,
+        statusCode: error?.rsvpStatus ?? null,
+        details,
+        payload: error?.rsvpBody ?? null,
+      });
+    }
+
+    return { status, details };
   }
 }
 
@@ -1526,11 +1553,19 @@ async function handleHeroAccessSubmit(trigger = null) {
     }
 
     setRsvpAccessFeedback('Checking your RSVP...');
-    const exists = await doesGuestExist(emailValue);
-    if (!exists) {
+    const lookup = await lookupGuestByEmail(emailValue);
+    if (lookup.status === 'not_found') {
       setRsvpAccessFeedback('We could not find an RSVP for that email address.');
       rsvpAccessEmailInput?.setAttribute('aria-invalid', 'true');
       rsvpAccessEmailInput?.focus();
+      return false;
+    }
+    if (lookup.status === 'unauthorized') {
+      setRsvpAccessFeedback('Access check failed. Please contact us; RSVP lookup config may be out of sync.');
+      return false;
+    }
+    if (lookup.status === 'lookup_failed') {
+      setRsvpAccessFeedback("We couldn't verify your RSVP right now. Please try again in a moment.");
       return false;
     }
 
