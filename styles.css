@@ -384,6 +384,50 @@ body.nav-open {
   z-index: 2001;
 }
 
+.rsvp-panel-slot {
+  width: min(100%, 760px);
+}
+
+.rsvp-panel-slot--hero {
+  width: min(100%, 420px);
+  margin-top: 0.25rem;
+}
+
+.rsvp-panel-slot--hero .rsvp-panel {
+  width: 100%;
+  max-height: none;
+}
+
+.rsvp-panel-slot--hero .rsvp-body {
+  padding: 0;
+  overflow: visible;
+}
+
+.rsvp-panel-slot--hero .rsvp-invite,
+.rsvp-panel-slot--hero .rsvp-steps {
+  display: none;
+}
+
+.rsvp-panel-slot--hero #rsvp-form {
+  gap: 0.75rem;
+}
+
+.rsvp-panel-slot--hero .rsvp-step[data-rsvp-step='1'] {
+  gap: 0.75rem;
+}
+
+.rsvp-panel-slot--hero .rsvp-step[data-rsvp-step='1'] .form-grid {
+  gap: 0.6rem;
+}
+
+.rsvp-panel-slot--hero .rsvp-step[data-rsvp-step='1'] [data-returning-email] {
+  order: 1;
+}
+
+.rsvp-panel-slot--hero .rsvp-step[data-rsvp-step='1'] .password-field {
+  order: 2;
+}
+
 .scroll-invite {
   margin-top: 2.5rem;
   font-size: 2.25rem;
@@ -1854,6 +1898,15 @@ html.no-js .schedule-desktop .schedule-track-line::after {
   .rsvp-page .section-content {
     width: 100%;
     padding: 0;
+  }
+
+  .rsvp-panel-slot--hero {
+    width: min(100%, 360px);
+    margin-bottom: 1.25rem;
+  }
+
+  .rsvp-panel-slot--hero .rsvp-panel {
+    min-height: auto;
   }
 
   .modal {
