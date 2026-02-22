@@ -134,7 +134,7 @@ export const WEDDING_POIS = [
     zoom: 16.1,
     pitch: 46,
     bearing: -22,
-    popupHtml: '15.00 Warm-Up Cricket Match & Welcome Tea',
+    popupHtml: '15.00 Warm-Up Cricket Match & Welcome Drinks',
   },
   {
     id: 'church',
