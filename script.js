@@ -1524,7 +1524,7 @@ function redirectToHomeAnchor() {
 }
 
 async function openModal({ trigger = null, preferDetailsStep = false } = {}) {
-  if (!isRsvpRoute || !rsvpSection) return;
+  if (!rsvpSection) return;
   if (trigger instanceof HTMLElement) {
     lastRsvpTrigger = trigger;
   }
@@ -1759,7 +1759,7 @@ async function initAuth() {
 }
 
 const shouldInitRsvp = enforceSiteGate();
-if (shouldInitRsvp && isRsvpRoute) {
+if (shouldInitRsvp) {
   initAuth();
 }
 
@@ -1770,7 +1770,7 @@ async function handleReturningRsvpRequest() {
 function handleRsvpEntryClick(event) {
   if (!(event.currentTarget instanceof HTMLAnchorElement)) return;
   event.preventDefault();
-  if (isRsvpRoute) {
+  if (rsvpSection) {
     const preferDetailsStep = hasSiteGatePassed();
     void openModal({ trigger: event.currentTarget, preferDetailsStep });
     return;
@@ -2596,7 +2596,7 @@ document.addEventListener('DOMContentLoaded', () => {
       void submitRsvp(event);
     });
   }
-  if (!isRsvpRoute || !rsvpSection) return;
+  if (!rsvpSection) return;
   setRsvpSectionVisibility(false);
   rsvpSection?.addEventListener('keydown', maintainModalFocus);
   rsvpModalCloseTargets.forEach(target => {
