@@ -121,6 +121,26 @@ function formatGuestName(firstName: unknown, lastName: unknown) {
   return combined || "Guest";
 }
 
+function firstToken(value: string) {
+  const tokens = value.trim().split(/\s+/).filter(Boolean);
+  return tokens[0] ?? "";
+}
+
+function formatUtcAsDayMonthYearTime(isoTimestamp: string) {
+  const timestamp = new Date(isoTimestamp);
+  if (Number.isNaN(timestamp.getTime())) {
+    return isoTimestamp;
+  }
+
+  const day = String(timestamp.getUTCDate()).padStart(2, "0");
+  const month = String(timestamp.getUTCMonth() + 1).padStart(2, "0");
+  const year = timestamp.getUTCFullYear();
+  const hours = String(timestamp.getUTCHours()).padStart(2, "0");
+  const minutes = String(timestamp.getUTCMinutes()).padStart(2, "0");
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -214,7 +234,8 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
   const subject = isCreated
     ? "Thanks for completing your RSVP for our wedding!"
     : "We've noted the changes to your wedding RSVP";
-  const greetingName = model.primaryGuest.name || "there";
+  const greetingName = firstToken(model.primaryGuest.name) || "there";
+  const submittedAtDisplay = formatUtcAsDayMonthYearTime(model.submittedAtIso);
   const intro = isCreated
     ? "Thanks for your RSVP. We've recorded your details below."
     : "Thanks for updating your RSVP. We've saved your latest details below.";
@@ -235,7 +256,7 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
     ...guestTextLines,
     ...addressTextLines,
     "",
-    `Saved at (UTC): ${model.submittedAtIso}`,
+    `Saved at (UTC): ${submittedAtDisplay}`,
     "",
     "With love,",
     "Ed & Laura",
@@ -251,15 +272,19 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
     : "";
 
   const html = [
-    "<div style=\"background-color:#4F752A;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;max-width:640px;color:#FFFFFF;line-height:1.5;padding:24px;border-radius:8px;\">",
+    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;min-width:100%;background-color:#4F752A;border-collapse:collapse;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;\">",
+    "<tr>",
+    "<td style=\"background-color:#4F752A;color:#FFFFFF;line-height:1.5;padding:24px 24px 32px;\">",
     `<p style="margin:0 0 12px;color:#ffffff;line-height:1.5;">Hi ${escapeHtml(greetingName)},</p>`,
     `<p style="margin:0 0 12px;color:#f7fbe9;line-height:1.5;">${escapeHtml(intro)}</p>`,
     renderGuestHtml(model.primaryGuest),
     model.plusOneGuest ? renderGuestHtml(model.plusOneGuest) : "",
     addressHtml,
-    `<p style="margin:16px 0 12px;color:#f7fbe9;line-height:1.5;"><strong style="color:#ffffff;">Saved at (UTC):</strong> ${escapeHtml(model.submittedAtIso)}</p>`,
+    `<p style="margin:16px 0 12px;color:#f7fbe9;line-height:1.5;"><strong style="color:#ffffff;">Saved at (UTC):</strong> ${escapeHtml(submittedAtDisplay)}</p>`,
     "<p style=\"margin:0;color:#ffffff;line-height:1.5;\">With love,<br/>Ed &amp; Laura</p>",
-    "</div>",
+    "</td>",
+    "</tr>",
+    "</table>",
   ].join("");
 
   return { subject, html, text };
