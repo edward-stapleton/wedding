@@ -59,7 +59,7 @@ const MAP_DEFAULTS = {
 const WALKING_ROUTE_COORDS = WALKING_ROUTE?.features?.[0]?.geometry?.coordinates ?? [];
 
 const rsvpAccessEmailInput = document.getElementById('rsvp-access-email');
-const rsvpAccessLink = document.querySelector('.rsvp-access-link');
+const rsvpAccessLink = document.querySelector('[data-rsvp-access-link]');
 const rsvpAccessFeedback = document.getElementById('rsvp-access-feedback');
 const returningEmailField = document.querySelector('[data-returning-email]');
 if (returningEmailField) {
@@ -90,6 +90,9 @@ const rsvpPasswordInput = document.getElementById('rsvp-password');
 const rsvpPasswordField = rsvpPasswordInput?.closest('.form-field');
 const rsvpEmailField = document.getElementById('rsvp-email');
 const inviteTokenField = document.getElementById('invite-token');
+const rsvpPanel = document.querySelector('[data-rsvp-panel]');
+const rsvpPanelHeroSlot = document.querySelector('[data-rsvp-panel-hero-slot]');
+const rsvpPanelPageSlot = document.querySelector('[data-rsvp-panel-page-slot]');
 const rsvpTriggers = document.querySelectorAll('[data-rsvp-trigger]');
 const heroReturningLinks = document.querySelectorAll('[data-hero-returning-link]');
 const guestSections = document.querySelectorAll('.guest-response');
@@ -122,7 +125,6 @@ const stepOneIntroDefault =
   'Saturday 22 August 2026 · Oxford. Please enter the password from your invitation to begin your RSVP.';
 const rsvpAccessLinkDefaultLabel =
   rsvpAccessLink?.textContent?.trim() || "Already RSVP'd?";
-const rsvpAccessLinkReturnLabel = 'Not RSVP’d yet?';
 const NAV_LINK_TARGETS = {
   home: `${SITE_BASE_URL}#home`,
   schedule: `${SITE_BASE_URL}#schedule`,
@@ -147,6 +149,7 @@ const rsvpState = {
   guestProfile: null,
   inviteDetails: null,
   currentStep: 1,
+  entryMode: 'initial',
   inviteToken: null,
   inviteTypeOverride: '',
   inviteTypeFromUrl: '',
@@ -940,70 +943,96 @@ function updateStepIndicatorVisibility() {
 }
 
 function getStepOneButtonLabel() {
-  return rsvpState.isReturningRsvp ? 'Enter' : 'RSVP';
+  if (rsvpState.entryMode === 'new') {
+    return 'RSVP';
+  }
+  return 'Enter';
 }
 
-function setReturningRsvpState(shouldReturn) {
-  const canReturn = Boolean(shouldReturn && rsvpState.hasRequestedReturning);
-  rsvpState.isReturningRsvp = canReturn;
+function setEntryMode(mode) {
+  const nextMode = mode === 'new' || mode === 'returning' ? mode : 'initial';
+  const isReturning = nextMode === 'returning';
+  rsvpState.entryMode = nextMode;
+  rsvpState.isReturningRsvp = isReturning;
+  rsvpState.hasRequestedReturning = isReturning;
+
   if (returningEmailField) {
-    returningEmailField.hidden = !canReturn;
+    returningEmailField.hidden = !isReturning;
   }
+
   if (rsvpAccessEmailInput) {
-    rsvpAccessEmailInput.required = canReturn;
-    if (!canReturn) {
+    rsvpAccessEmailInput.required = isReturning;
+    if (!isReturning) {
       rsvpAccessEmailInput.removeAttribute('required');
       rsvpAccessEmailInput.removeAttribute('aria-invalid');
     }
   }
+
   if (rsvpPasswordField) {
-    rsvpPasswordField.hidden = false;
+    rsvpPasswordField.hidden = nextMode === 'initial';
   }
+
   if (rsvpPasswordInput) {
-    if (canReturn) {
+    if (nextMode === 'initial') {
       rsvpPasswordInput.value = '';
-      rsvpPasswordInput.removeAttribute('aria-invalid');
+      rsvpPasswordInput.removeAttribute('required');
+    } else {
+      rsvpPasswordInput.setAttribute('required', 'true');
     }
-    rsvpPasswordInput.setAttribute('required', 'true');
+    rsvpPasswordInput.removeAttribute('aria-invalid');
   }
 
   if (rsvpAccessLink) {
-    rsvpAccessLink.textContent = canReturn ? rsvpAccessLinkReturnLabel : rsvpAccessLinkDefaultLabel;
+    rsvpAccessLink.textContent = rsvpAccessLinkDefaultLabel;
   }
 
   if (stepOneTitle) {
-    stepOneTitle.textContent = canReturn ? 'Welcome back' : stepOneTitleDefault;
+    stepOneTitle.textContent = stepOneTitleDefault;
   }
 
   if (stepOneIntro) {
-    stepOneIntro.textContent = canReturn
-      ? 'Enter the password from your invitation and the email address you used before to return to the main website.'
-      : stepOneIntroDefault;
+    stepOneIntro.textContent = stepOneIntroDefault;
   }
 
   if (rsvpState.currentStep === 1 && stepNextButton) {
     stepNextButton.textContent = getStepOneButtonLabel();
   }
+
+  if (rsvpFeedback) {
+    rsvpFeedback.textContent = '';
+  }
+
   updatePasswordGate();
 }
 
 function resetReturningRsvpRequest() {
   if (rsvpState.forceReturning) {
-    rsvpState.hasRequestedReturning = true;
-    setReturningRsvpState(true);
+    setEntryMode('returning');
     if (rsvpAccessLink) {
       rsvpAccessLink.hidden = true;
       rsvpAccessLink.setAttribute('aria-hidden', 'true');
     }
     return;
   }
-  rsvpState.hasRequestedReturning = false;
-  setReturningRsvpState(false);
+  setEntryMode('initial');
+}
+
+function syncRsvpPanelPlacement(step = rsvpState.currentStep) {
+  if (!rsvpPanel || !rsvpPanelHeroSlot || !rsvpPanelPageSlot) return;
+  const shouldMountInHero = step === 1;
+  const targetSlot = shouldMountInHero ? rsvpPanelHeroSlot : rsvpPanelPageSlot;
+  if (rsvpPanel.parentElement !== targetSlot) {
+    targetSlot.appendChild(rsvpPanel);
+  }
+  if (rsvpSection) {
+    setRsvpSectionVisibility(!shouldMountInHero);
+  }
 }
 
 function setStep(step) {
   const resolvedStep = getNearestRsvpStep(step);
   rsvpState.currentStep = resolvedStep;
+  syncRsvpPanelPlacement(resolvedStep);
   stepSections.forEach(section => {
     const sectionStep = Number(section.dataset.rsvpStep);
     section.hidden = sectionStep !== resolvedStep;
@@ -1422,7 +1451,7 @@ function setRsvpAccessFeedback(message) {
 
 function updateRsvpAccessLinkVisibility(step = rsvpState.currentStep) {
   if (!rsvpAccessLink) return;
-  const shouldShow = step === 1;
+  const shouldShow = step === 1 && !rsvpState.forceReturning;
   rsvpAccessLink.hidden = !shouldShow;
   rsvpAccessLink.setAttribute('aria-hidden', String(!shouldShow));
 }
@@ -1502,9 +1531,11 @@ async function handleRsvpAccessSubmit() {
   await loadAndApplyRsvpForEmail(normalizedEmail);
 
   // Move straight to the editable details step for returning guests.
-  rsvpState.hasRequestedReturning = true;
-  setReturningRsvpState(true);
-  handleRsvpEnter();
+  setEntryMode('returning');
+  setStep(2);
+  if (rsvpSection) {
+    rsvpSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   setRsvpAccessFeedback('');
   return true;
@@ -1590,12 +1621,7 @@ async function handleReturningRsvpRequest() {
   if (rsvpState.forceReturning) {
     return;
   }
-  if (rsvpState.isReturningRsvp) {
-    resetReturningRsvpRequest();
-  } else {
-    rsvpState.hasRequestedReturning = true;
-    setReturningRsvpState(true);
-  }
+  setEntryMode('returning');
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
@@ -2452,6 +2478,10 @@ function validateStep(step, formData, profile) {
   const hasPlusOne = isPlusOneActive(activeProfile);
 
   if (step === 1) {
+    if (rsvpState.entryMode === 'initial') {
+      return errors;
+    }
+
     const passwordValue = formData.get('rsvp-password')?.toString().trim().toUpperCase() || '';
     if (!passwordValue) {
       errors.push('Please enter the RSVP password from your invitation.');
@@ -2459,7 +2489,7 @@ function validateStep(step, formData, profile) {
       errors.push('The RSVP password is incorrect. Please check your invitation.');
     }
 
-    if (rsvpState.isReturningRsvp && rsvpState.hasRequestedReturning) {
+    if (rsvpState.isReturningRsvp) {
       const returningEmail = formData.get('rsvp-access-email')?.toString().trim() || '';
       if (!returningEmail || !returningEmail.includes('@')) {
         errors.push('Please enter a valid email address to continue.');
@@ -2547,6 +2577,10 @@ function updatePasswordGate() {
     stepNextButton.disabled = false;
     return;
   }
+  if (rsvpState.entryMode === 'initial') {
+    stepNextButton.disabled = false;
+    return;
+  }
   const passwordValue = rsvpPasswordInput?.value || '';
   const isValid = isRsvpPasswordValid(passwordValue);
   if (rsvpState.isReturningRsvp) {
@@ -2572,6 +2606,11 @@ rsvpPasswordInput?.addEventListener('input', () => {
 
 async function handleStepAdvance() {
   if (!rsvpForm) return;
+  if (rsvpState.currentStep === 1 && rsvpState.entryMode === 'initial') {
+    setEntryMode('new');
+    return;
+  }
+
   const formData = new FormData(rsvpForm);
   const errors = validateStep(rsvpState.currentStep, formData, rsvpState.guestProfile);
   if (errors.length > 0) {
@@ -2766,8 +2805,7 @@ async function submitRsvp(event) {
     applyRsvpCompletionGateState(true);
 
     // Clear any returning-mode flags so we don't bounce to Step 1.
-    rsvpState.hasRequestedReturning = false;
-    setReturningRsvpState(false);
+    setEntryMode('initial');
 
     if (rsvpFeedback) {
       rsvpFeedback.textContent = '';
