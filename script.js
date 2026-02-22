@@ -1469,12 +1469,12 @@ async function closeModal({ restoreFocus = true, scrollHome = true } = {}) {
   }
 }
 
-async function openModal({ trigger = null } = {}) {
+async function openModal({ trigger = null, preferDetailsStep = false } = {}) {
   if (!isRsvpRoute || !rsvpSection) return;
   if (trigger instanceof HTMLElement) {
     lastRsvpTrigger = trigger;
   }
-  await openRsvpSection();
+  await openRsvpSection({ preferDetailsStep });
   setRsvpSectionVisibility(true);
   focusInitialRsvpField();
 }
@@ -1703,7 +1703,8 @@ function handleRsvpEntryClick(event) {
   if (!(event.currentTarget instanceof HTMLAnchorElement)) return;
   event.preventDefault();
   if (isRsvpRoute) {
-    void openModal({ trigger: event.currentTarget });
+    const preferDetailsStep = hasSiteGatePassed();
+    void openModal({ trigger: event.currentTarget, preferDetailsStep });
     return;
   }
   const targetUrl = resolveRsvpEntryUrl();
@@ -2471,16 +2472,20 @@ function handleRsvpFormKeydown(event) {
   }
 }
 
-async function getInitialRsvpStep() {
+async function getInitialRsvpStep(options = {}) {
+  const { preferDetailsStep = false } = options;
   const email = getActiveRsvpEmail();
   const { hasData, completed } = await loadAndApplyRsvpForEmail(email);
+  if (preferDetailsStep) {
+    return 2;
+  }
   if (!hasData) {
     return 1;
   }
   return completed ? 2 : 1;
 }
 
-async function openRsvpSection() {
+async function openRsvpSection(options = {}) {
   if (!rsvpSection) return;
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
@@ -2494,12 +2499,12 @@ async function openRsvpSection() {
     updateGuestUi(rsvpState.guestProfile);
   }
 
-  const initialStep = await getInitialRsvpStep();
+  const initialStep = await getInitialRsvpStep(options);
   setStep(initialStep);
   resetGuestSectionState();
 }
 
-async function initializeRsvpOnLoad() {
+async function initializeRsvpOnLoad(options = {}) {
   if (!rsvpSection || rsvpState.hasInitializedRsvp) return;
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
@@ -2513,7 +2518,7 @@ async function initializeRsvpOnLoad() {
     updateGuestUi(rsvpState.guestProfile);
   }
 
-  const initialStep = await getInitialRsvpStep();
+  const initialStep = await getInitialRsvpStep(options);
   setStep(initialStep);
   resetGuestSectionState();
   rsvpState.hasInitializedRsvp = true;
