@@ -635,9 +635,8 @@ async function callRsvpFunction(url, payload) {
   return json;
 }
 
-const ATTENDANCE_PROMPT = 'Able to come to the wedding?';
-const CRICKET_ATTENDANCE_PROMPT =
-  'Able to make it to our cricket match in central Oxford the afternoon before the wedding (Friday 21 August)?';
+const ATTENDANCE_PROMPT = 'Able to come to our wedding on Saturday 22 August?';
+const CRICKET_ATTENDANCE_PROMPT = 'Able to come to cricket and drinks on Friday 21 August afternoon?';
 const DIETARY_LABEL_TEXT = 'Any dietary requirements?';
 const DIETARY_PLACEHOLDER = 'e.g. vegetarian, vegan, gluten-intolerant, allergies';
 const RSVP_PASSWORD = APP_CONFIG.rsvpPassword ?? 'STARFORD';
