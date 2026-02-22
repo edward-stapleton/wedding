@@ -1527,7 +1527,7 @@ async function refreshRsvpCompletionGate(email, { showFeedback = false } = {}) {
   return completed;
 }
 
-async function handleHeroAccessSubmit(trigger = null) {
+async function handleHeroAccessSubmit() {
   if (!rsvpPasswordInput) return false;
 
   setRsvpAccessFeedback('');
@@ -1542,7 +1542,8 @@ async function handleHeroAccessSubmit(trigger = null) {
         await loadAndApplyRsvpForEmail(existingEmail);
       }
     }
-    await openModal({ trigger, preferDetailsStep: true });
+    setRsvpAccessFeedback('');
+    updateRsvpNavigationVisibility();
     return true;
   }
 
@@ -1596,7 +1597,7 @@ async function handleHeroAccessSubmit(trigger = null) {
   }
 
   setRsvpAccessFeedback('');
-  await openModal({ trigger, preferDetailsStep: true });
+  updateRsvpNavigationVisibility();
   return true;
 }
 
@@ -1608,9 +1609,7 @@ rsvpAccessEmailInput?.addEventListener('input', () => {
 
 heroAccessForm?.addEventListener('submit', event => {
   event.preventDefault();
-  const trigger =
-    (event.submitter instanceof HTMLElement && event.submitter) || heroAccessSubmitButton || rsvpHeroTrigger;
-  void handleHeroAccessSubmit(trigger);
+  void handleHeroAccessSubmit();
 });
 
 async function initAuth() {
@@ -2524,9 +2523,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setStep(1);
   void (async () => {
     await initializeRsvpOnLoad();
-    if (hasSiteGatePassed()) {
-      await openModal({ preferDetailsStep: true });
-    }
   })();
 });
 
