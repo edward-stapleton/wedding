@@ -436,7 +436,7 @@ body.nav-open {
     display: flex;
     flex-direction: column;
     width: 100vw;
-    margin-left: calc(50% - 50vw);
+    margin-left: calc(50% - 50vw - 1.5rem);
     gap: 2rem;
     padding: 0.5rem 0 0;
   }
