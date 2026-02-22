@@ -216,6 +216,13 @@ body.nav-open {
   display: none;
 }
 
+.site-gated .hero-section {
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  background: var(--page-background);
+}
+
 .section {
   width: 100%;
   padding: 3.5rem 0;
