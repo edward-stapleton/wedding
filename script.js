@@ -103,6 +103,7 @@ const stepPrevButton = document.querySelector('[data-step-prev]');
 const stepNextButton = document.querySelector('[data-step-next]');
 const stepSubmitButton = document.querySelector('[data-step-submit]');
 const stepEnterButton = document.querySelector('[data-step-enter]');
+const scrollCue = document.querySelector('[data-scroll-cue]');
 const mapContainer = document.querySelector('[data-map-container]');
 const mapPoiButtons = Array.from(document.querySelectorAll('[data-map-poi]'));
 const scheduleSection = document.getElementById('schedule');
@@ -1026,6 +1027,10 @@ function syncRsvpPanelPlacement(step = rsvpState.currentStep) {
   }
   if (rsvpSection) {
     setRsvpSectionVisibility(!shouldMountInHero);
+  }
+  if (scrollCue) {
+    scrollCue.hidden = shouldMountInHero;
+    scrollCue.setAttribute('aria-hidden', String(shouldMountInHero));
   }
 }
 
