@@ -1534,6 +1534,18 @@ async function handleHeroAccessSubmit(trigger = null) {
   rsvpPasswordInput.removeAttribute('aria-invalid');
   rsvpAccessEmailInput?.removeAttribute('aria-invalid');
 
+  if (hasSiteGatePassed()) {
+    if (!rsvpState.authenticatedEmail) {
+      const existingEmail = normalizeEmailForStorage(getActiveRsvpEmail());
+      if (existingEmail) {
+        await setAuthEmail(existingEmail);
+        await loadAndApplyRsvpForEmail(existingEmail);
+      }
+    }
+    await openModal({ trigger, preferDetailsStep: true });
+    return true;
+  }
+
   const emailValue = rsvpAccessEmailInput?.value.trim() || '';
   const passwordValue = rsvpPasswordInput?.value?.trim().toUpperCase() || '';
 
@@ -2510,7 +2522,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', handleModalEscape);
   resetReturningRsvpRequest();
   setStep(1);
-  void initializeRsvpOnLoad();
+  void (async () => {
+    await initializeRsvpOnLoad();
+    if (hasSiteGatePassed()) {
+      await openModal({ preferDetailsStep: true });
+    }
+  })();
 });
 
 function validateStep(step, formData, profile) {
@@ -2595,6 +2612,13 @@ function isRsvpPasswordValid(value) {
 
 function updatePasswordGate() {
   if (!heroAccessSubmitButton) return;
+  if (hasSiteGatePassed()) {
+    heroAccessSubmitButton.disabled = false;
+    if (rsvpPasswordInput) {
+      rsvpPasswordInput.setAttribute('aria-invalid', 'false');
+    }
+    return;
+  }
   const passwordValue = rsvpPasswordInput?.value || '';
   const isValid = isRsvpPasswordValid(passwordValue);
   if (rsvpState.isReturningRsvp) {
