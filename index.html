@@ -85,6 +85,151 @@
                 </div>
               </li>
             </ol>
+            <section
+              class="schedule-desktop"
+              aria-label="Wedding schedule timeline"
+              data-schedule-timeline
+              data-schedule-animation-duration="4500"
+            >
+              <div class="schedule-track" data-schedule-track>
+                <div class="schedule-track-line" aria-hidden="true"></div>
+                <ol class="schedule-points" aria-label="Combined Friday and Saturday schedule">
+                  <li
+                    class="schedule-point-item"
+                    style="--schedule-point-index: 0"
+                    data-schedule-point-item
+                  >
+                    <span class="schedule-day-marker" data-schedule-day-marker>FRIDAY 21</span>
+                    <button
+                      class="schedule-point-button"
+                      type="button"
+                      data-schedule-point
+                      aria-pressed="false"
+                      aria-controls="schedule-event-details"
+                      data-time="15:00"
+                      data-name="Warm-Up Cricket Match &amp; Welcome Tea"
+                      data-location="Balliol College Master's Field, Jowett Walk, Oxford, OX1 3TL"
+                      data-description="Settle in with a relaxed afternoon of cricket, tea, and welcome drinks before the main celebrations."
+                    >
+                      <span class="schedule-point-time">15:00</span>
+                      <span class="schedule-point-name">Warm-Up Cricket Match &amp; Welcome Tea</span>
+                    </button>
+                  </li>
+                  <li
+                    class="schedule-point-item"
+                    style="--schedule-point-index: 1"
+                    data-schedule-point-item
+                  >
+                    <span class="schedule-day-marker" data-schedule-day-marker>SATURDAY 22</span>
+                    <button
+                      class="schedule-point-button"
+                      type="button"
+                      data-schedule-point
+                      aria-pressed="false"
+                      aria-controls="schedule-event-details"
+                      data-time="12:30"
+                      data-name="Arrival"
+                      data-location="St Margaret&rsquo;s Church, St Margaret&rsquo;s Road, Oxford OX2 6RX"
+                      data-description="Please arrive with enough time to find your seat and get settled before the ceremony begins."
+                    >
+                      <span class="schedule-point-time">12:30</span>
+                      <span class="schedule-point-name">Arrival</span>
+                    </button>
+                  </li>
+                  <li
+                    class="schedule-point-item"
+                    style="--schedule-point-index: 2"
+                    data-schedule-point-item
+                  >
+                    <button
+                      class="schedule-point-button"
+                      type="button"
+                      data-schedule-point
+                      aria-pressed="false"
+                      aria-controls="schedule-event-details"
+                      data-time="12:45"
+                      data-name="Wedding Ceremony"
+                      data-location="St Margaret&rsquo;s Church, St Margaret&rsquo;s Road, Oxford OX2 6RX"
+                      data-description="The ceremony starts promptly, followed by a short pause before we walk together to the reception."
+                    >
+                      <span class="schedule-point-time">12:45</span>
+                      <span class="schedule-point-name">Wedding Ceremony</span>
+                    </button>
+                  </li>
+                  <li
+                    class="schedule-point-item"
+                    style="--schedule-point-index: 3"
+                    data-schedule-point-item
+                  >
+                    <button
+                      class="schedule-point-button"
+                      type="button"
+                      data-schedule-point
+                      aria-pressed="false"
+                      aria-controls="schedule-event-details"
+                      data-time="14:00"
+                      data-name="Guided Meadow Walk to Reception"
+                      data-location="From St Margaret&rsquo;s Church to The Medley Walled Garden"
+                      data-description="Join us for a guided walk through the meadow route as we make our way from church to the reception."
+                    >
+                      <span class="schedule-point-time">14:00</span>
+                      <span class="schedule-point-name">Guided Meadow Walk to Reception</span>
+                    </button>
+                  </li>
+                  <li
+                    class="schedule-point-item"
+                    style="--schedule-point-index: 4"
+                    data-schedule-point-item
+                  >
+                    <button
+                      class="schedule-point-button"
+                      type="button"
+                      data-schedule-point
+                      aria-pressed="false"
+                      aria-controls="schedule-event-details"
+                      data-time="14:30"
+                      data-name="Wedding Reception"
+                      data-location="The Medley Walled Garden, Medley Manor Farm, Oxford OX2 0NJ"
+                      data-description="Celebrate with us over drinks, dinner, speeches, and dancing in the walled garden."
+                    >
+                      <span class="schedule-point-time">14:30</span>
+                      <span class="schedule-point-name">Wedding Reception</span>
+                    </button>
+                  </li>
+                  <li
+                    class="schedule-point-item"
+                    style="--schedule-point-index: 5"
+                    data-schedule-point-item
+                  >
+                    <button
+                      class="schedule-point-button"
+                      type="button"
+                      data-schedule-point
+                      aria-pressed="false"
+                      aria-controls="schedule-event-details"
+                      data-time="23:00"
+                      data-name="Carriages"
+                      data-location="The Medley Walled Garden, Medley Manor Farm, Oxford OX2 0NJ"
+                      data-description="Carriages at the end of the evening, with departures coordinated from the reception venue."
+                    >
+                      <span class="schedule-point-time">23:00</span>
+                      <span class="schedule-point-name">Carriages</span>
+                    </button>
+                  </li>
+                </ol>
+              </div>
+              <section
+                class="schedule-details-panel"
+                id="schedule-event-details"
+                hidden
+                aria-live="polite"
+                data-schedule-details
+              >
+                <h4 class="schedule-details-name" data-schedule-details-name></h4>
+                <p class="schedule-details-location" data-schedule-details-location></p>
+                <p class="schedule-details-description" data-schedule-details-description></p>
+              </section>
+            </section>
           </div>
         </section>
 
