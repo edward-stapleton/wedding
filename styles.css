@@ -377,6 +377,7 @@ body.nav-open {
 }
 
 .hero-access-link {
+  align-self: center;
   margin-top: 0.5rem;
   color: #ffffff;
   font-weight: 600;
