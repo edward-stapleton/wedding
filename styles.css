@@ -1,6 +1,10 @@
 :root {
   color-scheme: only dark;
   --header-height: 0px;
+  --app-vh: 100vh;
+  --app-vh-small: 100svh;
+  --app-vh-dynamic: 100dvh;
+  --app-vh-active: var(--app-vh);
   --alt-background: rgba(255, 255, 255, 0.12);
   --content-max-narrow: 600px;
   --content-max-wide: 960px;
@@ -18,6 +22,18 @@
   --page-gutter-mobile: 1rem;
   --page-gutter-desktop: 1.5rem;
   --page-gutter: var(--page-gutter-mobile);
+}
+
+@supports (height: 100svh) {
+  :root {
+    --app-vh-active: var(--app-vh-small);
+  }
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --app-vh-active: var(--app-vh-dynamic);
+  }
 }
 
 html {
@@ -245,7 +261,7 @@ body.nav-open {
 }
 
 .hero-section {
-  min-height: calc(100vh - var(--header-height));
+  min-height: calc(var(--app-vh-active) - var(--header-height));
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1062,12 +1078,16 @@ body.nav-open {
   }
 
   .nav-toggle {
-    top: 1.25rem;
+    top: calc(1.25rem + env(safe-area-inset-top));
     right: 1.25rem;
   }
 
   .hero-section {
-    padding-top: 6rem;
+    padding-top: calc(6rem + env(safe-area-inset-top));
+  }
+
+  .scroll-invite {
+    bottom: calc(1.75rem + env(safe-area-inset-bottom));
   }
 
   .nav-links {
