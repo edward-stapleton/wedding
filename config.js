@@ -7,6 +7,10 @@ window.__APP_CONFIG__ = {
   mapboxToken:
     'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg',
   mapboxStyle: 'mapbox://styles/mapbox/standard?optimize=true',
-  mapboxLabelFontStack: ['Stack Sans Headline Regular', 'Arial Unicode MS Regular'],
+  mapboxLabelFontStack: [
+    'Stack Sans Text Regular',
+    'Stack Sans Headline Regular',
+    'Arial Unicode MS Regular',
+  ],
 };
 window.APP_CONFIG = window.__APP_CONFIG__;
