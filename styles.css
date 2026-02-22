@@ -1772,6 +1772,15 @@ html.no-js .fade-section {
   transform: none;
 }
 
+html.no-js .schedule-desktop .schedule-point-item {
+  opacity: 1;
+  transform: none;
+}
+
+html.no-js .schedule-desktop .schedule-track-line::after {
+  transform: scaleX(1);
+}
+
 .fade-section.visible {
   opacity: 1;
   transform: translateY(0);
@@ -1898,5 +1907,14 @@ html.no-js .fade-section {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .schedule-desktop .schedule-track-line::after {
+    transform: scaleX(1);
+  }
+
+  .schedule-desktop .schedule-point-item {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

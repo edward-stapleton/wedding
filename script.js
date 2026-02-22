@@ -2016,6 +2016,190 @@ function setupFaqAccordion() {
   });
 }
 
+function setupScheduleTimeline() {
+  if (
+    !scheduleSection ||
+    !scheduleTimeline ||
+    !scheduleDetailsPanel ||
+    !scheduleDetailsName ||
+    !scheduleDetailsLocation ||
+    !scheduleDetailsDescription ||
+    !schedulePoints.length
+  ) {
+    return;
+  }
+
+  const desktopMediaQuery = window.matchMedia('(min-width: 768px)');
+  const reducedMotionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const configuredDuration = Number(scheduleTimeline.dataset.scheduleAnimationDuration);
+  const animationDuration =
+    Number.isFinite(configuredDuration) && configuredDuration > 0
+      ? Math.min(configuredDuration, 5000)
+      : 4500;
+  const delaySegments = Math.max(schedulePoints.length - 1, 1);
+  scheduleTimeline.style.setProperty('--schedule-animation-duration', `${animationDuration}ms`);
+  scheduleTimeline.style.setProperty('--schedule-point-count', String(delaySegments));
+
+  let selectedPoint = null;
+  let detailsHideTimeoutId = null;
+  let animationFrameId = null;
+
+  const clearDetailsHideTimeout = () => {
+    if (detailsHideTimeoutId) {
+      window.clearTimeout(detailsHideTimeoutId);
+      detailsHideTimeoutId = null;
+    }
+  };
+
+  const updatePressedState = () => {
+    schedulePoints.forEach(point => {
+      point.setAttribute('aria-pressed', String(point === selectedPoint));
+    });
+  };
+
+  const closeDetails = ({ immediate = false } = {}) => {
+    clearDetailsHideTimeout();
+    scheduleDetailsPanel.classList.remove('is-open');
+    if (immediate || reducedMotionMediaQuery.matches) {
+      scheduleDetailsPanel.hidden = true;
+      return;
+    }
+    detailsHideTimeoutId = window.setTimeout(() => {
+      if (!scheduleDetailsPanel.classList.contains('is-open')) {
+        scheduleDetailsPanel.hidden = true;
+      }
+    }, 340);
+  };
+
+  const openDetails = point => {
+    if (!point) return;
+    clearDetailsHideTimeout();
+    scheduleDetailsName.textContent = point.dataset.name ?? '';
+    scheduleDetailsLocation.textContent = point.dataset.location ?? '';
+    scheduleDetailsDescription.textContent = point.dataset.description ?? '';
+    if (scheduleDetailsPanel.hidden) {
+      scheduleDetailsPanel.hidden = false;
+      requestAnimationFrame(() => {
+        scheduleDetailsPanel.classList.add('is-open');
+      });
+      return;
+    }
+    scheduleDetailsPanel.classList.add('is-open');
+  };
+
+  const togglePoint = point => {
+    if (selectedPoint === point) {
+      selectedPoint = null;
+      updatePressedState();
+      closeDetails();
+      return;
+    }
+    selectedPoint = point;
+    updatePressedState();
+    openDetails(point);
+  };
+
+  const resetAnimation = () => {
+    if (animationFrameId) {
+      window.cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+    scheduleTimeline.classList.remove('is-animated');
+    if (reducedMotionMediaQuery.matches || !desktopMediaQuery.matches) {
+      scheduleTimeline.classList.add('is-animated');
+    }
+  };
+
+  const startAnimation = () => {
+    if (!desktopMediaQuery.matches) return;
+    if (reducedMotionMediaQuery.matches) {
+      scheduleTimeline.classList.add('is-animated');
+      return;
+    }
+    scheduleTimeline.classList.remove('is-animated');
+    void scheduleTimeline.offsetWidth;
+    animationFrameId = window.requestAnimationFrame(() => {
+      scheduleTimeline.classList.add('is-animated');
+      animationFrameId = null;
+    });
+  };
+
+  const isScheduleInViewport = () => {
+    const rect = scheduleSection.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    if (!viewportHeight) return false;
+    const visibleTop = Math.max(rect.top, 0);
+    const visibleBottom = Math.min(rect.bottom, viewportHeight);
+    const visibleHeight = Math.max(visibleBottom - visibleTop, 0);
+    return visibleHeight / Math.max(rect.height, 1) >= 0.35;
+  };
+
+  const handlePointKeydown = (event, point) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    togglePoint(point);
+  };
+
+  schedulePoints.forEach(point => {
+    point.addEventListener('click', () => togglePoint(point));
+    point.addEventListener('keydown', event => handlePointKeydown(event, point));
+  });
+
+  const observer = new IntersectionObserver(
+    entries => {
+      entries.forEach(entry => {
+        if (entry.target !== scheduleSection || !desktopMediaQuery.matches) return;
+        if (entry.isIntersecting) {
+          startAnimation();
+        } else {
+          resetAnimation();
+        }
+      });
+    },
+    { threshold: 0.35 }
+  );
+  observer.observe(scheduleSection);
+
+  const handleResponsiveChange = event => {
+    if (event.matches) {
+      if (isScheduleInViewport()) {
+        startAnimation();
+      } else {
+        resetAnimation();
+      }
+      return;
+    }
+    closeDetails({ immediate: true });
+    selectedPoint = null;
+    updatePressedState();
+    resetAnimation();
+  };
+
+  if (desktopMediaQuery.addEventListener) {
+    desktopMediaQuery.addEventListener('change', handleResponsiveChange);
+  } else if (desktopMediaQuery.addListener) {
+    desktopMediaQuery.addListener(handleResponsiveChange);
+  }
+
+  const handleReducedMotionChange = () => {
+    if (!desktopMediaQuery.matches) return;
+    if (isScheduleInViewport()) {
+      startAnimation();
+    } else {
+      resetAnimation();
+    }
+  };
+
+  if (reducedMotionMediaQuery.addEventListener) {
+    reducedMotionMediaQuery.addEventListener('change', handleReducedMotionChange);
+  } else if (reducedMotionMediaQuery.addListener) {
+    reducedMotionMediaQuery.addListener(handleReducedMotionChange);
+  }
+
+  closeDetails({ immediate: true });
+  resetAnimation();
+}
+
 function setupFadeSections() {
   const sections = document.querySelectorAll('[data-section], [data-map-container]');
   const observer = new IntersectionObserver(
@@ -2035,6 +2219,7 @@ function setupFadeSections() {
 
 setupFadeSections();
 setupFaqAccordion();
+setupScheduleTimeline();
 initMap();
 setupRsvpEntryTriggers();
 
