@@ -50,6 +50,9 @@ const MAPBOX_TOKEN = APP_CONFIG.mapboxToken;
 const MAPBOX_DEFAULT_STYLE = APP_CONFIG.mapboxStyle;
 const mapElement = document.getElementById('map');
 const MAPBOX_STYLE = mapElement?.dataset.style?.trim() || MAPBOX_DEFAULT_STYLE;
+const MAPBOX_LABEL_FONT_STACK = Array.isArray(APP_CONFIG.mapboxLabelFontStack)
+  ? APP_CONFIG.mapboxLabelFontStack
+  : ['Stack Sans Headline Regular', 'Arial Unicode MS Regular'];
 const CHURCH_COORDS = [-1.2684928, 51.7666909];
 const MAP_DEFAULTS = {
   zoom: 14.5,
@@ -535,6 +538,32 @@ function bindMapPoiControls() {
   });
 }
 
+function hasMatchingMapboxFontStack(currentStack, targetStack) {
+  if (!Array.isArray(currentStack) || currentStack.length !== targetStack.length) return false;
+  return currentStack.every((font, index) => font === targetStack[index]);
+}
+
+function applyMapLabelTypeface(map) {
+  const style = map.getStyle();
+  if (!style?.layers?.length) return;
+
+  style.layers.forEach(layer => {
+    if (layer.type !== 'symbol' || !map.getLayer(layer.id)) return;
+
+    const textField = map.getLayoutProperty(layer.id, 'text-field');
+    if (textField == null) return;
+
+    const currentFontStack = map.getLayoutProperty(layer.id, 'text-font');
+    if (hasMatchingMapboxFontStack(currentFontStack, MAPBOX_LABEL_FONT_STACK)) return;
+
+    try {
+      map.setLayoutProperty(layer.id, 'text-font', MAPBOX_LABEL_FONT_STACK);
+    } catch (error) {
+      console.warn(`Unable to set map label font for layer "${layer.id}".`, error);
+    }
+  });
+}
+
 function initMap() {
   if (!mapElement || !MAPBOX_TOKEN) return;
   if (!window.mapboxgl) {
@@ -565,6 +594,8 @@ function initMap() {
         bearing: MAP_DEFAULTS.bearing,
       });
     }
+    applyMapLabelTypeface(mapInstance);
+    mapInstance.once('idle', () => applyMapLabelTypeface(mapInstance));
     playMapFlyover();
   });
 }

@@ -183,9 +183,9 @@ function buildRsvpEmailModel(params: {
   };
 }
 
-function renderGuestTextLines(label: string, guest: GuestSummary) {
+function renderGuestTextLines(guest: GuestSummary) {
   const lines = [
-    `${label}: ${guest.name}`,
+    `${guest.name}`,
     `- Wedding attendance: ${guest.attendance}`,
     `- Cricket attendance: ${guest.cricketAttendance}`,
   ];
@@ -195,12 +195,12 @@ function renderGuestTextLines(label: string, guest: GuestSummary) {
   return lines;
 }
 
-function renderGuestHtml(label: string, guest: GuestSummary) {
+function renderGuestHtml(guest: GuestSummary) {
   const dietaryLine = guest.dietary
     ? `<li style="color:#f7fbe9;margin:0 0 6px;"><strong style="color:#ffffff;">Dietary requirements:</strong> ${escapeHtml(guest.dietary)}</li>`
     : "";
   return [
-    `<h3 style="margin:16px 0 8px;font-size:16px;line-height:1.4;color:#ffffff;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;">${escapeHtml(label)}: ${escapeHtml(guest.name)}</h3>`,
+    `<h3 style="margin:16px 0 8px;font-size:16px;line-height:1.4;color:#ffffff;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;">${escapeHtml(guest.name)}</h3>`,
     "<ul style=\"margin:0 0 12px 18px;padding:0;color:#f7fbe9;\">",
     `<li style="color:#f7fbe9;margin:0 0 6px;"><strong style="color:#ffffff;">Wedding attendance:</strong> ${escapeHtml(guest.attendance)}</li>`,
     `<li style="color:#f7fbe9;margin:0 0 6px;"><strong style="color:#ffffff;">Cricket attendance:</strong> ${escapeHtml(guest.cricketAttendance)}</li>`,
@@ -211,15 +211,17 @@ function renderGuestHtml(label: string, guest: GuestSummary) {
 
 function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
   const isCreated = model.submissionType === "created";
-  const subject = isCreated ? "We've received your RSVP" : "Your RSVP changes have been saved";
+  const subject = isCreated
+    ? "Thanks for completing your RSVP for our wedding!"
+    : "We've noted the changes to your wedding RSVP";
   const greetingName = model.primaryGuest.name || "there";
   const intro = isCreated
     ? "Thanks for your RSVP. We've recorded your details below."
     : "Thanks for updating your RSVP. We've saved your latest details below.";
 
   const guestTextLines = [
-    ...renderGuestTextLines("Guest 1", model.primaryGuest),
-    ...(model.plusOneGuest ? ["", ...renderGuestTextLines("Guest 2", model.plusOneGuest)] : []),
+    ...renderGuestTextLines(model.primaryGuest),
+    ...(model.plusOneGuest ? ["", ...renderGuestTextLines(model.plusOneGuest)] : []),
   ];
   const addressTextLines = model.address.length
     ? ["", "Address:", ...model.address.map(line => `- ${line}`)]
@@ -236,7 +238,7 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
     `Saved at (UTC): ${model.submittedAtIso}`,
     "",
     "With love,",
-    "Edward & Laura",
+    "Ed & Laura",
   ].join("\n");
 
   const addressHtml = model.address.length
@@ -252,11 +254,11 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
     "<div style=\"background-color:#4F752A;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;max-width:640px;color:#FFFFFF;line-height:1.5;padding:24px;border-radius:8px;\">",
     `<p style="margin:0 0 12px;color:#ffffff;line-height:1.5;">Hi ${escapeHtml(greetingName)},</p>`,
     `<p style="margin:0 0 12px;color:#f7fbe9;line-height:1.5;">${escapeHtml(intro)}</p>`,
-    renderGuestHtml("Guest 1", model.primaryGuest),
-    model.plusOneGuest ? renderGuestHtml("Guest 2", model.plusOneGuest) : "",
+    renderGuestHtml(model.primaryGuest),
+    model.plusOneGuest ? renderGuestHtml(model.plusOneGuest) : "",
     addressHtml,
     `<p style="margin:16px 0 12px;color:#f7fbe9;line-height:1.5;"><strong style="color:#ffffff;">Saved at (UTC):</strong> ${escapeHtml(model.submittedAtIso)}</p>`,
-    "<p style=\"margin:0;color:#ffffff;line-height:1.5;\">With love,<br/>Edward &amp; Laura</p>",
+    "<p style=\"margin:0;color:#ffffff;line-height:1.5;\">With love,<br/>Ed &amp; Laura</p>",
     "</div>",
   ].join("");
 
