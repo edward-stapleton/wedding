@@ -39,10 +39,48 @@
             <p class="hero-names">Edward Stapleton &amp; Laura Harford</p>
             <p class="hero-date">Saturday 22 August 2026</p>
             <p class="hero-location">Oxford</p>
-            <a class="primary" href="/rsvp/" data-rsvp-trigger data-hero-cta>RSVP</a>
-            <a class="rsvp-access-link hero-access-link" href="/rsvp/?returning=1" data-hero-returning-link
-              >Already RSVP&rsquo;d?</a
-            >
+            <form class="hero-access-form" data-hero-access-form novalidate>
+              <div class="form-field password-field">
+                <div class="password-input">
+                  <input
+                    id="rsvp-password"
+                    name="rsvp-password"
+                    type="password"
+                    autocomplete="off"
+                    class="form-control"
+                    placeholder="Password"
+                    aria-label="Password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="password-toggle"
+                    data-password-toggle
+                    aria-label="Show password"
+                    aria-pressed="false"
+                  >
+                    <span class="material-icons" aria-hidden="true">visibility</span>
+                  </button>
+                </div>
+              </div>
+              <div class="form-field" data-returning-email hidden>
+                <input
+                  id="rsvp-access-email"
+                  name="rsvp-access-email"
+                  type="email"
+                  inputmode="email"
+                  autocomplete="email"
+                  class="form-control"
+                  placeholder="Email Address"
+                  aria-label="Email Address"
+                />
+              </div>
+              <button type="submit" class="primary" data-hero-access-submit>Enter</button>
+              <button type="button" class="rsvp-access-link hero-access-link" data-hero-returning-link>
+                Already RSVP&rsquo;d?
+              </button>
+              <p id="rsvp-access-feedback" class="hero-access-feedback" role="status" aria-live="polite"></p>
+            </form>
           </div>
           <div class="scroll-invite" aria-hidden="true" data-scroll-cue>&#8595;</div>
           <p class="visually-hidden">Scroll for the schedule and details.</p>
@@ -66,55 +104,7 @@
                     </li>
                   </ol>
 
-                  <section class="rsvp-step" data-rsvp-step="1">
-                    <div class="rsvp-invite">
-                      <p class="rsvp-invite-kicker">You&rsquo;re invited to</p>
-                      <p class="rsvp-invite-title">THE WEDDING OF</p>
-                      <p class="rsvp-invite-names">Edward Stapleton &amp; Laura Harford</p>
-                      <p class="rsvp-invite-date">SATURDAY 22 AUGUST 2026</p>
-                      <p class="rsvp-invite-location">Oxford</p>
-                    </div>
-                    <div class="form-grid">
-                      <div class="form-field password-field">
-                        <div class="password-input">
-                          <input
-                            id="rsvp-password"
-                            name="rsvp-password"
-                            type="password"
-                            autocomplete="off"
-                            class="form-control"
-                            placeholder="Password"
-                            aria-label="Password"
-                            required
-                            data-initial-focus
-                          />
-                          <button
-                            type="button"
-                            class="password-toggle"
-                            data-password-toggle
-                            aria-label="Show password"
-                            aria-pressed="false"
-                          >
-                            <span class="material-icons" aria-hidden="true">visibility</span>
-                          </button>
-                        </div>
-                      </div>
-                      <div class="form-field" data-returning-email hidden>
-                        <input
-                          id="rsvp-access-email"
-                          name="rsvp-access-email"
-                          type="email"
-                          inputmode="email"
-                          autocomplete="email"
-                          class="form-control"
-                          placeholder="Email Address"
-                          aria-label="Email Address"
-                        />
-                      </div>
-                    </div>
-                  </section>
-
-                  <section class="rsvp-step" data-rsvp-step="2" hidden>
+                  <section class="rsvp-step" data-rsvp-step="1" hidden>
                     <h3 class="rsvp-step-title">Guest 1</h3>
                     <section class="guest-response" data-guest-section="primary">
                       <div class="form-grid">
@@ -178,7 +168,7 @@
                     </section>
                   </section>
 
-                  <section class="rsvp-step" data-rsvp-step="3" hidden>
+                  <section class="rsvp-step" data-rsvp-step="2" hidden>
                     <h3 class="rsvp-step-title">Guest 2</h3>
                     <section class="guest-response" data-guest-section="plusOne">
                       <h4 class="guest-title"><span data-guest-name="plusOne">Guest 2</span></h4>
@@ -243,7 +233,7 @@
                     </section>
                   </section>
 
-                    <section class="rsvp-step" data-rsvp-step="4" hidden>
+                    <section class="rsvp-step" data-rsvp-step="3" hidden>
                     <h3 class="rsvp-step-title">Contact Details</h3>
                     <div class="form-field">
                       <input
@@ -325,7 +315,7 @@
                     </div>
                   </section>
 
-                  <section class="rsvp-step" data-rsvp-step="5" hidden>
+                  <section class="rsvp-step" data-rsvp-step="4" hidden>
                     <h3 class="rsvp-step-title">Thank you!</h3>
                     <p class="rsvp-step-intro">Your RSVP has been sent.</p>
                     <p id="rsvp-thank-you-message" class="thank-you"></p>
@@ -338,9 +328,6 @@
                     <button type="button" class="primary" data-step-next>Next</button>
                     <button type="submit" class="primary" data-step-submit hidden>Submit</button>
                     <button type="button" class="primary" data-step-enter hidden>Enter</button>
-                  </div>
-                  <div class="rsvp-access-footer">
-                    <button type="button" class="rsvp-access-link" data-rsvp-access-link>Already RSVP&rsquo;d?</button>
                   </div>
                   <p id="rsvp-feedback" role="status" aria-live="polite"></p>
                   </form>
