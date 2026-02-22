@@ -44,12 +44,16 @@
             <p class="hero-names">Edward Stapleton &amp; Laura Harford</p>
             <p class="hero-date">Saturday 22 August 2026</p>
             <p class="hero-location">Oxford</p>
-            <a class="primary" href="/rsvp/" data-rsvp-trigger>Edit RSVP</a>
+            <a class="primary" href="/rsvp/" data-rsvp-trigger data-hero-cta>RSVP</a>
+            <a class="rsvp-access-link hero-access-link" href="/rsvp/?returning=1" data-hero-returning-link
+              >Already RSVP&rsquo;d?</a
+            >
           </div>
-          <div class="scroll-invite" aria-hidden="true">&#8595;</div>
+          <div class="scroll-invite" aria-hidden="true" data-scroll-cue>&#8595;</div>
           <p class="visually-hidden">Scroll for the schedule and details.</p>
         </section>
 
+        <div data-gated-content>
         <section id="schedule" class="section alt fade-section" data-section>
           <div class="section-content section-inner section-inner--wide section-inner--center">
             <h2>Schedule</h2>
@@ -992,6 +996,7 @@
             </div>
           </div>
           </section>
+        </div>
         </div>
       </main>
 

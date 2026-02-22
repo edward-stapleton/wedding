@@ -91,6 +91,7 @@ const rsvpPasswordField = rsvpPasswordInput?.closest('.form-field');
 const rsvpEmailField = document.getElementById('rsvp-email');
 const inviteTokenField = document.getElementById('invite-token');
 const rsvpTriggers = document.querySelectorAll('[data-rsvp-trigger]');
+const heroReturningLinks = document.querySelectorAll('[data-hero-returning-link]');
 const guestSections = document.querySelectorAll('.guest-response');
 const stepIndicators = document.querySelectorAll('[data-step-indicator]');
 const rsvpProgress = document.querySelector('.rsvp-steps.rsvp-progress');
@@ -1338,15 +1339,9 @@ async function loadAndApplyRsvpForEmail(email) {
 }
 
 function enforceSiteGate() {
-  if (!isRsvpRoute) return true;
-  if (hasSiteGatePassed()) {
-    return true;
-  }
   hydrateInviteContextFromUrl();
-  if (window.location.href !== SITE_BASE_URL) {
-    window.location.assign(SITE_BASE_URL);
-  }
-  return false;
+  updateRsvpNavigationVisibility();
+  return true;
 }
 
 function getActiveRsvpEmail() {
@@ -1361,14 +1356,17 @@ function getActiveRsvpEmail() {
 }
 
 async function updateRsvpTriggerLabels() {
-  if (!rsvpTriggers.length) return;
-  const email = getActiveRsvpEmail();
-  const completed = await fetchRsvpCompletionStatus(email);
+  const isAuthenticated = hasSiteGatePassed();
   rsvpTriggers.forEach(trigger => {
     if (!trigger.dataset.rsvpDefaultLabel) {
       trigger.dataset.rsvpDefaultLabel = trigger.textContent?.trim() || 'RSVP';
     }
-    trigger.textContent = completed ? 'Edit RSVP' : trigger.dataset.rsvpDefaultLabel;
+    trigger.textContent = isAuthenticated ? 'Edit RSVP' : trigger.dataset.rsvpDefaultLabel;
+  });
+
+  heroReturningLinks.forEach(link => {
+    link.hidden = isAuthenticated;
+    link.setAttribute('aria-hidden', String(isAuthenticated));
   });
 }
 
@@ -1396,6 +1394,7 @@ async function setAuthEmail(email) {
   rsvpState.authenticatedEmail = email;
   if (email) {
     localStorage.setItem(EMAIL_STORAGE_KEY, email);
+    setSiteGatePassed();
   }
   if (rsvpState.inviteDetails) {
     const updatedInvite = {
@@ -1407,6 +1406,7 @@ async function setAuthEmail(email) {
     setGuestProfile(createGuestProfile(email));
   }
   await updateRsvpTriggerLabels();
+  updateRsvpNavigationVisibility();
   await refreshRsvpCompletionGate(email);
 }
 
@@ -1581,7 +1581,6 @@ async function initAuth() {
   }
 }
 
-hydrateInviteContextFromUrl();
 const shouldInitRsvp = enforceSiteGate();
 if (shouldInitRsvp && isRsvpRoute) {
   initAuth();
@@ -1610,11 +1609,25 @@ rsvpAccessLink?.addEventListener('click', event => {
 function handleRsvpEntryClick(event) {
   if (!(event.currentTarget instanceof HTMLAnchorElement)) return;
   event.preventDefault();
-  setSiteGatePassed();
   const targetUrl = resolveRsvpEntryUrl();
   if (window.location.href !== targetUrl) {
     window.location.assign(targetUrl);
   }
+}
+
+function handleHeroReturningLinkClick(event) {
+  if (!(event.currentTarget instanceof HTMLAnchorElement)) return;
+  if (hasSiteGatePassed()) return;
+  event.preventDefault();
+
+  if (isRsvpRoute) {
+    void handleReturningRsvpRequest();
+    return;
+  }
+
+  const targetUrl = new URL(resolveRsvpEntryUrl());
+  targetUrl.searchParams.set(RETURNING_QUERY_KEY, '1');
+  window.location.assign(targetUrl.toString());
 }
 
 function setupRsvpEntryTriggers(root = document) {
@@ -1624,6 +1637,16 @@ function setupRsvpEntryTriggers(root = document) {
     if (link.dataset.rsvpEntryBound === 'true') return;
     link.dataset.rsvpEntryBound = 'true';
     link.addEventListener('click', handleRsvpEntryClick);
+  });
+}
+
+function setupHeroReturningLinks(root = document) {
+  const links = root.querySelectorAll('[data-hero-returning-link]');
+  links.forEach(link => {
+    if (!(link instanceof HTMLAnchorElement)) return;
+    if (link.dataset.heroReturningBound === 'true') return;
+    link.dataset.heroReturningBound = 'true';
+    link.addEventListener('click', handleHeroReturningLinkClick);
   });
 }
 
@@ -2222,6 +2245,7 @@ setupFaqAccordion();
 setupScheduleTimeline();
 initMap();
 setupRsvpEntryTriggers();
+setupHeroReturningLinks();
 
 const sharedHeaderPromise = loadSharedHeader();
 sharedHeaderPromise.finally(() => {
@@ -2233,6 +2257,7 @@ let navigationInitialized = false;
 function setupNavigation() {
   refreshNavigationElements();
   setupRsvpEntryTriggers(document);
+  setupHeroReturningLinks(document);
   if (navigationInitialized) return;
   if (navToggle) {
     navToggle.addEventListener('click', () => toggleNavigation());
@@ -2281,12 +2306,13 @@ function updateHeaderOffset() {
 }
 
 function updateRsvpNavigationVisibility() {
-  if (!header) return;
-  const shouldHideNav = isRsvpRoute && !rsvpState.hasCompletedRsvp;
-  document.body.classList.toggle('rsvp-nav-hidden', shouldHideNav);
-  if (shouldHideNav) {
+  const shouldLockSite = !hasSiteGatePassed();
+  document.body.classList.toggle('site-gated', shouldLockSite);
+  document.body.classList.toggle('rsvp-nav-hidden', shouldLockSite);
+  if (shouldLockSite) {
     toggleNavigation(false);
   }
+  void updateRsvpTriggerLabels();
   updateHeaderOffset();
 }
 
@@ -2563,9 +2589,6 @@ async function handleStepAdvance() {
   }
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
-  }
-  if (rsvpState.currentStep === 1) {
-    setSiteGatePassed();
   }
   setStep(getRsvpStepByOffset(rsvpState.currentStep, 1));
 }

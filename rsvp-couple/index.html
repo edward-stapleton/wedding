@@ -21,6 +21,33 @@
       <div data-shared-header></div>
 
       <main>
+        <section id="home" class="section hero-section fade-section" data-section>
+          <video
+            class="hero-image"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            poster="../assets/alternative-hero-image.jpeg"
+            aria-hidden="true"
+          >
+            <source src="../assets/hero-video.mp4" type="video/mp4" />
+          </video>
+          <div class="hero-content">
+            <p class="hero-date">The Wedding of</p>
+            <p class="hero-names">Edward Stapleton &amp; Laura Harford</p>
+            <p class="hero-date">Saturday 22 August 2026</p>
+            <p class="hero-location">Oxford</p>
+            <a class="primary" href="/rsvp/" data-rsvp-trigger data-hero-cta>RSVP</a>
+            <a class="rsvp-access-link hero-access-link" href="/rsvp/?returning=1" data-hero-returning-link
+              >Already RSVP&rsquo;d?</a
+            >
+          </div>
+          <div class="scroll-invite" aria-hidden="true" data-scroll-cue>&#8595;</div>
+          <p class="visually-hidden">Scroll for the schedule and details.</p>
+        </section>
+
         <section id="rsvp-page" class="section rsvp-page fade-section" data-section>
           <div class="section-content">
             <div class="rsvp-panel">
