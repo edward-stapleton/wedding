@@ -2,7 +2,9 @@
   color-scheme: only dark;
   --header-height: 0px;
   --alt-background: rgba(255, 255, 255, 0.12);
-  --content-max-width: 600px;
+  --content-max-narrow: 600px;
+  --content-max-wide: 960px;
+  --content-max-width: var(--content-max-narrow);
   --page-background: #4f752a;
   --text-color: #ffffff;
   --accent-color: #ffffff;
@@ -12,7 +14,10 @@
   --input-border: rgba(255, 255, 255, 0.75);
   --input-background: #4f752a;
   --input-text: #ffffff;
-  --map-container-max-width: 960px;
+  --map-container-max-width: var(--content-max-wide);
+  --page-gutter-mobile: 1rem;
+  --page-gutter-desktop: 1.5rem;
+  --page-gutter: var(--page-gutter-mobile);
 }
 
 html {
@@ -196,9 +201,10 @@ body.nav-open {
 }
 
 .section-content {
-  width: min(100%, var(--content-max-width));
+  width: 100%;
+  max-width: var(--content-max-narrow);
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding-inline: var(--page-gutter);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -206,14 +212,31 @@ body.nav-open {
   gap: 1.5rem;
 }
 
-#schedule .section-content {
-  width: min(100%, var(--map-container-max-width));
-  align-items: center;
+.section-inner {
+  width: 100%;
+  margin: 0 auto;
+  padding-inline: var(--page-gutter);
+}
+
+.section-inner--narrow {
+  max-width: var(--content-max-narrow);
+}
+
+.section-inner--wide {
+  max-width: var(--content-max-wide);
+}
+
+.section-inner--full {
+  max-width: none;
+  padding-inline: 0;
+}
+
+.section-inner--center {
   text-align: center;
 }
 
-#guide .section-content {
-  width: min(100%, var(--map-container-max-width));
+.section-content.section-inner--center {
+  align-items: center;
 }
 
 .section-content h2 {
@@ -359,6 +382,10 @@ body.nav-open {
 }
 
 @media (min-width: 768px) {
+  :root {
+    --page-gutter: var(--page-gutter-desktop);
+  }
+
   .hero-image {
     object-position: center;
   }
@@ -435,8 +462,8 @@ body.nav-open {
     --schedule-point-count: 6;
     display: flex;
     flex-direction: column;
-    width: 100vw;
-    margin-left: calc(50% - 50vw - 1.5rem);
+    width: 100%;
+    margin-left: 0;
     gap: 2rem;
     padding: 0.5rem 0 0;
   }
@@ -642,10 +669,6 @@ body.nav-open {
 
 .map-section {
   padding-top: 2.5rem;
-}
-
-#map-section .section-content {
-  width: min(100%, var(--map-container-max-width));
 }
 
 .map-section .section-content {
@@ -1875,12 +1898,12 @@ html.no-js .schedule-desktop .schedule-track-line::after {
     text-align: left;
   }
 
-  .hero-content {
+  .section-content.section-inner--center {
     align-items: center;
     text-align: center;
   }
 
-  #schedule .section-content {
+  .hero-content {
     align-items: center;
     text-align: center;
   }
