@@ -1636,6 +1636,14 @@ async function handleHeroAccessSubmit() {
   setRsvpAccessFeedback('');
   updateRsvpNavigationVisibility();
   updateHeroAccessUiState();
+
+  if (isRsvpRoute) {
+    const homeUrl = new URL(SITE_BASE_PATH, window.location.origin);
+    homeUrl.hash = 'home';
+    window.location.assign(homeUrl.toString());
+    return true;
+  }
+
   return true;
 }
 

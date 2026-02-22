@@ -197,13 +197,13 @@ function renderGuestTextLines(label: string, guest: GuestSummary) {
 
 function renderGuestHtml(label: string, guest: GuestSummary) {
   const dietaryLine = guest.dietary
-    ? `<li><strong>Dietary requirements:</strong> ${escapeHtml(guest.dietary)}</li>`
+    ? `<li style="color:#f7fbe9;margin:0 0 6px;"><strong style="color:#ffffff;">Dietary requirements:</strong> ${escapeHtml(guest.dietary)}</li>`
     : "";
   return [
-    `<h3 style="margin:16px 0 8px;font-size:16px;">${escapeHtml(label)}: ${escapeHtml(guest.name)}</h3>`,
-    "<ul style=\"margin:0 0 12px 18px;padding:0;\">",
-    `<li><strong>Wedding attendance:</strong> ${escapeHtml(guest.attendance)}</li>`,
-    `<li><strong>Cricket attendance:</strong> ${escapeHtml(guest.cricketAttendance)}</li>`,
+    `<h3 style="margin:16px 0 8px;font-size:16px;line-height:1.4;color:#ffffff;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;">${escapeHtml(label)}: ${escapeHtml(guest.name)}</h3>`,
+    "<ul style=\"margin:0 0 12px 18px;padding:0;color:#f7fbe9;\">",
+    `<li style="color:#f7fbe9;margin:0 0 6px;"><strong style="color:#ffffff;">Wedding attendance:</strong> ${escapeHtml(guest.attendance)}</li>`,
+    `<li style="color:#f7fbe9;margin:0 0 6px;"><strong style="color:#ffffff;">Cricket attendance:</strong> ${escapeHtml(guest.cricketAttendance)}</li>`,
     dietaryLine,
     "</ul>",
   ].join("");
@@ -241,22 +241,22 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
 
   const addressHtml = model.address.length
     ? [
-        "<p style=\"margin:16px 0 8px;\"><strong>Address:</strong></p>",
-        "<ul style=\"margin:0 0 12px 18px;padding:0;\">",
-        ...model.address.map(line => `<li>${escapeHtml(line)}</li>`),
+        "<p style=\"margin:16px 0 8px;color:#ffffff;line-height:1.5;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;\"><strong style=\"color:#ffffff;\">Address:</strong></p>",
+        "<ul style=\"margin:0 0 12px 18px;padding:0;color:#f7fbe9;\">",
+        ...model.address.map(line => `<li style="color:#f7fbe9;margin:0 0 6px;">${escapeHtml(line)}</li>`),
         "</ul>",
       ].join("")
     : "";
 
   const html = [
-    "<div style=\"font-family:Arial, sans-serif; max-width:640px; color:#1f2937; line-height:1.5;\">",
-    `<p>Hi ${escapeHtml(greetingName)},</p>`,
-    `<p>${escapeHtml(intro)}</p>`,
+    "<div style=\"background-color:#4F752A;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;max-width:640px;color:#FFFFFF;line-height:1.5;padding:24px;border-radius:8px;\">",
+    `<p style="margin:0 0 12px;color:#ffffff;line-height:1.5;">Hi ${escapeHtml(greetingName)},</p>`,
+    `<p style="margin:0 0 12px;color:#f7fbe9;line-height:1.5;">${escapeHtml(intro)}</p>`,
     renderGuestHtml("Guest 1", model.primaryGuest),
     model.plusOneGuest ? renderGuestHtml("Guest 2", model.plusOneGuest) : "",
     addressHtml,
-    `<p><strong>Saved at (UTC):</strong> ${escapeHtml(model.submittedAtIso)}</p>`,
-    "<p>With love,<br/>Edward &amp; Laura</p>",
+    `<p style="margin:16px 0 12px;color:#f7fbe9;line-height:1.5;"><strong style="color:#ffffff;">Saved at (UTC):</strong> ${escapeHtml(model.submittedAtIso)}</p>`,
+    "<p style=\"margin:0;color:#ffffff;line-height:1.5;\">With love,<br/>Edward &amp; Laura</p>",
     "</div>",
   ].join("");
 
