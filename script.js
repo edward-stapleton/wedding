@@ -1514,6 +1514,15 @@ async function closeModal({ restoreFocus = true, scrollHome = true } = {}) {
   }
 }
 
+function redirectToHomeAnchor() {
+  if (isRsvpRoute && rsvpSection) {
+    setRsvpSectionVisibility(false);
+  }
+  const homeUrl = new URL(SITE_BASE_PATH, window.location.origin);
+  homeUrl.hash = 'home';
+  window.location.assign(homeUrl.toString());
+}
+
 async function openModal({ trigger = null, preferDetailsStep = false } = {}) {
   if (!isRsvpRoute || !rsvpSection) return;
   if (trigger instanceof HTMLElement) {
@@ -1609,8 +1618,7 @@ async function handleHeroAccessSubmit() {
     setRsvpAccessFeedback('');
     updateRsvpNavigationVisibility();
     if (isRsvpRoute) {
-      const trigger = heroAccessSubmitButton instanceof HTMLElement ? heroAccessSubmitButton : null;
-      await openModal({ trigger, preferDetailsStep: true });
+      redirectToHomeAnchor();
     }
     return true;
   }
@@ -1669,9 +1677,7 @@ async function handleHeroAccessSubmit() {
   updateHeroAccessUiState();
 
   if (isRsvpRoute) {
-    const homeUrl = new URL(SITE_BASE_PATH, window.location.origin);
-    homeUrl.hash = 'home';
-    window.location.assign(homeUrl.toString());
+    redirectToHomeAnchor();
     return true;
   }
 
