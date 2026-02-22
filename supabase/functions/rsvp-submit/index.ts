@@ -245,7 +245,7 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
     ...(model.plusOneGuest ? ["", ...renderGuestTextLines(model.plusOneGuest)] : []),
   ];
   const addressTextLines = model.address.length
-    ? ["", "Address:", ...model.address.map(line => `- ${line}`)]
+    ? ["", "Address:", ...model.address]
     : [];
 
   const text = [
@@ -258,6 +258,8 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
     "",
     `Saved at (UTC): ${submittedAtDisplay}`,
     "",
+    "If you want to check the details of the wedding at any point, feel free to return to the website and log in using your email and the website password!",
+    "",
     "With love,",
     "Ed & Laura",
   ].join("\n");
@@ -265,9 +267,7 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
   const addressHtml = model.address.length
     ? [
         "<p style=\"margin:16px 0 8px;color:#ffffff;line-height:1.5;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;\"><strong style=\"color:#ffffff;\">Address:</strong></p>",
-        "<ul style=\"margin:0 0 12px 18px;padding:0;color:#f7fbe9;\">",
-        ...model.address.map(line => `<li style="color:#f7fbe9;margin:0 0 6px;">${escapeHtml(line)}</li>`),
-        "</ul>",
+        `<p style="margin:0 0 12px;color:#f7fbe9;line-height:1.5;">${model.address.map(line => escapeHtml(line)).join("<br/>")}</p>`,
       ].join("")
     : "";
 
@@ -281,6 +281,7 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
     model.plusOneGuest ? renderGuestHtml(model.plusOneGuest) : "",
     addressHtml,
     `<p style="margin:16px 0 12px;color:#f7fbe9;line-height:1.5;"><strong style="color:#ffffff;">Saved at (UTC):</strong> ${escapeHtml(submittedAtDisplay)}</p>`,
+    "<p style=\"margin:0 0 12px;color:#f7fbe9;line-height:1.5;\">If you want to check the details of the wedding at any point, feel free to return to <a href=\"https://edlaura.com/\" style=\"color:#ffffff;text-decoration:underline;\">the website</a> and log in using your email and the website password!</p>",
     "<p style=\"margin:0;color:#ffffff;line-height:1.5;\">With love,<br/>Ed &amp; Laura</p>",
     "</td>",
     "</tr>",

@@ -33,6 +33,8 @@ Thank you for your RSVP — we can’t wait to celebrate with you!
 If you need to change any details, you can use the magic link anytime:
 {{magic_link}}
 
+If you want to check the details of the wedding at any point, feel free to return to [the website](https://edlaura.com/) and log in using your email and the website password!
+
 With love,
 Edward & Laura
 
@@ -48,6 +50,8 @@ Thank you for letting us know. We’re sure we’ll see you soon.
 
 If you need to update anything, you can use this link:
 {{magic_link}}
+
+If you want to check the details of the wedding at any point, feel free to return to [the website](https://edlaura.com/) and log in using your email and the website password!
 
 With love,
 Edward & Laura
