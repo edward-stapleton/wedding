@@ -87,6 +87,7 @@ const plusOneDietaryInput = document.getElementById('plusone-dietary');
 const plusOneFirstNameInput = document.getElementById('plusone-first-name');
 const plusOneLastNameInput = document.getElementById('plusone-last-name');
 const rsvpPasswordInput = document.getElementById('rsvp-password');
+const heroPasswordField = rsvpPasswordInput?.closest('.form-field') || heroAccessForm?.querySelector('.password-field');
 const rsvpEmailField = document.getElementById('rsvp-email');
 const inviteTokenField = document.getElementById('invite-token');
 const rsvpTriggers = document.querySelectorAll('[data-rsvp-trigger]');
@@ -971,22 +972,12 @@ function setEntryMode(mode) {
   rsvpState.isReturningRsvp = isReturning;
   rsvpState.hasRequestedReturning = isReturning;
 
-  if (returningEmailField) {
-    returningEmailField.hidden = !isReturning;
-  }
-
   if (rsvpAccessEmailInput) {
-    rsvpAccessEmailInput.required = isReturning;
     if (!isReturning) {
       rsvpAccessEmailInput.value = '';
       rsvpAccessEmailInput.removeAttribute('required');
       rsvpAccessEmailInput.removeAttribute('aria-invalid');
     }
-  }
-
-  if (rsvpPasswordInput) {
-    rsvpPasswordInput.setAttribute('required', 'true');
-    rsvpPasswordInput.removeAttribute('aria-invalid');
   }
 
   if (heroReturningLinks.length > 0) {
@@ -997,7 +988,7 @@ function setEntryMode(mode) {
 
   setRsvpAccessFeedback('');
 
-  updatePasswordGate();
+  updateHeroAccessUiState();
 }
 
 function resetReturningRsvpRequest() {
@@ -1378,6 +1369,48 @@ async function updateRsvpTriggerLabels() {
   });
 }
 
+function updateHeroAccessUiState() {
+  if (!heroAccessForm || !heroAccessSubmitButton) return;
+
+  const isAuthenticated = hasSiteGatePassed();
+  const shouldShowReturningEmail = !isAuthenticated && rsvpState.isReturningRsvp;
+
+  heroAccessSubmitButton.textContent = isAuthenticated ? 'Edit RSVP' : 'Enter';
+
+  if (heroPasswordField) {
+    heroPasswordField.hidden = isAuthenticated;
+    heroPasswordField.setAttribute('aria-hidden', String(isAuthenticated));
+  }
+
+  if (rsvpPasswordInput) {
+    rsvpPasswordInput.disabled = isAuthenticated;
+    rsvpPasswordInput.required = !isAuthenticated;
+    if (isAuthenticated) {
+      rsvpPasswordInput.removeAttribute('aria-invalid');
+    }
+  }
+
+  if (returningEmailField) {
+    returningEmailField.hidden = !shouldShowReturningEmail;
+    returningEmailField.setAttribute('aria-hidden', String(!shouldShowReturningEmail));
+  }
+
+  if (rsvpAccessEmailInput) {
+    rsvpAccessEmailInput.disabled = !shouldShowReturningEmail;
+    rsvpAccessEmailInput.required = shouldShowReturningEmail;
+    if (!shouldShowReturningEmail) {
+      rsvpAccessEmailInput.removeAttribute('aria-invalid');
+    }
+  }
+
+  heroReturningLinks.forEach(link => {
+    link.hidden = isAuthenticated;
+    link.setAttribute('aria-hidden', String(isAuthenticated));
+  });
+
+  updatePasswordGate();
+}
+
 function setRsvpSectionVisibility(shouldShow) {
   if (!rsvpSection) return;
   rsvpSection.hidden = !shouldShow;
@@ -1544,6 +1577,10 @@ async function handleHeroAccessSubmit() {
     }
     setRsvpAccessFeedback('');
     updateRsvpNavigationVisibility();
+    if (isRsvpRoute) {
+      const trigger = heroAccessSubmitButton instanceof HTMLElement ? heroAccessSubmitButton : null;
+      await openModal({ trigger, preferDetailsStep: true });
+    }
     return true;
   }
 
@@ -1598,6 +1635,7 @@ async function handleHeroAccessSubmit() {
 
   setRsvpAccessFeedback('');
   updateRsvpNavigationVisibility();
+  updateHeroAccessUiState();
   return true;
 }
 
@@ -1633,6 +1671,7 @@ async function initAuth() {
     if (rsvpState.hasRequestedReturning) {
       await applyRsvpCompletionDismissal();
     }
+    updateHeroAccessUiState();
     return;
   }
 
@@ -1671,6 +1710,7 @@ async function initAuth() {
   if (rsvpState.hasRequestedReturning) {
     await applyRsvpCompletionDismissal();
   }
+  updateHeroAccessUiState();
 }
 
 const shouldInitRsvp = enforceSiteGate();
@@ -2394,6 +2434,7 @@ function updateRsvpNavigationVisibility() {
     toggleNavigation(false);
   }
   void updateRsvpTriggerLabels();
+  updateHeroAccessUiState();
   updateHeaderOffset();
 }
 
