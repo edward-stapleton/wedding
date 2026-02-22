@@ -442,7 +442,8 @@ body.nav-open {
   }
 
   .schedule-track {
-    --schedule-track-padding: clamp(1.5rem, 4vw, 4rem);
+    --schedule-track-padding: 0;
+    --schedule-dot-size: 0.95rem;
     width: 100%;
     padding: 3.75rem var(--schedule-track-padding) 0;
     position: relative;
@@ -452,7 +453,7 @@ body.nav-open {
     position: absolute;
     left: var(--schedule-track-padding);
     right: var(--schedule-track-padding);
-    top: 5.65rem;
+    top: calc(3.75rem + (var(--schedule-dot-size) / 2));
     height: 2px;
   }
 
@@ -525,8 +526,8 @@ body.nav-open {
 
   .schedule-point-button::before {
     content: '';
-    width: 0.95rem;
-    height: 0.95rem;
+    width: var(--schedule-dot-size);
+    height: var(--schedule-dot-size);
     border-radius: 50%;
     background: var(--page-background);
     border: 2px solid rgba(255, 255, 255, 0.82);
@@ -592,12 +593,12 @@ body.nav-open {
   }
 
   .schedule-details-panel {
-    width: min(100%, 48rem);
+    width: min(100vw, 48rem);
     margin: 0 auto;
     text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.32);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.08);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     opacity: 0;
     transform: translateY(-0.5rem);
     max-height: 0;
