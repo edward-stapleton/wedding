@@ -69,6 +69,8 @@ const stepOneSection = document.querySelector('[data-rsvp-step="1"]');
 const stepOneTitle = stepOneSection?.querySelector('.rsvp-step-title');
 const stepOneIntro = stepOneSection?.querySelector('.rsvp-step-intro');
 const rsvpSection = document.getElementById('rsvp-page');
+const rsvpModalContent = rsvpSection?.querySelector('.modal-content');
+const rsvpModalCloseTargets = rsvpSection?.querySelectorAll('[data-rsvp-modal-close]') ?? [];
 const rsvpForm = document.getElementById('rsvp-form');
 const rsvpFeedback = document.getElementById('rsvp-feedback');
 const primaryNameEl = document.querySelector('[data-guest-name="primary"]');
@@ -90,10 +92,8 @@ const rsvpPasswordInput = document.getElementById('rsvp-password');
 const rsvpPasswordField = rsvpPasswordInput?.closest('.form-field');
 const rsvpEmailField = document.getElementById('rsvp-email');
 const inviteTokenField = document.getElementById('invite-token');
-const rsvpPanel = document.querySelector('[data-rsvp-panel]');
-const rsvpPanelHeroSlot = document.querySelector('[data-rsvp-panel-hero-slot]');
-const rsvpPanelPageSlot = document.querySelector('[data-rsvp-panel-page-slot]');
 const rsvpTriggers = document.querySelectorAll('[data-rsvp-trigger]');
+const rsvpHeroTrigger = document.querySelector('[data-hero-cta]');
 const heroReturningLinks = document.querySelectorAll('[data-hero-returning-link]');
 const guestSections = document.querySelectorAll('.guest-response');
 const stepIndicators = document.querySelectorAll('[data-step-indicator]');
@@ -164,8 +164,10 @@ const rsvpState = {
   hasRequestedReturning: false,
   hasCompletedRsvp: false,
   forceReturning: false,
+  hasInitializedRsvp: false,
 };
 const rsvpCompletionCache = new Map();
+let lastRsvpTrigger = null;
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -1018,19 +1020,10 @@ function resetReturningRsvpRequest() {
   setEntryMode('initial');
 }
 
-function syncRsvpPanelPlacement(step = rsvpState.currentStep) {
-  if (!rsvpPanel || !rsvpPanelHeroSlot || !rsvpPanelPageSlot) return;
-  const shouldMountInHero = step === 1;
-  const targetSlot = shouldMountInHero ? rsvpPanelHeroSlot : rsvpPanelPageSlot;
-  if (rsvpPanel.parentElement !== targetSlot) {
-    targetSlot.appendChild(rsvpPanel);
-  }
-  if (rsvpSection) {
-    setRsvpSectionVisibility(!shouldMountInHero);
-  }
+function syncRsvpPanelPlacement() {
   if (scrollCue) {
-    scrollCue.hidden = shouldMountInHero;
-    scrollCue.setAttribute('aria-hidden', String(shouldMountInHero));
+    scrollCue.hidden = false;
+    scrollCue.setAttribute('aria-hidden', 'false');
   }
 }
 
@@ -1408,6 +1401,82 @@ function setRsvpSectionVisibility(shouldShow) {
   if (!rsvpSection) return;
   rsvpSection.hidden = !shouldShow;
   rsvpSection.setAttribute('aria-hidden', String(!shouldShow));
+  rsvpSection.classList.toggle('open', shouldShow);
+  document.body.classList.toggle('rsvp-modal-open', shouldShow);
+}
+
+function getModalFocusableElements() {
+  if (!rsvpSection) return [];
+  const selector =
+    'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  return Array.from(rsvpSection.querySelectorAll(selector)).filter(
+    element => element instanceof HTMLElement && !element.hasAttribute('hidden')
+  );
+}
+
+function focusInitialRsvpField() {
+  if (!rsvpSection || rsvpSection.hidden) return;
+  const activeStep = Array.from(stepSections).find(section => !section.hidden) || stepSections[0];
+  const target =
+    activeStep?.querySelector('[data-initial-focus]') ||
+    activeStep?.querySelector(
+      'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled])'
+    ) ||
+    rsvpModalContent;
+  if (target instanceof HTMLElement) {
+    target.focus({ preventScroll: true });
+  }
+}
+
+function maintainModalFocus(event) {
+  if (!rsvpSection || rsvpSection.hidden || event.key !== 'Tab') return;
+  const focusableElements = getModalFocusableElements();
+  if (!focusableElements.length) return;
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+  const activeElement = document.activeElement;
+
+  if (event.shiftKey && activeElement === firstElement) {
+    event.preventDefault();
+    lastElement.focus();
+    return;
+  }
+  if (!event.shiftKey && activeElement === lastElement) {
+    event.preventDefault();
+    firstElement.focus();
+  }
+}
+
+function handleModalEscape(event) {
+  if (event.key !== 'Escape' || !rsvpSection || rsvpSection.hidden) return;
+  event.preventDefault();
+  void closeModal();
+}
+
+async function closeModal({ restoreFocus = true, scrollHome = true } = {}) {
+  if (!rsvpSection) return;
+  setRsvpSectionVisibility(false);
+  if (scrollHome) {
+    const homeSection = document.querySelector('#home');
+    homeSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if (!restoreFocus) return;
+  const restoreTarget =
+    (lastRsvpTrigger instanceof HTMLElement && document.contains(lastRsvpTrigger) && lastRsvpTrigger) ||
+    (rsvpHeroTrigger instanceof HTMLElement && document.contains(rsvpHeroTrigger) && rsvpHeroTrigger);
+  if (restoreTarget instanceof HTMLElement) {
+    restoreTarget.focus({ preventScroll: true });
+  }
+}
+
+async function openModal({ trigger = null } = {}) {
+  if (!isRsvpRoute || !rsvpSection) return;
+  if (trigger instanceof HTMLElement) {
+    lastRsvpTrigger = trigger;
+  }
+  await openRsvpSection();
+  setRsvpSectionVisibility(true);
+  focusInitialRsvpField();
 }
 
 async function applyRsvpCompletionDismissal() {
@@ -1538,9 +1607,6 @@ async function handleRsvpAccessSubmit() {
   // Move straight to the editable details step for returning guests.
   setEntryMode('returning');
   setStep(2);
-  if (rsvpSection) {
-    rsvpSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
 
   setRsvpAccessFeedback('');
   return true;
@@ -1559,7 +1625,6 @@ async function initAuth() {
   const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
   rsvpState.storedEmail = storedAccessEmail || storedEmail;
   const allowDirectInvite = Boolean(rsvpState.inviteTypeOverride);
-  const shouldAutoOpenInvite = Boolean(rsvpState.inviteTypeFromUrl);
 
   if (rsvpAccessEmailInput && rsvpState.storedEmail) {
     rsvpAccessEmailInput.value = rsvpState.storedEmail;
@@ -1597,9 +1662,6 @@ async function initAuth() {
     populateRsvpFromGuests(guestRows, storedAccessEmail);
   } else if (allowDirectInvite) {
     applyInviteDetailsToProfile(rsvpState.inviteDetails, rsvpState.storedEmail);
-    if (shouldAutoOpenInvite) {
-      openModal();
-    }
   } else {
     applyInviteDetailsToProfile(rsvpState.inviteDetails, rsvpState.storedEmail);
     if (
@@ -1640,6 +1702,10 @@ rsvpAccessLink?.addEventListener('click', event => {
 function handleRsvpEntryClick(event) {
   if (!(event.currentTarget instanceof HTMLAnchorElement)) return;
   event.preventDefault();
+  if (isRsvpRoute) {
+    void openModal({ trigger: event.currentTarget });
+    return;
+  }
   const targetUrl = resolveRsvpEntryUrl();
   if (window.location.href !== targetUrl) {
     window.location.assign(targetUrl);
@@ -1653,6 +1719,7 @@ function handleHeroReturningLinkClick(event) {
 
   if (isRsvpRoute) {
     void handleReturningRsvpRequest();
+    void openModal({ trigger: event.currentTarget });
     return;
   }
 
@@ -2354,11 +2421,7 @@ updateHeaderOffset();
 setupGuestSectionToggles();
 
 function dismissRsvpSection() {
-  setRsvpSectionVisibility(false);
-  const target = document.querySelector('#schedule') || document.querySelector('#home');
-  if (target) {
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  void closeModal();
 }
 
 function handleRsvpEnter() {
@@ -2419,8 +2482,6 @@ async function getInitialRsvpStep() {
 
 async function openRsvpSection() {
   if (!rsvpSection) return;
-  setRsvpSectionVisibility(true);
-  rsvpSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
@@ -2439,8 +2500,7 @@ async function openRsvpSection() {
 }
 
 async function initializeRsvpOnLoad() {
-  if (!rsvpSection) return;
-  setRsvpSectionVisibility(true);
+  if (!rsvpSection || rsvpState.hasInitializedRsvp) return;
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
@@ -2456,6 +2516,7 @@ async function initializeRsvpOnLoad() {
   const initialStep = await getInitialRsvpStep();
   setStep(initialStep);
   resetGuestSectionState();
+  rsvpState.hasInitializedRsvp = true;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2467,8 +2528,15 @@ document.addEventListener('DOMContentLoaded', () => {
       void submitRsvp(event);
     });
   }
-  if (!isRsvpRoute && !rsvpSection) return;
-  setRsvpSectionVisibility(true);
+  if (!isRsvpRoute || !rsvpSection) return;
+  setRsvpSectionVisibility(false);
+  rsvpSection?.addEventListener('keydown', maintainModalFocus);
+  rsvpModalCloseTargets.forEach(target => {
+    target.addEventListener('click', () => {
+      dismissRsvpSection();
+    });
+  });
+  document.addEventListener('keydown', handleModalEscape);
   resetReturningRsvpRequest();
   setStep(1);
   void initializeRsvpOnLoad();

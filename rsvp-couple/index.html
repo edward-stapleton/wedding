@@ -39,8 +39,8 @@
             <p class="hero-names">Edward Stapleton &amp; Laura Harford</p>
             <p class="hero-date">Saturday 22 August 2026</p>
             <p class="hero-location">Oxford</p>
-            <a class="primary" href="/rsvp/" data-rsvp-trigger data-hero-cta>RSVP</a>
-            <a class="rsvp-access-link hero-access-link" href="/rsvp/?returning=1" data-hero-returning-link
+            <a class="primary" href="/rsvp-couple/" data-rsvp-trigger data-hero-cta>RSVP</a>
+            <a class="rsvp-access-link hero-access-link" href="/rsvp-couple/?returning=1" data-hero-returning-link
               >Already RSVP&rsquo;d?</a
             >
           </div>
@@ -48,11 +48,15 @@
           <p class="visually-hidden">Scroll for the schedule and details.</p>
         </section>
 
-        <section id="rsvp-page" class="section rsvp-page fade-section" data-section>
-          <div class="section-content">
-            <div class="rsvp-panel">
-              <div class="rsvp-body">
-                <form id="rsvp-form" novalidate>
+        <section id="rsvp-page" class="modal rsvp-page" data-rsvp-modal hidden aria-hidden="true">
+          <div class="modal-backdrop" data-rsvp-modal-close></div>
+          <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="rsvp-modal-title">
+            <button type="button" class="modal-close" data-rsvp-modal-close aria-label="Close RSVP form">&times;</button>
+            <div class="modal-body">
+              <h2 id="rsvp-modal-title" class="visually-hidden">RSVP form</h2>
+              <div class="rsvp-panel">
+                <div class="rsvp-body">
+                  <form id="rsvp-form" novalidate>
                   <ol class="rsvp-steps rsvp-progress" aria-label="RSVP progress">
                     <li class="rsvp-step-indicator" data-step-indicator="1">
                       <span class="rsvp-step-label">Guest 1</span>
@@ -338,10 +342,11 @@
                     <button type="button" class="primary" data-step-enter hidden>Enter</button>
                   </div>
                   <div class="rsvp-access-footer">
-                    <button type="button" class="rsvp-access-link">Already RSVP&rsquo;d?</button>
+                    <button type="button" class="rsvp-access-link" data-rsvp-access-link>Already RSVP&rsquo;d?</button>
                   </div>
                   <p id="rsvp-feedback" role="status" aria-live="polite"></p>
-                </form>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
