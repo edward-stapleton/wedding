@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const BUILD_ID = "rsvp-submit-2026-02-21a";
+const BUILD_ID = "rsvp-submit-2026-02-22a";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,6 +47,39 @@ type SubmitPayload = {
   };
 };
 
+type SubmissionType = "created" | "updated";
+type EmailDeliveryStatus = "sent" | "failed" | "skipped";
+
+type GuestRecord = {
+  role?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  attendance?: string | null;
+  cricket_attendance?: string | null;
+  dietary?: string | null;
+  address_line_1?: string | null;
+  address_line_2?: string | null;
+  city?: string | null;
+  postcode?: string | null;
+  country?: string | null;
+};
+
+type GuestSummary = {
+  name: string;
+  attendance: string;
+  cricketAttendance: string;
+  dietary: string | null;
+};
+
+type RsvpEmailModel = {
+  recipientEmail: string;
+  submissionType: SubmissionType;
+  submittedAtIso: string;
+  primaryGuest: GuestSummary;
+  plusOneGuest: GuestSummary | null;
+  address: string[];
+};
+
 function normaliseEmail(email: string) {
   return email.trim().toLowerCase();
 }
@@ -68,6 +101,342 @@ async function validateAccess(sitePassword?: string) {
   }
 
   return { ok: false as const, reason: "bad_password" };
+}
+
+function cleanText(value: unknown) {
+  return value?.toString().trim() ?? "";
+}
+
+function formatYesNo(value: unknown) {
+  const normalized = normaliseYesNo(value);
+  if (normalized === "yes") return "Yes";
+  if (normalized === "no") return "No";
+  return "Not provided";
+}
+
+function formatGuestName(firstName: unknown, lastName: unknown) {
+  const first = cleanText(firstName);
+  const last = cleanText(lastName);
+  const combined = `${first} ${last}`.trim();
+  return combined || "Guest";
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function toGuestSummary(guest: GuestRecord | undefined, fallbackName = "Guest"): GuestSummary {
+  if (!guest) {
+    return {
+      name: fallbackName,
+      attendance: "Not provided",
+      cricketAttendance: "Not provided",
+      dietary: null,
+    };
+  }
+
+  const name = formatGuestName(guest.first_name, guest.last_name) || fallbackName;
+  const dietary = cleanText(guest.dietary);
+
+  return {
+    name,
+    attendance: formatYesNo(guest.attendance),
+    cricketAttendance: formatYesNo(guest.cricket_attendance),
+    dietary: dietary || null,
+  };
+}
+
+function buildAddressLines(primaryGuest: GuestRecord | undefined) {
+  if (!primaryGuest) return [];
+
+  const line1 = cleanText(primaryGuest.address_line_1);
+  const line2 = cleanText(primaryGuest.address_line_2);
+  const city = cleanText(primaryGuest.city);
+  const postcode = cleanText(primaryGuest.postcode);
+  const country = cleanText(primaryGuest.country);
+
+  const locality = [city, postcode].filter(Boolean).join(", ");
+  return [line1, line2, locality, country].filter(Boolean);
+}
+
+function buildRsvpEmailModel(params: {
+  recipientEmail: string;
+  submissionType: SubmissionType;
+  submittedAtIso: string;
+  guests: GuestRecord[];
+}): RsvpEmailModel {
+  const primaryRow = params.guests.find(row => row.role === "primary") ?? params.guests[0];
+  const plusOneRow = params.guests.find(row => row.role === "plusone");
+
+  return {
+    recipientEmail: params.recipientEmail,
+    submissionType: params.submissionType,
+    submittedAtIso: params.submittedAtIso,
+    primaryGuest: toGuestSummary(primaryRow),
+    plusOneGuest: plusOneRow ? toGuestSummary(plusOneRow, "Plus one") : null,
+    address: buildAddressLines(primaryRow),
+  };
+}
+
+function renderGuestTextLines(label: string, guest: GuestSummary) {
+  const lines = [
+    `${label}: ${guest.name}`,
+    `- Wedding attendance: ${guest.attendance}`,
+    `- Cricket attendance: ${guest.cricketAttendance}`,
+  ];
+  if (guest.dietary) {
+    lines.push(`- Dietary requirements: ${guest.dietary}`);
+  }
+  return lines;
+}
+
+function renderGuestHtml(label: string, guest: GuestSummary) {
+  const dietaryLine = guest.dietary
+    ? `<li><strong>Dietary requirements:</strong> ${escapeHtml(guest.dietary)}</li>`
+    : "";
+  return [
+    `<h3 style="margin:16px 0 8px;font-size:16px;">${escapeHtml(label)}: ${escapeHtml(guest.name)}</h3>`,
+    "<ul style=\"margin:0 0 12px 18px;padding:0;\">",
+    `<li><strong>Wedding attendance:</strong> ${escapeHtml(guest.attendance)}</li>`,
+    `<li><strong>Cricket attendance:</strong> ${escapeHtml(guest.cricketAttendance)}</li>`,
+    dietaryLine,
+    "</ul>",
+  ].join("");
+}
+
+function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
+  const isCreated = model.submissionType === "created";
+  const subject = isCreated ? "We've received your RSVP" : "Your RSVP changes have been saved";
+  const greetingName = model.primaryGuest.name || "there";
+  const intro = isCreated
+    ? "Thanks for your RSVP. We've recorded your details below."
+    : "Thanks for updating your RSVP. We've saved your latest details below.";
+
+  const guestTextLines = [
+    ...renderGuestTextLines("Guest 1", model.primaryGuest),
+    ...(model.plusOneGuest ? ["", ...renderGuestTextLines("Guest 2", model.plusOneGuest)] : []),
+  ];
+  const addressTextLines = model.address.length
+    ? ["", "Address:", ...model.address.map(line => `- ${line}`)]
+    : [];
+
+  const text = [
+    `Hi ${greetingName},`,
+    "",
+    intro,
+    "",
+    ...guestTextLines,
+    ...addressTextLines,
+    "",
+    `Saved at (UTC): ${model.submittedAtIso}`,
+    "",
+    "With love,",
+    "Edward & Laura",
+  ].join("\n");
+
+  const addressHtml = model.address.length
+    ? [
+        "<p style=\"margin:16px 0 8px;\"><strong>Address:</strong></p>",
+        "<ul style=\"margin:0 0 12px 18px;padding:0;\">",
+        ...model.address.map(line => `<li>${escapeHtml(line)}</li>`),
+        "</ul>",
+      ].join("")
+    : "";
+
+  const html = [
+    "<div style=\"font-family:Arial, sans-serif; max-width:640px; color:#1f2937; line-height:1.5;\">",
+    `<p>Hi ${escapeHtml(greetingName)},</p>`,
+    `<p>${escapeHtml(intro)}</p>`,
+    renderGuestHtml("Guest 1", model.primaryGuest),
+    model.plusOneGuest ? renderGuestHtml("Guest 2", model.plusOneGuest) : "",
+    addressHtml,
+    `<p><strong>Saved at (UTC):</strong> ${escapeHtml(model.submittedAtIso)}</p>`,
+    "<p>With love,<br/>Edward &amp; Laura</p>",
+    "</div>",
+  ].join("");
+
+  return { subject, html, text };
+}
+
+function extractResendErrorDetail(payload: unknown) {
+  if (!payload || typeof payload !== "object") {
+    return "Unknown Resend error";
+  }
+
+  const obj = payload as Record<string, unknown>;
+  if (typeof obj.message === "string" && obj.message.trim()) {
+    return obj.message;
+  }
+  if (typeof obj.error === "string" && obj.error.trim()) {
+    return obj.error;
+  }
+  if (Array.isArray(obj.errors) && obj.errors.length > 0) {
+    const first = obj.errors[0];
+    if (typeof first === "string") return first;
+    if (first && typeof first === "object") {
+      const firstObj = first as Record<string, unknown>;
+      if (typeof firstObj.message === "string") return firstObj.message;
+    }
+  }
+
+  return "Unknown Resend error";
+}
+
+async function sendRsvpConfirmationEmail(params: {
+  to: string;
+  from: string;
+  replyTo: string | string[];
+  subject: string;
+  html: string;
+  text: string;
+  apiKey: string;
+}) {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${params.apiKey}`,
+    },
+    body: JSON.stringify({
+      from: params.from,
+      to: [params.to],
+      reply_to: params.replyTo,
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+    }),
+  });
+
+  let payload: unknown = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    return {
+      ok: false as const,
+      resendStatusCode: response.status,
+      errorDetail: extractResendErrorDetail(payload),
+    };
+  }
+
+  const emailId =
+    payload && typeof payload === "object" && typeof (payload as Record<string, unknown>).id === "string"
+      ? ((payload as Record<string, unknown>).id as string)
+      : null;
+
+  return {
+    ok: true as const,
+    resendStatusCode: response.status,
+    emailId,
+  };
+}
+
+function parseReplyToAddresses(rawReplyTo: string, fallbackFromAddress: string) {
+  const entries = rawReplyTo
+    .split(",")
+    .map(value => value.trim())
+    .filter(Boolean);
+
+  if (entries.length === 0) {
+    return [fallbackFromAddress];
+  }
+
+  return entries;
+}
+
+async function maybeSendRsvpConfirmationEmail(params: {
+  to: string;
+  submissionType: SubmissionType;
+  guests: GuestRecord[];
+  submittedAtIso: string;
+}): Promise<EmailDeliveryStatus> {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
+  const resendFromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "";
+  const resendReplyToRaw = Deno.env.get("RSVP_CONFIRMATION_REPLY_TO") ?? "";
+
+  if (!resendApiKey || !resendFromEmail) {
+    console.warn(
+      JSON.stringify({
+        event: "email_skipped_missing_config",
+        submissionType: params.submissionType,
+        to: params.to,
+        status: "skipped",
+        build: BUILD_ID,
+      }),
+    );
+    return "skipped";
+  }
+
+  const model = buildRsvpEmailModel({
+    recipientEmail: params.to,
+    submissionType: params.submissionType,
+    submittedAtIso: params.submittedAtIso,
+    guests: params.guests,
+  });
+  const message = buildRsvpConfirmationEmail(model);
+  const replyToAddresses = parseReplyToAddresses(resendReplyToRaw, resendFromEmail);
+  const resendReplyTo = replyToAddresses.length === 1 ? replyToAddresses[0] : replyToAddresses;
+
+  try {
+    const result = await sendRsvpConfirmationEmail({
+      to: params.to,
+      from: resendFromEmail,
+      replyTo: resendReplyTo,
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
+      apiKey: resendApiKey,
+    });
+
+    if (!result.ok) {
+      console.error(
+        JSON.stringify({
+          event: "rsvp_confirmation_email",
+          submissionType: params.submissionType,
+          to: params.to,
+          status: "failed",
+          resendStatusCode: result.resendStatusCode,
+          errorDetail: result.errorDetail,
+          build: BUILD_ID,
+        }),
+      );
+      return "failed";
+    }
+
+    console.log(
+      JSON.stringify({
+        event: "rsvp_confirmation_email",
+        submissionType: params.submissionType,
+        to: params.to,
+        status: "sent",
+        resendStatusCode: result.resendStatusCode,
+        email_id: result.emailId,
+        build: BUILD_ID,
+      }),
+    );
+    return "sent";
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: "rsvp_confirmation_email",
+        submissionType: params.submissionType,
+        to: params.to,
+        status: "failed",
+        resendStatusCode: null,
+        errorDetail: error instanceof Error ? error.message : "Unknown email error",
+        build: BUILD_ID,
+      }),
+    );
+    return "failed";
+  }
 }
 
 Deno.serve(async req => {
@@ -268,11 +637,19 @@ Deno.serve(async req => {
       return json(500, { error: "invite_update_failed", details: inviteErr.message });
     }
 
+    const emailDelivery = await maybeSendRsvpConfirmationEmail({
+      to: email,
+      submissionType: "updated",
+      guests: (updatedGuests ?? []) as GuestRecord[],
+      submittedAtIso: now,
+    });
+
     return json(200, {
       ok: true,
       email,
       rsvp_completed: true,
       guests: updatedGuests ?? [],
+      email_delivery: emailDelivery,
     });
   }
 
@@ -369,10 +746,18 @@ Deno.serve(async req => {
     return json(500, { error: "invite_update_failed", details: inviteRedeemErr.message });
   }
 
+  const emailDelivery = await maybeSendRsvpConfirmationEmail({
+    to: email,
+    submissionType: "created",
+    guests: (insertedGuests ?? []) as GuestRecord[],
+    submittedAtIso: now,
+  });
+
   return json(200, {
     ok: true,
     email,
     rsvp_completed: true,
     guests: insertedGuests ?? [],
+    email_delivery: emailDelivery,
   });
 });
