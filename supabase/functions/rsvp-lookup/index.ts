@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const BUILD_ID = "rsvp-lookup-2026-02-22a";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -7,9 +9,14 @@ const corsHeaders = {
 };
 
 function json(status: number, body: unknown) {
-  return new Response(JSON.stringify(body), {
+  const enriched =
+    body && typeof body === "object" && !Array.isArray(body)
+      ? { ...(body as Record<string, unknown>), build: BUILD_ID }
+      : body;
+
+  return new Response(JSON.stringify(enriched), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json", "X-Build-Id": BUILD_ID },
   });
 }
 
