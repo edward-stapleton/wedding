@@ -121,6 +121,9 @@ let header = document.querySelector('.site-header');
 const mobileModalMedia = window.matchMedia('(max-width: 600px)');
 const thankYouMessageEl = document.getElementById('rsvp-thank-you-message');
 const thankYouPersonalEl = document.getElementById('rsvp-thank-you-personal');
+const thankYouStepSection = document.querySelector('[data-rsvp-step="4"]');
+const thankYouTitleEl = thankYouStepSection?.querySelector('.rsvp-step-title');
+const thankYouIntroEl = thankYouStepSection?.querySelector('.rsvp-step-intro');
 const NAV_LINK_TARGETS = {
   home: `${SITE_BASE_URL}#home`,
   schedule: `${SITE_BASE_URL}#schedule`,
@@ -1069,7 +1072,7 @@ function setStep(step) {
   }
 
   if (stepEnterButton) {
-    stepEnterButton.hidden = resolvedStep !== 4;
+    stepEnterButton.hidden = resolvedStep !== 4 || rsvpState.isReturningRsvp;
   }
 
   const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === resolvedStep);
@@ -2493,6 +2496,20 @@ function dismissRsvpSection() {
   void closeModal();
 }
 
+function applyThankYouStepContent({ isReturningRsvp }) {
+  if (thankYouTitleEl) {
+    thankYouTitleEl.textContent = isReturningRsvp ? 'Thanks for letting us know!' : 'Thank you!';
+  }
+  if (thankYouIntroEl) {
+    thankYouIntroEl.textContent = isReturningRsvp
+      ? "We've updated your RSVP for you."
+      : 'Your RSVP has been sent.';
+  }
+  if (isReturningRsvp && thankYouMessageEl) {
+    thankYouMessageEl.textContent = '';
+  }
+}
+
 function handleRsvpEnter() {
   const confirmationMessage = 'Thanks! Your RSVP is confirmed.';
   if (thankYouMessageEl) {
@@ -2908,15 +2925,18 @@ async function submitRsvp(event) {
     // Ensure UI knows we've completed (nav + "Edit RSVP" behave).
     applyRsvpCompletionGateState(true);
 
-    // Reset hero state after submit.
-    setEntryMode('new');
+    const isReturningSubmission = rsvpState.isReturningRsvp;
+    applyThankYouStepContent({ isReturningRsvp: isReturningSubmission });
 
     if (rsvpFeedback) {
       rsvpFeedback.textContent = '';
     }
 
-    // Move to the thank-you step (with the Enter button).
+    // Move to the thank-you step.
     setStep(4);
+
+    // Reset hero state after submit.
+    setEntryMode('new');
 
     // Keep RSVP section visible and update nav state.
     setRsvpSectionVisibility(true);
