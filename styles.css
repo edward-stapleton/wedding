@@ -1354,13 +1354,14 @@ body.rsvp-modal-open {
 }
 
 .rsvp-access-link {
-  align-self: flex-start;
+  align-self: center;
   padding: 0;
   border: 0;
   background: transparent;
   color: var(--accent-color);
   font-size: 0.9rem;
   text-decoration: underline;
+  text-align: center;
   cursor: pointer;
 }
 
