@@ -923,12 +923,16 @@ body.nav-open {
 
 @media (min-width: 768px) {
   .map-container {
-    width: min(100%, var(--map-container-max-width));
-    padding: 0 1.5rem 2.25rem;
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding: 0 0 2.25rem;
+    overflow-x: clip;
   }
 
   .map {
-    height: 420px;
+    height: 650px;
   }
 }
 
