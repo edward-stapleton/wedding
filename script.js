@@ -170,6 +170,7 @@ let lastRsvpTrigger = null;
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function setSiteGatePassed() {
+  // Trusted unlock events only: successful returning RSVP lookup or successful RSVP submission.
   if (typeof sessionStorage === 'undefined') return;
   sessionStorage.setItem(SITE_GATE_STORAGE_KEY, 'true');
 }
@@ -1667,18 +1668,14 @@ async function handleHeroAccessSubmit() {
     await setAuthEmail(normalizedEmail);
     await loadAndApplyRsvpForEmail(normalizedEmail);
   } else {
-    setSiteGatePassed();
-    const storedEmail = normalizeEmailForStorage(rsvpState.storedEmail);
-    if (storedEmail) {
-      await setAuthEmail(storedEmail);
-    }
+    // New RSVP flow does not unlock site content. Access is granted only after submit succeeds.
   }
 
   setRsvpAccessFeedback('');
   updateRsvpNavigationVisibility();
   updateHeroAccessUiState();
 
-  if (isRsvpRoute) {
+  if (isRsvpRoute && hasSiteGatePassed()) {
     redirectToHomeAnchor();
     return true;
   }
