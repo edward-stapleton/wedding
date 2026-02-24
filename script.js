@@ -13,6 +13,8 @@ const SUPABASE_URL =
 const SUPABASE_ANON_KEY =
   APP_CONFIG.supabaseAnonKey ??
   'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
+const GA_MEASUREMENT_ID = APP_CONFIG.gaMeasurementId?.toString().trim() || '';
+const ANALYTICS_DEBUG = APP_CONFIG.analyticsDebug === true;
 const SITE_BASE_URL =
   APP_CONFIG.siteBaseUrl ?? `${window.location.origin}/`;
 const SITE_BASE_PATH = new URL(SITE_BASE_URL).pathname.replace(/\/?$/, '/');
@@ -164,10 +166,105 @@ const rsvpState = {
   forceReturning: false,
   hasInitializedRsvp: false,
 };
+const analyticsState = {
+  isReady: false,
+  hasTrackedSiteVisit: false,
+};
 const rsvpCompletionCache = new Map();
 let lastRsvpTrigger = null;
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function sanitizeAnalyticsParams(params = {}) {
+  return Object.fromEntries(
+    Object.entries(params).filter(([, value]) =>
+      typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+    )
+  );
+}
+
+function getAnalyticsRouteType() {
+  if (isRsvpSingleRoute) return 'rsvp_single';
+  if (isRsvpCoupleRoute) return 'rsvp_couple';
+  return 'home';
+}
+
+function getAnalyticsInviteType() {
+  const resolved =
+    normalizeInviteType(rsvpState.inviteDetails?.invite_type) ||
+    normalizeInviteType(rsvpState.inviteTypeOverride) ||
+    normalizeInviteType(resolveRsvpInviteType());
+  return resolved || 'unknown';
+}
+
+function trackEvent(eventName, params = {}) {
+  if (!analyticsState.isReady || !window.gtag) return;
+  const payload = sanitizeAnalyticsParams(params);
+  window.gtag('event', eventName, payload);
+  if (ANALYTICS_DEBUG) {
+    console.debug('[analytics:event]', eventName, payload);
+  }
+}
+
+function setAnalyticsUserId(userIdHash) {
+  if (!analyticsState.isReady || !window.gtag) return;
+  const normalized = userIdHash?.toString().trim();
+  if (!normalized) return;
+  window.gtag('config', GA_MEASUREMENT_ID, { user_id: normalized });
+  if (ANALYTICS_DEBUG) {
+    console.debug('[analytics:user_id:set]', normalized);
+  }
+}
+
+function initAnalytics() {
+  if (!GA_MEASUREMENT_ID) return;
+  if (analyticsState.isReady) return;
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag =
+    window.gtag ||
+    function gtag() {
+      window.dataLayer.push(arguments);
+    };
+
+  window.gtag('js', new Date());
+  window.gtag('config', GA_MEASUREMENT_ID, { debug_mode: ANALYTICS_DEBUG });
+
+  const existingScript = document.querySelector(`script[src*="gtag/js?id=${GA_MEASUREMENT_ID}"]`);
+  if (!existingScript) {
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_MEASUREMENT_ID)}`;
+    document.head.appendChild(script);
+  }
+
+  analyticsState.isReady = true;
+}
+
+function trackSiteVisitOnce() {
+  if (analyticsState.hasTrackedSiteVisit) return;
+  trackEvent('site_visit', {
+    route_type: getAnalyticsRouteType(),
+    entry_mode: rsvpState.entryMode,
+    invite_type_hint: getAnalyticsInviteType(),
+  });
+  analyticsState.hasTrackedSiteVisit = true;
+}
+
+function classifyRsvpSubmitError(error) {
+  const status = Number.isFinite(error?.rsvpStatus) ? error.rsvpStatus : 0;
+  const bodyError = error?.rsvpBody?.error;
+  const bodyReason = error?.rsvpBody?.reason;
+  const errorCode =
+    (typeof bodyError === 'string' && bodyError) ||
+    (typeof bodyReason === 'string' && bodyReason) ||
+    'unknown_error';
+  const httpStatusBucket =
+    status >= 500 ? '5xx' : status >= 400 ? '4xx' : status >= 300 ? '3xx' : status >= 200 ? '2xx' : '0xx';
+  return { errorCode, httpStatusBucket };
+}
+
+initAnalytics();
 
 function setSiteGatePassed() {
   // Trusted unlock events only: successful returning RSVP lookup or successful RSVP submission.
@@ -770,8 +867,14 @@ async function lookupGuestByEmail(email) {
       sitePassword: RSVP_PASSWORD,
       inviteToken: rsvpState.inviteToken || '',
     });
+    const analyticsUserIdHash = result.analytics_user_id_hash?.toString().trim() || '';
+    if (analyticsUserIdHash) {
+      setAnalyticsUserId(analyticsUserIdHash);
+    }
     return {
       status: (result.guests?.length ?? 0) > 0 ? 'found' : 'not_found',
+      rsvpCompleted: Boolean(result.rsvp_completed),
+      analyticsUserIdHash,
     };
   } catch (error) {
     const statusText = typeof error?.message === 'string' ? error.message.toLowerCase() : '';
@@ -793,7 +896,7 @@ async function lookupGuestByEmail(email) {
       });
     }
 
-    return { status, details };
+    return { status, details, rsvpCompleted: false };
   }
 }
 
@@ -1339,6 +1442,10 @@ async function loadGuestRowsByEmail(email) {
       sitePassword: RSVP_PASSWORD,
       inviteToken: rsvpState.inviteToken || '',
     });
+    const analyticsUserIdHash = result.analytics_user_id_hash?.toString().trim() || '';
+    if (analyticsUserIdHash) {
+      setAnalyticsUserId(analyticsUserIdHash);
+    }
     return result.guests || [];
   } catch (error) {
     if (rsvpFeedback) {
@@ -1645,7 +1752,13 @@ async function handleHeroAccessSubmit() {
     }
 
     setRsvpAccessFeedback('Checking your RSVP...');
+    trackEvent('rsvp_lookup_attempt', { source: 'hero_access' });
     const lookup = await lookupGuestByEmail(emailValue);
+    trackEvent('rsvp_lookup_result', {
+      status: lookup.status,
+      lookup_status: lookup.status,
+      rsvp_completed: Boolean(lookup.rsvpCompleted),
+    });
     if (lookup.status === 'not_found') {
       setRsvpAccessFeedback('We could not find an RSVP for that email address.');
       rsvpAccessEmailInput?.setAttribute('aria-invalid', 'true');
@@ -1667,6 +1780,12 @@ async function handleHeroAccessSubmit() {
     setSiteGatePassed();
     await setAuthEmail(normalizedEmail);
     await loadAndApplyRsvpForEmail(normalizedEmail);
+    if (lookup.status === 'found' && lookup.rsvpCompleted) {
+      trackEvent('rsvp_returning_visit_confirmed', {
+        route_type: getAnalyticsRouteType(),
+        source: 'hero_access',
+      });
+    }
   } else {
     // New RSVP flow does not unlock site content. Access is granted only after submit succeeds.
   }
@@ -1697,6 +1816,7 @@ heroAccessForm?.addEventListener('submit', event => {
 async function initAuth() {
   resolveInviteToken();
   resetReturningRsvpRequest();
+  trackSiteVisitOnce();
   const storedAccessEmail = getStoredRsvpAccessEmail();
   const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
   rsvpState.storedEmail = storedAccessEmail || storedEmail;
@@ -2563,6 +2683,10 @@ async function getInitialRsvpStep(options = {}) {
 
 async function openRsvpSection(options = {}) {
   if (!rsvpSection) return;
+  trackEvent('rsvp_form_opened', {
+    route_type: getAnalyticsRouteType(),
+    entry_mode: rsvpState.entryMode,
+  });
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
@@ -2739,11 +2863,19 @@ async function handleStepAdvance() {
   const formData = new FormData(rsvpForm);
   const errors = validateStep(rsvpState.currentStep, formData, rsvpState.guestProfile);
   if (errors.length > 0) {
+    trackEvent('rsvp_validation_error', {
+      step_number: rsvpState.currentStep,
+      error_count: errors.length,
+    });
     if (rsvpFeedback) {
       rsvpFeedback.textContent = errors.join(' ');
     }
     return;
   }
+  trackEvent('rsvp_step_completed', {
+    step_number: rsvpState.currentStep,
+    invite_type: getAnalyticsInviteType(),
+  });
   if (rsvpFeedback) {
     rsvpFeedback.textContent = '';
   }
@@ -2780,9 +2912,19 @@ async function submitRsvp(event) {
   const formData = new FormData(rsvpForm);
   const profile =
     rsvpState.guestProfile || createGuestProfile(formData.get('guest-email')?.trim() || '');
+  const inviteTypeForAttempt =
+    rsvpState.inviteDetails?.invite_type || (isPlusOneActive(profile) ? 'plusone' : 'single');
+  trackEvent('rsvp_submit_attempt', {
+    invite_type: inviteTypeForAttempt,
+    has_plus_one: inviteTypeForAttempt === 'plusone',
+  });
   const errors = validateForm(formData, profile);
 
   if (errors.length > 0) {
+    trackEvent('rsvp_validation_error', {
+      step_number: rsvpState.currentStep,
+      error_count: errors.length,
+    });
     if (rsvpFeedback) {
       rsvpFeedback.textContent = errors.join(' ');
     }
@@ -2904,6 +3046,10 @@ async function submitRsvp(event) {
           : null,
       },
     });
+    const analyticsUserIdHash = result.analytics_user_id_hash?.toString().trim() || '';
+    if (analyticsUserIdHash) {
+      setAnalyticsUserId(analyticsUserIdHash);
+    }
 
     // Persist completion + allow returning access.
     const normalizedEmail = normalizeEmailForStorage(primaryRow.email);
@@ -2922,6 +3068,29 @@ async function submitRsvp(event) {
     applyRsvpCompletionGateState(true);
 
     const isReturningSubmission = rsvpState.isReturningRsvp;
+    const submissionType =
+      result.submission_type === 'updated' || result.submission_type === 'created'
+        ? result.submission_type
+        : isReturningSubmission
+          ? 'updated'
+          : 'created';
+    trackEvent('rsvp_submit_success', {
+      submission_type: submissionType,
+      invite_type: inviteType,
+      has_plus_one: includesPlusOne,
+    });
+    if (submissionType === 'created') {
+      trackEvent('rsvp_submitted_first_time', {
+        invite_type: inviteType,
+        has_plus_one: includesPlusOne,
+      });
+    }
+    if (submissionType === 'updated') {
+      trackEvent('rsvp_submitted_edit', {
+        invite_type: inviteType,
+        has_plus_one: includesPlusOne,
+      });
+    }
     applyThankYouStepContent({ isReturningRsvp: isReturningSubmission });
 
     if (rsvpFeedback) {
@@ -2940,6 +3109,11 @@ async function submitRsvp(event) {
 
     return;
   } catch (error) {
+    const { errorCode, httpStatusBucket } = classifyRsvpSubmitError(error);
+    trackEvent('rsvp_submit_failed', {
+      error_code: errorCode,
+      http_status_bucket: httpStatusBucket,
+    });
     if (rsvpFeedback) {
       rsvpFeedback.textContent = error?.message || 'We could not save your RSVP right now. Please try again.';
     }

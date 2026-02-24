@@ -14,6 +14,7 @@ Optional:
 - `RSVP_CONFIRMATION_REPLY_TO` (defaults to `RESEND_FROM_EMAIL`)
   - Single address: `person@example.com`
   - Multiple addresses: `person1@example.com,person2@example.com`
+- `ANALYTICS_HASH_SALT` (used to generate `analytics_user_id_hash` for GA4)
 
 ## Delivery behavior
 
@@ -31,6 +32,7 @@ Optional:
    - `supabase secrets set RESEND_API_KEY=...`
    - `supabase secrets set RESEND_FROM_EMAIL='Edward & Laura <hello@yourdomain.com>'`
    - `supabase secrets set RSVP_CONFIRMATION_REPLY_TO='edwardstapleton@me.com,lem.harford@gmail.com'` (optional)
+   - `supabase secrets set ANALYTICS_HASH_SALT='your-random-long-secret'` (optional but recommended for GA4 user hashing)
 2. Deploy function:
    - `supabase functions deploy rsvp-submit`
 3. Verify:
