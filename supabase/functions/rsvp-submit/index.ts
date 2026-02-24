@@ -84,6 +84,19 @@ function normaliseEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+async function sha256Hex(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const hashBytes = Array.from(new Uint8Array(digest));
+  return hashBytes.map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function buildAnalyticsUserIdHash(email: string) {
+  const salt = Deno.env.get("ANALYTICS_HASH_SALT") ?? "";
+  if (!salt) return "";
+  return await sha256Hex(`${email}${salt}`);
+}
+
 function normaliseYesNo(value: unknown) {
   const normalized = value?.toString().trim().toLowerCase();
   if (normalized === "yes" || normalized === "no") {
@@ -500,6 +513,7 @@ Deno.serve(async req => {
   if (!email.includes("@")) {
     return json(400, { error: "invalid_email" });
   }
+  const analyticsUserIdHash = await buildAnalyticsUserIdHash(email);
 
   const access = await validateAccess(payload.sitePassword);
   if (!access.ok) {
@@ -676,6 +690,8 @@ Deno.serve(async req => {
       ok: true,
       email,
       rsvp_completed: true,
+      submission_type: "updated" as SubmissionType,
+      analytics_user_id_hash: analyticsUserIdHash,
       guests: updatedGuests ?? [],
       email_delivery: emailDelivery,
     });
@@ -785,6 +801,8 @@ Deno.serve(async req => {
     ok: true,
     email,
     rsvp_completed: true,
+    submission_type: "created" as SubmissionType,
+    analytics_user_id_hash: analyticsUserIdHash,
     guests: insertedGuests ?? [],
     email_delivery: emailDelivery,
   });

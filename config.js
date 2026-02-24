@@ -4,6 +4,8 @@ window.__APP_CONFIG__ = {
   siteBaseUrl: 'https://edlaura.com/',
   rsvpPassword: 'STARFORD',
   debugRsvp: false,
+  gaMeasurementId: 'G-2RDFRMJXWQ',
+  analyticsDebug: true,
   mapboxToken:
     'pk.eyJ1IjoiZWR3YXJkc3RhcGxldG9uIiwiYSI6ImNtaGwyMWE2YzBjbzcyanNjYms4ZTduMWoifQ.yo7R9MXXEfna7rzmFk2rQg',
   mapboxStyle: 'mapbox://styles/mapbox/standard?optimize=true',

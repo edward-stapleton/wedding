@@ -30,6 +30,19 @@ function normaliseEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+async function sha256Hex(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const hashBytes = Array.from(new Uint8Array(digest));
+  return hashBytes.map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function buildAnalyticsUserIdHash(email: string) {
+  const salt = Deno.env.get("ANALYTICS_HASH_SALT") ?? "";
+  if (!salt) return "";
+  return await sha256Hex(`${email}${salt}`);
+}
+
 async function validateAccess(sitePassword?: string) {
   const expectedPassword = Deno.env.get("RSVP_SITE_PASSWORD") ?? "";
   if (!expectedPassword) return { ok: false as const, reason: "server_password_not_set" };
@@ -78,11 +91,13 @@ Deno.serve(async req => {
     .maybeSingle();
 
   if (inviteErr) return json(500, { error: "invite_lookup_failed", details: inviteErr.message });
+  const analyticsUserIdHash = await buildAnalyticsUserIdHash(email);
 
   return json(200, {
     ok: true,
     email,
     rsvp_completed: Boolean(invite?.redeemed_at),
+    analytics_user_id_hash: analyticsUserIdHash,
     guests: guests ?? [],
   });
 });
