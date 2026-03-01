@@ -96,7 +96,9 @@ const heroPasswordField = rsvpPasswordInput?.closest('.form-field') || heroAcces
 const rsvpEmailField = document.getElementById('rsvp-email');
 const inviteTokenField = document.getElementById('invite-token');
 const rsvpTriggers = document.querySelectorAll('[data-rsvp-trigger]');
-const rsvpHeroTrigger = document.querySelector('[data-hero-access-submit]');
+const rsvpHeroTrigger = document.querySelector(
+  '[data-hero-cta], [data-hero-access-submit], [data-rsvp-trigger]'
+);
 const heroReturningLinks = document.querySelectorAll('[data-hero-returning-link]');
 const guestSections = document.querySelectorAll('.guest-response');
 const stepIndicators = document.querySelectorAll('[data-step-indicator]');
@@ -1516,7 +1518,11 @@ function updateHeroAccessUiState() {
   const isAuthenticated = hasSiteGatePassed();
   const shouldShowReturningEmail = !isAuthenticated && rsvpState.isReturningRsvp;
 
-  heroAccessSubmitButton.textContent = isAuthenticated ? 'Edit RSVP' : 'Enter';
+  heroAccessSubmitButton.textContent = isAuthenticated
+    ? 'Edit RSVP'
+    : rsvpState.isReturningRsvp
+      ? 'Enter'
+      : 'RSVP';
 
   if (heroPasswordField) {
     heroPasswordField.hidden = isAuthenticated;
@@ -1729,6 +1735,10 @@ async function handleHeroAccessSubmit() {
     updateRsvpNavigationVisibility();
     if (isRsvpRoute) {
       redirectToHomeAnchor();
+      return true;
+    }
+    if (heroAccessSubmitButton instanceof HTMLElement) {
+      await openModal({ trigger: heroAccessSubmitButton, preferDetailsStep: true });
     }
     return true;
   }
@@ -1787,7 +1797,15 @@ async function handleHeroAccessSubmit() {
       });
     }
   } else {
-    // New RSVP flow does not unlock site content. Access is granted only after submit succeeds.
+    if (heroAccessSubmitButton instanceof HTMLElement) {
+      await openModal({ trigger: heroAccessSubmitButton, preferDetailsStep: false });
+      return true;
+    }
+    const targetUrl = resolveRsvpEntryUrl();
+    if (window.location.href !== targetUrl) {
+      window.location.assign(targetUrl);
+      return true;
+    }
   }
 
   setRsvpAccessFeedback('');
@@ -1887,7 +1905,7 @@ async function handleReturningRsvpRequest() {
 }
 
 function handleRsvpEntryClick(event) {
-  if (!(event.currentTarget instanceof HTMLAnchorElement)) return;
+  if (!(event.currentTarget instanceof HTMLElement)) return;
   event.preventDefault();
   if (rsvpSection) {
     const preferDetailsStep = hasSiteGatePassed();
@@ -1907,6 +1925,9 @@ function handleHeroReturningLinkClick(event) {
 
   if (isRsvpRoute) {
     void handleReturningRsvpRequest();
+    if (rsvpSection) {
+      void openModal({ trigger: event.currentTarget, preferDetailsStep: false });
+    }
     return;
   }
 
@@ -1916,12 +1937,12 @@ function handleHeroReturningLinkClick(event) {
 }
 
 function setupRsvpEntryTriggers(root = document) {
-  const links = root.querySelectorAll('[data-rsvp-trigger], [data-nav-link="rsvp"]');
-  links.forEach(link => {
-    if (!(link instanceof HTMLAnchorElement)) return;
-    if (link.dataset.rsvpEntryBound === 'true') return;
-    link.dataset.rsvpEntryBound = 'true';
-    link.addEventListener('click', handleRsvpEntryClick);
+  const triggers = root.querySelectorAll('[data-rsvp-trigger], [data-nav-link="rsvp"]');
+  triggers.forEach(trigger => {
+    if (!(trigger instanceof HTMLAnchorElement || trigger instanceof HTMLButtonElement)) return;
+    if (trigger.dataset.rsvpEntryBound === 'true') return;
+    trigger.dataset.rsvpEntryBound = 'true';
+    trigger.addEventListener('click', handleRsvpEntryClick);
   });
 }
 

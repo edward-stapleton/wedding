@@ -47,10 +47,42 @@
             <p class="hero-names">Edward Stapleton &amp; Laura Harford</p>
             <p class="hero-date">Saturday 22 August 2026</p>
             <p class="hero-location">Oxford</p>
-            <a class="primary" href="/rsvp/" data-rsvp-trigger data-hero-cta>RSVP</a>
-            <a class="rsvp-access-link hero-access-link" href="/rsvp/?returning=1" data-hero-returning-link
-              >Already RSVP&rsquo;d?</a
-            >
+            <form class="hero-access-form" data-hero-access-form novalidate>
+              <div class="form-field password-field">
+                <label class="visually-hidden" for="rsvp-password">Website password</label>
+                <div class="password-input">
+                  <input
+                    id="rsvp-password"
+                    name="rsvp-password"
+                    type="password"
+                    class="form-control"
+                    placeholder="Website password"
+                    autocomplete="current-password"
+                    required
+                  />
+                  <button type="button" class="password-toggle" data-password-toggle aria-label="Show password">
+                    <span class="material-icons" aria-hidden="true">visibility</span>
+                  </button>
+                </div>
+              </div>
+              <div class="form-field" data-returning-email hidden aria-hidden="true">
+                <label class="visually-hidden" for="rsvp-access-email">Email address</label>
+                <input
+                  id="rsvp-access-email"
+                  name="rsvp-access-email"
+                  type="email"
+                  inputmode="email"
+                  autocomplete="email"
+                  class="form-control"
+                  placeholder="Email address"
+                />
+              </div>
+              <button type="submit" class="primary" data-hero-access-submit data-hero-cta>RSVP</button>
+              <button type="button" class="rsvp-access-link hero-access-link" data-hero-returning-link>
+                Already RSVP&rsquo;d?
+              </button>
+              <p id="rsvp-access-feedback" class="hero-access-feedback" role="status" aria-live="polite"></p>
+            </form>
           </div>
           <div class="scroll-invite" aria-hidden="true" data-scroll-cue>&#8595;</div>
           <p class="visually-hidden">Scroll for the schedule and details.</p>
