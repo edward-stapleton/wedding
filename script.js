@@ -1177,7 +1177,10 @@ function setStep(step) {
   }
 
   if (stepEnterButton) {
-    stepEnterButton.hidden = resolvedStep !== 4 || rsvpState.isReturningRsvp;
+    stepEnterButton.hidden = resolvedStep !== 4;
+    if (resolvedStep === 4) {
+      stepEnterButton.textContent = rsvpState.isReturningRsvp ? 'Return' : 'Enter';
+    }
   }
 
   const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === resolvedStep);
@@ -1925,9 +1928,11 @@ function handleHeroReturningLinkClick(event) {
 
   if (isRsvpRoute) {
     void handleReturningRsvpRequest();
-    if (rsvpSection) {
-      void openModal({ trigger: event.currentTarget, preferDetailsStep: false });
-    }
+    const shouldFocusReturningEmail = rsvpState.entryMode === 'returning';
+    setTimeout(() => {
+      const focusTarget = shouldFocusReturningEmail ? rsvpAccessEmailInput : rsvpPasswordInput;
+      focusTarget?.focus();
+    }, 0);
     return;
   }
 
@@ -2639,8 +2644,11 @@ function applyThankYouStepContent({ isReturningRsvp }) {
   }
   if (thankYouIntroEl) {
     thankYouIntroEl.textContent = isReturningRsvp
-      ? "We've updated your RSVP for you."
+      ? 'Your RSVP has been edited'
       : 'Your RSVP has been sent.';
+  }
+  if (stepEnterButton) {
+    stepEnterButton.textContent = isReturningRsvp ? 'Return' : 'Enter';
   }
   if (thankYouMessageEl) {
     thankYouMessageEl.textContent = '';
@@ -2648,6 +2656,10 @@ function applyThankYouStepContent({ isReturningRsvp }) {
 }
 
 function handleRsvpEnter() {
+  if (rsvpState.isReturningRsvp) {
+    void closeModal();
+    return;
+  }
   window.location = NAV_LINK_TARGETS.home || SITE_BASE_URL;
 }
 
