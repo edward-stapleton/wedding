@@ -2642,18 +2642,12 @@ function applyThankYouStepContent({ isReturningRsvp }) {
       ? "We've updated your RSVP for you."
       : 'Your RSVP has been sent.';
   }
-  if (isReturningRsvp && thankYouMessageEl) {
+  if (thankYouMessageEl) {
     thankYouMessageEl.textContent = '';
   }
 }
 
 function handleRsvpEnter() {
-  const confirmationMessage = 'Thanks! Your RSVP is confirmed.';
-  if (thankYouMessageEl) {
-    thankYouMessageEl.textContent = confirmationMessage;
-  } else if (rsvpFeedback) {
-    rsvpFeedback.textContent = confirmationMessage;
-  }
   window.location = NAV_LINK_TARGETS.home || SITE_BASE_URL;
 }
 
