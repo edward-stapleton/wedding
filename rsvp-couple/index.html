@@ -44,29 +44,24 @@
             <p class="hero-location">Oxford</p>
             <form class="hero-access-form" data-hero-access-form novalidate>
               <div class="form-field password-field">
+                <label class="visually-hidden" for="rsvp-password">Website password</label>
                 <div class="password-input">
                   <input
                     id="rsvp-password"
                     name="rsvp-password"
                     type="password"
-                    autocomplete="off"
                     class="form-control"
-                    placeholder="Password"
-                    aria-label="Password"
+                    placeholder="Website password"
+                    autocomplete="current-password"
                     required
                   />
-                  <button
-                    type="button"
-                    class="password-toggle"
-                    data-password-toggle
-                    aria-label="Show password"
-                    aria-pressed="false"
-                  >
+                  <button type="button" class="password-toggle" data-password-toggle aria-label="Show password">
                     <span class="material-icons" aria-hidden="true">visibility</span>
                   </button>
                 </div>
               </div>
-              <div class="form-field" data-returning-email hidden>
+              <div class="form-field" data-returning-email hidden aria-hidden="true">
+                <label class="visually-hidden" for="rsvp-access-email">Email address</label>
                 <input
                   id="rsvp-access-email"
                   name="rsvp-access-email"
@@ -74,11 +69,10 @@
                   inputmode="email"
                   autocomplete="email"
                   class="form-control"
-                  placeholder="Email Address"
-                  aria-label="Email Address"
+                  placeholder="Email address"
                 />
               </div>
-              <button type="submit" class="primary" data-hero-access-submit>Enter</button>
+              <button type="submit" class="primary" data-hero-access-submit data-hero-cta>RSVP</button>
               <button type="button" class="rsvp-access-link hero-access-link" data-hero-returning-link>
                 Already RSVP&rsquo;d?
               </button>
