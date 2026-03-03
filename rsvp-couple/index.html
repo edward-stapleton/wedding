@@ -10,6 +10,111 @@
     <script>
       document.documentElement.classList.remove('no-js');
     </script>
+    <style>
+      #network-blocked-notice {
+        display: none;
+      }
+
+      html.network-blocked body {
+        margin: 0;
+        background: #f5f7fa;
+        color: #1b2430;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+      }
+
+      html.network-blocked body > * {
+        display: none !important;
+      }
+
+      html.network-blocked body > #network-blocked-notice {
+        display: grid !important;
+        place-items: center;
+        min-height: 100vh;
+        padding: 1.5rem;
+      }
+
+      html.network-blocked .network-blocked-notice__content {
+        max-width: 44rem;
+        margin: 0 auto;
+        line-height: 1.5;
+        text-align: center;
+        font-size: 1.05rem;
+      }
+    </style>
+    <script>
+      (function () {
+        const NOTICE_MESSAGE =
+          'It looks like your network may be blocking parts of this site (common on corporate laptops). Please open this page on a personal device or another network.';
+        const FIRST_CHECK_DELAY_MS = 2200;
+        const MAX_WAIT_MS = 7000;
+        const ROOT_BLOCK_CLASS = 'network-blocked';
+        let isBlocked = false;
+
+        function ensureNotice() {
+          const existing = document.getElementById('network-blocked-notice');
+          if (existing) return existing;
+          const notice = document.createElement('section');
+          notice.id = 'network-blocked-notice';
+          notice.setAttribute('role', 'alert');
+          notice.setAttribute('aria-live', 'assertive');
+          notice.innerHTML =
+            '<div class="network-blocked-notice__content"><p>' + NOTICE_MESSAGE + '</p></div>';
+          document.body.appendChild(notice);
+          return notice;
+        }
+
+        function cssLoaded() {
+          const cssLink = document.getElementById('critical-css');
+          if (!cssLink) return false;
+          try {
+            return Boolean(cssLink.sheet);
+          } catch (error) {
+            return true;
+          }
+        }
+
+        function jsLoaded() {
+          return window.__WEDDING_APP_BOOTED__ === true;
+        }
+
+        function activateBlockMode() {
+          if (isBlocked) return;
+          isBlocked = true;
+          document.documentElement.classList.add(ROOT_BLOCK_CLASS);
+          ensureNotice();
+        }
+
+        function runFinalCheck() {
+          if (!cssLoaded() || !jsLoaded()) {
+            activateBlockMode();
+          }
+        }
+
+        function runEarlyCheck() {
+          if (!cssLoaded() && !jsLoaded()) {
+            activateBlockMode();
+          }
+        }
+
+        function scheduleChecks() {
+          setTimeout(runEarlyCheck, FIRST_CHECK_DELAY_MS);
+          window.addEventListener(
+            'load',
+            function () {
+              setTimeout(runFinalCheck, 120);
+            },
+            { once: true }
+          );
+          setTimeout(runFinalCheck, MAX_WAIT_MS);
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', scheduleChecks, { once: true });
+        } else {
+          scheduleChecks();
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -17,9 +122,17 @@
       rel="stylesheet"
     />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="../styles.css" id="critical-css" data-critical-asset="css" />
   </head>
   <body data-rsvp-entry="couple">
+    <section id="network-blocked-notice" role="alert" aria-live="assertive">
+      <div class="network-blocked-notice__content">
+        <p>
+          It looks like your network may be blocking parts of this site (common on corporate laptops). Please open
+          this page on a personal device or another network.
+        </p>
+      </div>
+    </section>
     <div class="page" id="page">
       <div data-shared-header></div>
 
@@ -342,6 +455,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="../config.js"></script>
-    <script src="../script.js" type="module"></script>
+    <script src="../script.js" type="module" id="critical-js" data-critical-asset="js"></script>
   </body>
 </html>

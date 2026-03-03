@@ -7,6 +7,8 @@ import {
 } from './data/map.js';
 import { GUIDE_CATEGORY_INTROS } from './data/guide.js';
 
+window.__WEDDING_APP_BOOTED__ = true;
+
 const APP_CONFIG = window.__APP_CONFIG__ ?? window.APP_CONFIG ?? {};
 const SUPABASE_URL =
   APP_CONFIG.supabaseUrl ?? 'https://ipxbndockmhkfuwjyevi.supabase.co';
