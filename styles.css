@@ -957,11 +957,17 @@ body.nav-open {
   width: min(100%, 860px);
   display: grid;
   gap: 1rem;
+  text-align: center;
 }
 
 .registry-copy p {
   margin: 0;
   line-height: 1.65;
+  text-align: center;
+}
+
+.registry-link {
+  align-self: center;
 }
 
 .guide-carousel {
