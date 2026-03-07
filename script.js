@@ -1721,6 +1721,16 @@ async function refreshRsvpCompletionGate(email, { showFeedback = false } = {}) {
   return completed;
 }
 
+async function openEditRsvpFromHero() {
+  if (rsvpSection) {
+    const trigger = heroAccessSubmitButton instanceof HTMLElement ? heroAccessSubmitButton : null;
+    await openModal({ trigger, preferDetailsStep: true });
+    return true;
+  }
+  redirectToHomeAnchor();
+  return true;
+}
+
 async function handleHeroAccessSubmit() {
   if (!rsvpPasswordInput) return false;
 
@@ -1738,14 +1748,7 @@ async function handleHeroAccessSubmit() {
     }
     setRsvpAccessFeedback('');
     updateRsvpNavigationVisibility();
-    if (isRsvpRoute) {
-      redirectToHomeAnchor();
-      return true;
-    }
-    if (heroAccessSubmitButton instanceof HTMLElement) {
-      await openModal({ trigger: heroAccessSubmitButton, preferDetailsStep: true });
-    }
-    return true;
+    return openEditRsvpFromHero();
   }
 
   const emailValue = rsvpAccessEmailInput?.value.trim() || '';
