@@ -327,6 +327,16 @@ function resolveRsvpEntryUrl() {
   return new URL(path, SITE_BASE_URL).toString();
 }
 
+function getHomeAnchorUrl() {
+  const homeUrl = new URL(SITE_BASE_PATH, window.location.origin);
+  homeUrl.hash = 'home';
+  return homeUrl.toString();
+}
+
+function shouldRedirectRememberedReturningVisit() {
+  return isRsvpRoute && rsvpState.forceReturning && hasSiteGatePassed();
+}
+
 function setupPasswordToggles() {
   const toggleButtons = document.querySelectorAll('[data-password-toggle]');
   toggleButtons.forEach(button => {
@@ -1639,9 +1649,17 @@ function redirectToHomeAnchor() {
   if (isRsvpRoute && rsvpSection) {
     setRsvpSectionVisibility(false);
   }
-  const homeUrl = new URL(SITE_BASE_PATH, window.location.origin);
-  homeUrl.hash = 'home';
-  window.location.assign(homeUrl.toString());
+  window.location.assign(getHomeAnchorUrl());
+}
+
+function redirectRememberedReturningVisitHome() {
+  if (!shouldRedirectRememberedReturningVisit()) return false;
+  rsvpState.forceReturning = false;
+  if (isRsvpRoute && rsvpSection) {
+    setRsvpSectionVisibility(false);
+  }
+  window.location.replace(getHomeAnchorUrl());
+  return true;
 }
 
 async function openModal({ trigger = null, preferDetailsStep = false } = {}) {
@@ -1842,6 +1860,9 @@ heroAccessForm?.addEventListener('submit', event => {
 async function initAuth() {
   resolveInviteToken();
   resetReturningRsvpRequest();
+  if (redirectRememberedReturningVisitHome()) {
+    return;
+  }
   trackSiteVisitOnce();
   const storedAccessEmail = getStoredRsvpAccessEmail();
   const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
