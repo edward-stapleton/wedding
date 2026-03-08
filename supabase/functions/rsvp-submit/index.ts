@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const BUILD_ID = "rsvp-submit-2026-02-22a";
+const BUILD_ID = "rsvp-submit-2026-03-08a";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -128,29 +128,28 @@ function getErrorMessage(error: unknown) {
   return "Unknown error";
 }
 
-function isDuplicateEmailConstraintMessage(message: string) {
-  const normalized = message.toLowerCase();
-  return normalized.includes("duplicate key value") && normalized.includes("guests_email_unique");
-}
-
 function logServerError(event: string, error: unknown, extra: Record<string, unknown> = {}) {
+  const errorMeta =
+    error && typeof error === "object"
+      ? {
+          errorCode: "code" in error ? error.code : undefined,
+          errorDetails: "details" in error ? error.details : undefined,
+          errorHint: "hint" in error ? error.hint : undefined,
+        }
+      : {};
+
   console.error(
     JSON.stringify({
       event,
       errorDetail: getErrorMessage(error),
       build: BUILD_ID,
+      ...errorMeta,
       ...extra,
     }),
   );
 }
 
 function jsonError(status: number, errorCode: string, error?: unknown, extra: Record<string, unknown> = {}) {
-  const message = getErrorMessage(error);
-  if (isDuplicateEmailConstraintMessage(message)) {
-    logServerError("duplicate_email", error, extra);
-    return json(409, { error: "duplicate_email" });
-  }
-
   if (error) {
     logServerError(errorCode, error, extra);
   }
@@ -746,6 +745,7 @@ Deno.serve(async req => {
   }
 
   let inviteId = inviteExisting?.id;
+  let createdInviteId: string | null = null;
 
   if (!inviteId) {
     const { data: inviteNew, error: inviteCreateErr } = await supabaseAdmin
@@ -763,6 +763,7 @@ Deno.serve(async req => {
     }
 
     inviteId = inviteNew.id;
+    createdInviteId = inviteNew.id;
   }
 
   const guestsToInsert: Array<Record<string, unknown>> = [
@@ -812,10 +813,27 @@ Deno.serve(async req => {
     .order("role", { ascending: true });
 
   if (guestInsertErr) {
+    if (createdInviteId) {
+      const { error: inviteCleanupErr } = await supabaseAdmin
+        .from("invites")
+        .delete()
+        .eq("id", createdInviteId);
+
+      if (inviteCleanupErr) {
+        logServerError("invite_cleanup_failed", inviteCleanupErr, {
+          email,
+          inviteId: createdInviteId,
+          phase: "cleanup_failed_invite_after_guest_insert_error",
+        });
+      }
+    }
+
     return jsonError(500, "guest_insert_failed", guestInsertErr, {
       email,
       phase: "insert_new_guests",
       guestCount: guestsToInsert.length,
+      inviteId,
+      createdInviteId,
     });
   }
 

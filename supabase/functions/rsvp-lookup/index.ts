@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const BUILD_ID = "rsvp-lookup-2026-02-22a";
+const BUILD_ID = "rsvp-lookup-2026-03-08a";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,6 +62,11 @@ function getErrorMessage(error: unknown) {
   return "Unknown error";
 }
 
+function hasCompletedRsvp(guests: Array<{ attendance?: string | null }> | null | undefined) {
+  if (!Array.isArray(guests) || guests.length === 0) return false;
+  return guests.some(guest => typeof guest.attendance === "string" && guest.attendance.trim() !== "");
+}
+
 function logServerError(event: string, error: unknown, extra: Record<string, unknown> = {}) {
   console.error(
     JSON.stringify({
@@ -111,19 +116,12 @@ Deno.serve(async req => {
 
   if (guestsErr) return jsonError(500, "guest_lookup_failed", guestsErr, { email, phase: "lookup_guests" });
 
-  const { data: invite, error: inviteErr } = await supabaseAdmin
-    .from("invites")
-    .select("redeemed_at")
-    .eq("primary_email", email)
-    .maybeSingle();
-
-  if (inviteErr) return jsonError(500, "invite_lookup_failed", inviteErr, { email, phase: "lookup_invite" });
   const analyticsUserIdHash = await buildAnalyticsUserIdHash(email);
 
   return json(200, {
     ok: true,
     email,
-    rsvp_completed: Boolean(invite?.redeemed_at),
+    rsvp_completed: hasCompletedRsvp(guests),
     analytics_user_id_hash: analyticsUserIdHash,
     guests: guests ?? [],
   });

@@ -284,22 +284,9 @@ function getRsvpErrorMeta(error) {
   };
 }
 
-function hasDuplicateEmailConstraint(error) {
-  const { bodyDetails, rawMessage } = getRsvpErrorMeta(error);
-  const combined = `${bodyDetails} ${rawMessage}`.toLowerCase();
-  return (
-    combined.includes('duplicate key value') &&
-    (combined.includes('guests_email_unique') || combined.includes('email'))
-  );
-}
-
 function translateRsvpError(error, context = 'submit') {
   if (!error) {
     return "We couldn't process your RSVP just now. Please try again in a moment.";
-  }
-
-  if (hasDuplicateEmailConstraint(error)) {
-    return "We seem to already have an RSVP saved for that email address. Try again in a second, and if it doesn't work again, please let us know!";
   }
 
   const { status, bodyError, bodyReason, rawMessage } = getRsvpErrorMeta(error);
@@ -326,8 +313,6 @@ function translateRsvpError(error, context = 'submit') {
   }
 
   switch (errorCode) {
-    case 'duplicate_email':
-      return "We seem to already have an RSVP saved for that email address. Try again in a second, and if it doesn't work again, please let us know!";
     case 'guest_insert_failed':
     case 'invite_create_failed':
       return "We couldn't save your RSVP just yet. Please try again in a moment.";
