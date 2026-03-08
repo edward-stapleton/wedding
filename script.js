@@ -453,6 +453,17 @@ function shouldRedirectRememberedReturningVisit() {
   return isRsvpRoute && rsvpState.forceReturning && hasSiteGatePassed();
 }
 
+function shouldRedirectAuthenticatedRsvpRouteHome({ bootstrap = false } = {}) {
+  if (!isRsvpRoute || !hasSiteGatePassed()) return false;
+  if (!bootstrap) return true;
+  return Boolean(
+    rsvpState.forceReturning ||
+      rsvpState.hasRequestedReturning ||
+      getStoredRsvpAccessEmail() ||
+      getActiveRsvpEmail()
+  );
+}
+
 function setupPasswordToggles() {
   const toggleButtons = document.querySelectorAll('[data-password-toggle]');
   toggleButtons.forEach(button => {
@@ -2097,6 +2108,25 @@ function redirectRememberedReturningVisitHome() {
   return true;
 }
 
+function finalizeAuthenticatedAccess({ redirectHome = false, replaceHistory = false } = {}) {
+  setRsvpAccessFeedback('');
+  updateRsvpNavigationVisibility();
+  updateHeroAccessUiState();
+
+  if (!redirectHome) return false;
+
+  if (replaceHistory) {
+    if (isRsvpRoute && rsvpSection) {
+      setRsvpSectionVisibility(false);
+    }
+    window.location.replace(getHomeAnchorUrl());
+    return true;
+  }
+
+  redirectToHomeAnchor();
+  return true;
+}
+
 async function openModal({ trigger = null, preferDetailsStep = false } = {}) {
   if (!rsvpSection) return;
   if (trigger instanceof HTMLElement) {
@@ -2274,16 +2304,9 @@ async function handleHeroAccessSubmit() {
     }
   }
 
-  setRsvpAccessFeedback('');
-  updateRsvpNavigationVisibility();
-  updateHeroAccessUiState();
-
-  if (isRsvpRoute && hasSiteGatePassed()) {
-    redirectToHomeAnchor();
-    return true;
-  }
-
-  return true;
+  return finalizeAuthenticatedAccess({
+    redirectHome: shouldRedirectAuthenticatedRsvpRouteHome(),
+  }) || true;
 }
 
 rsvpAccessEmailInput?.addEventListener('input', () => {
@@ -2322,7 +2345,10 @@ async function initAuth() {
     if (rsvpState.hasRequestedReturning) {
       await applyRsvpCompletionDismissal();
     }
-    updateHeroAccessUiState();
+    finalizeAuthenticatedAccess({
+      redirectHome: shouldRedirectAuthenticatedRsvpRouteHome({ bootstrap: true }),
+      replaceHistory: true,
+    });
     return;
   }
 
@@ -2361,7 +2387,10 @@ async function initAuth() {
   if (rsvpState.hasRequestedReturning) {
     await applyRsvpCompletionDismissal();
   }
-  updateHeroAccessUiState();
+  finalizeAuthenticatedAccess({
+    redirectHome: shouldRedirectAuthenticatedRsvpRouteHome({ bootstrap: true }),
+    replaceHistory: true,
+  });
 }
 
 const shouldInitRsvp = enforceSiteGate();
