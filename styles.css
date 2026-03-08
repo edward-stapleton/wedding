@@ -955,7 +955,7 @@ body.nav-open {
 }
 
 .registry-copy {
-  width: min(100%, 860px);
+  width: min(100%, 640px);
   display: grid;
   gap: 1rem;
   text-align: center;
