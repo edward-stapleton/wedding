@@ -413,12 +413,31 @@
             </div>
           </div>
           <div class="map-container fade-section" data-map-container>
+            <div class="map-controls">
+              <button
+                type="button"
+                class="map-fullscreen-toggle"
+                data-map-fullscreen-open
+                aria-label="Open map fullscreen"
+                title="Open fullscreen map"
+              >
+                <span aria-hidden="true" class="map-fullscreen-toggle__icon"></span>
+              </button>
+            </div>
             <div
               id="map"
               class="map"
               aria-label="Wedding locations map"
               data-style="mapbox://styles/mapbox/standard?optimize=true"
             ></div>
+            <button
+              type="button"
+              class="modal-close map-fullscreen-close"
+              data-map-fullscreen-close
+              aria-label="Close fullscreen map"
+            >
+              &times;
+            </button>
           </div>
         </section>
 

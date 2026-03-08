@@ -121,6 +121,10 @@ const RSVP_SCROLL_TARGET_SELECTOR = '.form-field, .form-field-optional, fieldset
 const scrollCue = document.querySelector('[data-scroll-cue]');
 const mapContainer = document.querySelector('[data-map-container]');
 const mapPoiButtons = Array.from(document.querySelectorAll('[data-map-poi]'));
+const mapSection = document.getElementById('map-section');
+const mapFullscreenOpenButton = document.querySelector('[data-map-fullscreen-open]');
+const mapFullscreenCloseButton = document.querySelector('[data-map-fullscreen-close]');
+const mobileMapMediaQuery = window.matchMedia('(max-width: 767px)');
 const scheduleSection = document.getElementById('schedule');
 const scheduleTimeline = scheduleSection?.querySelector('[data-schedule-timeline]');
 const schedulePoints = Array.from(scheduleTimeline?.querySelectorAll('[data-schedule-point]') ?? []);
@@ -150,6 +154,9 @@ let mapLoaded = false;
 let mapInstance;
 let routeBoundsCache = null;
 let activeFlyoverId = 0;
+let mapResizeFrame = null;
+let mapScrollFrame = null;
+let mapViewportObserver = null;
 const MAP_POI_FILL_LAYER_IDS = {
   cricket: 'cricket-footprint-fill',
   church: 'church-footprint-fill',
@@ -157,6 +164,7 @@ const MAP_POI_FILL_LAYER_IDS = {
 };
 const mapPoiState = {
   popupsById: new Map(),
+  isFullscreen: false,
 };
 const rsvpState = {
   guestProfile: null,
@@ -783,6 +791,147 @@ function applyMapLabelTypeface(map) {
   });
 }
 
+function isMobileMapLayout() {
+  return mobileMapMediaQuery.matches;
+}
+
+function getSafeAreaInsetBottom() {
+  const safeArea = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-bottom').trim();
+  const parsed = Number.parseFloat(safeArea);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getMapViewportHeight() {
+  if (window.visualViewport?.height) return window.visualViewport.height;
+  return window.innerHeight || document.documentElement.clientHeight || 0;
+}
+
+function setMapInlineHeight(height) {
+  document.documentElement.style.setProperty('--map-inline-height', `${Math.round(height)}px`);
+}
+
+function syncMapSize() {
+  if (!mapElement || !mapContainer) return;
+
+  if (mapPoiState.isFullscreen) {
+    setMapInlineHeight(360);
+  } else if (isMobileMapLayout()) {
+    const viewportHeight = getMapViewportHeight();
+    const mapRect = mapElement.getBoundingClientRect();
+    const safeAreaBottom = getSafeAreaInsetBottom();
+    const nextHeight = Math.max(320, viewportHeight - Math.max(mapRect.top, 0) - safeAreaBottom);
+    setMapInlineHeight(nextHeight);
+  } else {
+    document.documentElement.style.removeProperty('--map-inline-height');
+  }
+
+  if (mapResizeFrame != null) {
+    window.cancelAnimationFrame(mapResizeFrame);
+  }
+  mapResizeFrame = window.requestAnimationFrame(() => {
+    if (mapInstance) {
+      mapInstance.resize();
+    }
+    mapResizeFrame = null;
+  });
+}
+
+function scheduleMapSizeSync() {
+  if (mapScrollFrame != null) return;
+  mapScrollFrame = window.requestAnimationFrame(() => {
+    syncMapSize();
+    mapScrollFrame = null;
+  });
+}
+
+function closeMapFullscreen() {
+  if (!mapPoiState.isFullscreen) return;
+  mapPoiState.isFullscreen = false;
+  document.body.classList.remove('map-fullscreen-open');
+  mapFullscreenOpenButton?.setAttribute('aria-expanded', 'false');
+  syncMapSize();
+  mapFullscreenOpenButton?.focus({ preventScroll: true });
+}
+
+function openMapFullscreen() {
+  if (!mapContainer || mapPoiState.isFullscreen) return;
+  mapPoiState.isFullscreen = true;
+  document.body.classList.add('map-fullscreen-open');
+  mapFullscreenOpenButton?.setAttribute('aria-expanded', 'true');
+  syncMapSize();
+  mapFullscreenCloseButton?.focus({ preventScroll: true });
+}
+
+function setupMapViewportSync() {
+  if (!mapElement || !mapContainer) return;
+
+  syncMapSize();
+
+  const handleWindowResize = () => {
+    if (mapPoiState.isFullscreen) {
+      closeMapFullscreen();
+      return;
+    }
+    scheduleMapSizeSync();
+  };
+
+  const handleOrientationChange = () => {
+    if (mapPoiState.isFullscreen) {
+      closeMapFullscreen();
+      return;
+    }
+    scheduleMapSizeSync();
+  };
+
+  window.addEventListener('resize', handleWindowResize);
+  window.addEventListener('orientationchange', handleOrientationChange);
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!isMobileMapLayout() || mapPoiState.isFullscreen) return;
+      scheduleMapSizeSync();
+    },
+    { passive: true }
+  );
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', scheduleMapSizeSync);
+    window.visualViewport.addEventListener('scroll', scheduleMapSizeSync);
+  }
+
+  if (mobileMapMediaQuery.addEventListener) {
+    mobileMapMediaQuery.addEventListener('change', handleWindowResize);
+  } else if (mobileMapMediaQuery.addListener) {
+    mobileMapMediaQuery.addListener(handleWindowResize);
+  }
+
+  if ('IntersectionObserver' in window && mapSection) {
+    mapViewportObserver = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.target === mapSection && entry.isIntersecting) {
+            scheduleMapSizeSync();
+          }
+        });
+      },
+      { threshold: [0, 0.25, 0.5, 0.75, 1] }
+    );
+    mapViewportObserver.observe(mapSection);
+  }
+}
+
+function setupMapFullscreenControls() {
+  if (!mapContainer || !mapFullscreenOpenButton || !mapFullscreenCloseButton) return;
+
+  mapFullscreenOpenButton.setAttribute('aria-expanded', 'false');
+  mapFullscreenOpenButton.addEventListener('click', () => {
+    openMapFullscreen();
+  });
+  mapFullscreenCloseButton.addEventListener('click', () => {
+    closeMapFullscreen();
+  });
+}
+
 function initMap() {
   if (!mapElement || !MAPBOX_TOKEN) return;
   if (!window.mapboxgl) {
@@ -804,6 +953,7 @@ function initMap() {
     addMapSourcesAndLayers(mapInstance);
     bindMapPoiLayerInteractions(mapInstance);
     bindMapPoiControls();
+    setupMapViewportSync();
     routeBoundsCache = buildRouteBounds();
     if (routeBoundsCache) {
       mapInstance.fitBounds(routeBoundsCache, {
@@ -1889,7 +2039,13 @@ function maintainModalFocus(event) {
 }
 
 function handleModalEscape(event) {
-  if (event.key !== 'Escape' || !rsvpSection || rsvpSection.hidden) return;
+  if (event.key !== 'Escape') return;
+  if (mapPoiState.isFullscreen) {
+    event.preventDefault();
+    closeMapFullscreen();
+    return;
+  }
+  if (!rsvpSection || rsvpSection.hidden) return;
   event.preventDefault();
   void closeModal();
 }
@@ -2850,6 +3006,7 @@ function setupFadeSections() {
 setupFadeSections();
 setupFaqAccordion();
 setupScheduleTimeline();
+setupMapFullscreenControls();
 initMap();
 setupRsvpEntryTriggers();
 setupHeroReturningLinks();
