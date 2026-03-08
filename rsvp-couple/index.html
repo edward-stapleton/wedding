@@ -246,38 +246,45 @@
                           />
                         </div>
                       </div>
-                      <fieldset>
+                      <fieldset class="rsvp-choice-group">
                         <legend data-cricket-attendance-legend="primary">
                           Able to come to cricket and drinks on Friday 21 August afternoon?
                         </legend>
-                        <label>
-                          <input type="radio" name="primary-cricket-attendance" value="Yes" required />
-                          Yes
-                        </label>
-                        <label>
-                          <input type="radio" name="primary-cricket-attendance" value="No" required />
-                          No
-                        </label>
+                        <div class="rsvp-choice-row">
+                          <label class="rsvp-choice">
+                            <input type="radio" name="primary-cricket-attendance" value="Yes" required />
+                            <span>Yes</span>
+                          </label>
+                          <label class="rsvp-choice">
+                            <input type="radio" name="primary-cricket-attendance" value="No" required />
+                            <span>No</span>
+                          </label>
+                        </div>
                       </fieldset>
-                      <fieldset>
+                      <fieldset class="rsvp-choice-group">
                         <legend data-attendance-legend="primary">Able to come to our wedding on Saturday 22 August?</legend>
-                        <label>
-                          <input id="primary-attending" type="radio" name="primary-attendance" value="Yes" required />
-                          Yes
-                        </label>
-                        <label>
-                          <input type="radio" name="primary-attendance" value="No" required />
-                          No
-                        </label>
+                        <div class="rsvp-choice-row">
+                          <label class="rsvp-choice">
+                            <input id="primary-attending" type="radio" name="primary-attendance" value="Yes" required />
+                            <span>Yes</span>
+                          </label>
+                          <label class="rsvp-choice">
+                            <input type="radio" name="primary-attendance" value="No" required />
+                            <span>No</span>
+                          </label>
+                        </div>
                       </fieldset>
-                      <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
-                      <textarea
-                        id="primary-dietary"
-                        name="primary-dietary"
-                        class="form-control"
-                        rows="2"
-                        placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
-                      ></textarea>
+                      <div class="form-field form-field-optional">
+                        <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
+                        <p class="form-help">Optional. Share any allergies, intolerances, or preferences.</p>
+                        <textarea
+                          id="primary-dietary"
+                          name="primary-dietary"
+                          class="form-control"
+                          rows="3"
+                          placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
+                        ></textarea>
+                      </div>
                     </section>
                   </section>
 
@@ -310,38 +317,45 @@
                           />
                         </div>
                       </div>
-                      <fieldset>
+                      <fieldset class="rsvp-choice-group">
                         <legend data-cricket-attendance-legend="plusOne">
                           Able to come to cricket and drinks on Friday 21 August afternoon?
                         </legend>
-                        <label>
-                          <input type="radio" name="plusone-cricket-attendance" value="Yes" required />
-                          Yes
-                        </label>
-                        <label>
-                          <input type="radio" name="plusone-cricket-attendance" value="No" required />
-                          No
-                        </label>
+                        <div class="rsvp-choice-row">
+                          <label class="rsvp-choice">
+                            <input type="radio" name="plusone-cricket-attendance" value="Yes" required />
+                            <span>Yes</span>
+                          </label>
+                          <label class="rsvp-choice">
+                            <input type="radio" name="plusone-cricket-attendance" value="No" required />
+                            <span>No</span>
+                          </label>
+                        </div>
                       </fieldset>
-                      <fieldset>
+                      <fieldset class="rsvp-choice-group">
                         <legend data-attendance-legend="plusOne">Able to come to our wedding on Saturday 22 August?</legend>
-                        <label>
-                          <input type="radio" name="plusone-attendance" value="Yes" required />
-                          Yes
-                        </label>
-                        <label>
-                          <input type="radio" name="plusone-attendance" value="No" required />
-                          No
-                        </label>
+                        <div class="rsvp-choice-row">
+                          <label class="rsvp-choice">
+                            <input type="radio" name="plusone-attendance" value="Yes" required />
+                            <span>Yes</span>
+                          </label>
+                          <label class="rsvp-choice">
+                            <input type="radio" name="plusone-attendance" value="No" required />
+                            <span>No</span>
+                          </label>
+                        </div>
                       </fieldset>
-                      <label for="plusone-dietary" data-dietary-label="plusOne">Any dietary requirements?</label>
-                      <textarea
-                        id="plusone-dietary"
-                        name="plusone-dietary"
-                        class="form-control"
-                        rows="2"
-                        placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
-                      ></textarea>
+                      <div class="form-field form-field-optional">
+                        <label for="plusone-dietary" data-dietary-label="plusOne">Any dietary requirements?</label>
+                        <p class="form-help">Optional. Share any allergies, intolerances, or preferences.</p>
+                        <textarea
+                          id="plusone-dietary"
+                          name="plusone-dietary"
+                          class="form-control"
+                          rows="3"
+                          placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
+                        ></textarea>
+                      </div>
                     </section>
                   </section>
 
