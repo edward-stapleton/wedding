@@ -2686,7 +2686,11 @@ function handleRsvpEnter() {
     void closeModal();
     return;
   }
-  window.location = NAV_LINK_TARGETS.home || SITE_BASE_URL;
+  if (isHomeRoute) {
+    void closeModal();
+    return;
+  }
+  redirectToHomeAnchor();
 }
 
 function handleRsvpFormKeydown(event) {
