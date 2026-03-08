@@ -1341,6 +1341,7 @@ body.nav-open {
 .modal-content {
   position: relative;
   width: min(94vw, 500px);
+  height: min(90vh, 46rem);
   max-height: 90vh;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid var(--border-color);
@@ -1372,13 +1373,13 @@ body.nav-open {
 }
 
 .modal-body {
-  padding: 2rem;
+  padding: 1.35rem 1.5rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   flex: 1;
-  overflow-y: auto;
-  scrollbar-gutter: stable both-edges;
+  min-height: 0;
+  overflow: hidden;
   scroll-padding-top: 1.25rem;
   scroll-padding-bottom: calc(7rem + var(--rsvp-keyboard-offset, 0px));
 }
@@ -1392,24 +1393,29 @@ body.rsvp-modal-open {
 }
 
 .rsvp-panel {
-  width: min(100%, 640px);
+  width: 100%;
   background: transparent;
   border: none;
   border-radius: 0;
   color: var(--text-color);
   text-align: left;
   box-shadow: none;
-  overflow: visible;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .rsvp-body {
-  padding: 2rem 2rem 1rem;
+  padding: 1.35rem 1.25rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
 }
 
 .rsvp-access {
@@ -1457,6 +1463,8 @@ body.rsvp-modal-open {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex: 1;
+  min-height: 100%;
 }
 
 .rsvp-steps {
@@ -1688,6 +1696,8 @@ body.rsvp-modal-open {
   flex-wrap: wrap;
   gap: 0.75rem;
   justify-content: flex-start;
+  margin-top: auto;
+  padding-top: 0.5rem;
 }
 
 #rsvp-form.rsvp-step-four .rsvp-step {
@@ -1982,7 +1992,7 @@ html.no-js .schedule-desktop .schedule-track-line::after {
   }
 
   .modal-body {
-    padding: 1rem 1rem calc(env(safe-area-inset-bottom) + 2.5rem + var(--rsvp-keyboard-offset, 0px));
+    padding: max(1rem, env(safe-area-inset-top)) 0 0;
     gap: 0.85rem;
   }
 
@@ -1998,14 +2008,15 @@ html.no-js .schedule-desktop .schedule-track-line::after {
 
   .rsvp-panel {
     width: 100%;
-    min-height: 100dvh;
+    min-height: 0;
+    height: 100%;
     border-radius: 0;
     border: none;
     box-shadow: none;
   }
 
   .rsvp-body {
-    padding: 1.25rem 1rem 0.75rem;
+    padding: 1rem 1rem calc(env(safe-area-inset-bottom) + 1rem);
   }
 
   #rsvp-form {
@@ -2059,10 +2070,11 @@ html.no-js .schedule-desktop .schedule-track-line::after {
 
   .rsvp-actions {
     position: sticky;
-    bottom: calc(env(safe-area-inset-bottom) * -1);
-    padding-top: 0.4rem;
-    padding-bottom: calc(env(safe-area-inset-bottom) + 0.25rem);
-    background: transparent;
+    bottom: 0;
+    padding-top: 0.5rem;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 0.35rem);
+    background: linear-gradient(180deg, rgba(153, 175, 135, 0), rgba(153, 175, 135, 0.92) 32%);
+    backdrop-filter: blur(10px);
   }
 
   .rsvp-actions button {
