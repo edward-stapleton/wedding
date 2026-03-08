@@ -134,7 +134,7 @@ export const WEDDING_POIS = [
     zoom: 16.1,
     pitch: 46,
     bearing: -22,
-    popupHtml: '15.00 Warm-Up Cricket Match & Welcome Drinks',
+    popupHtml: '21/08 15:00 Warm-Up Cricket Match & Welcome Drinks',
   },
   {
     id: 'church',
@@ -143,7 +143,7 @@ export const WEDDING_POIS = [
     zoom: 16.25,
     pitch: 55,
     bearing: 10,
-    popupHtml: '12:45 Wedding Ceremony',
+    popupHtml: '22/08 12:45 Wedding Ceremony',
   },
   {
     id: 'venue',
@@ -152,6 +152,6 @@ export const WEDDING_POIS = [
     zoom: 16.5,
     pitch: 55,
     bearing: -70,
-    popupHtml: '14:30 Wedding Reception',
+    popupHtml: '22/08 14:30 Wedding Reception',
   },
 ];
