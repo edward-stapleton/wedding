@@ -66,6 +66,8 @@ const MAP_DEFAULTS = {
 const WALKING_ROUTE_COORDS = WALKING_ROUTE?.features?.[0]?.geometry?.coordinates ?? [];
 
 const heroAccessForm = document.querySelector('[data-hero-access-form]');
+const heroSection = document.querySelector('[data-hero-section]');
+const heroVideo = document.querySelector('[data-hero-video]');
 const rsvpAccessEmailInput = document.getElementById('rsvp-access-email');
 const heroAccessSubmitButton = document.querySelector('[data-hero-access-submit]');
 const rsvpAccessFeedback = document.getElementById('rsvp-access-feedback');
@@ -123,8 +125,6 @@ const mapContainer = document.querySelector('[data-map-container]');
 const mapPoiButtons = Array.from(document.querySelectorAll('[data-map-poi]'));
 const mapPoiControls = document.querySelector('[data-map-poi-controls]');
 const mapSection = document.getElementById('map-section');
-const mapFullscreenOpenButton = document.querySelector('[data-map-fullscreen-open]');
-const mapFullscreenCloseButton = document.querySelector('[data-map-fullscreen-close]');
 const mobileMapMediaQuery = window.matchMedia('(max-width: 767px)');
 const scheduleSection = document.getElementById('schedule');
 const scheduleTimeline = scheduleSection?.querySelector('[data-schedule-timeline]');
@@ -146,11 +146,90 @@ const thankYouIntroEl = thankYouStepSection?.querySelector('.rsvp-step-intro');
 const NAV_LINK_TARGETS = {
   home: `${SITE_BASE_URL}#home`,
   schedule: `${SITE_BASE_URL}#schedule`,
+  map: `${SITE_BASE_URL}#map-section`,
   guide: `${SITE_BASE_URL}#guide`,
   faqs: `${SITE_BASE_URL}#faqs`,
   registry: `${SITE_BASE_URL}#registry`,
 };
 const RETURNING_QUERY_KEY = 'returning';
+const HERO_VIDEO_AUTOPLAY_TIMEOUT_MS = 1200;
+
+function escapeCssUrl(value) {
+  return value.replace(/(["\\])/g, '\\$1');
+}
+
+function enableHeroPosterFallback() {
+  if (!(heroSection instanceof HTMLElement) || !(heroVideo instanceof HTMLVideoElement)) return;
+  if (heroSection.classList.contains('hero-poster-only')) return;
+
+  const poster = heroVideo.getAttribute('poster')?.trim();
+  if (poster) {
+    heroSection.style.setProperty('--hero-poster-image', `url("${escapeCssUrl(poster)}")`);
+  }
+
+  heroSection.classList.add('hero-poster-only');
+  heroVideo.pause();
+  heroVideo.removeAttribute('autoplay');
+  heroVideo.hidden = true;
+
+  const sourceElements = heroVideo.querySelectorAll('source');
+  sourceElements.forEach(source => {
+    source.removeAttribute('src');
+  });
+  heroVideo.removeAttribute('src');
+  heroVideo.load();
+}
+
+function setupHeroMediaFallback() {
+  if (!(heroSection instanceof HTMLElement) || !(heroVideo instanceof HTMLVideoElement)) return;
+
+  heroVideo.muted = true;
+  heroVideo.defaultMuted = true;
+  heroVideo.playsInline = true;
+  const heroVideoSource = heroVideo.querySelector('source');
+
+  let settled = false;
+  let fallbackTimer = 0;
+
+  const cleanup = () => {
+    heroVideo.removeEventListener('playing', handlePlaybackSuccess);
+    heroVideo.removeEventListener('error', handlePlaybackFailure);
+    heroVideoSource?.removeEventListener('error', handlePlaybackFailure);
+    if (fallbackTimer) {
+      window.clearTimeout(fallbackTimer);
+    }
+  };
+
+  const handlePlaybackSuccess = () => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+  };
+
+  const handlePlaybackFailure = () => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    enableHeroPosterFallback();
+  };
+
+  heroVideo.addEventListener('playing', handlePlaybackSuccess, { once: true });
+  heroVideo.addEventListener('error', handlePlaybackFailure, { once: true });
+  heroVideoSource?.addEventListener('error', handlePlaybackFailure, { once: true });
+
+  fallbackTimer = window.setTimeout(() => {
+    if (!settled && heroVideo.paused) {
+      handlePlaybackFailure();
+    }
+  }, HERO_VIDEO_AUTOPLAY_TIMEOUT_MS);
+
+  const playbackAttempt = heroVideo.play();
+  if (playbackAttempt && typeof playbackAttempt.catch === 'function') {
+    playbackAttempt.catch(() => {
+      handlePlaybackFailure();
+    });
+  }
+}
 
 let mapLoaded = false;
 let mapInstance;
@@ -166,7 +245,6 @@ const MAP_POI_FILL_LAYER_IDS = {
 };
 const mapPoiState = {
   popupsById: new Map(),
-  isFullscreen: false,
   controlsParent: mapPoiControls?.parentElement ?? null,
   controlsNextSibling: mapPoiControls?.nextElementSibling ?? null,
 };
@@ -821,6 +899,10 @@ function getMapViewportHeight() {
   return window.innerHeight || document.documentElement.clientHeight || 0;
 }
 
+function isMapContainerFullscreen() {
+  return document.fullscreenElement === mapContainer;
+}
+
 function setMapInlineHeight(height) {
   document.documentElement.style.setProperty('--map-inline-height', `${Math.round(height)}px`);
 }
@@ -828,8 +910,8 @@ function setMapInlineHeight(height) {
 function syncMapSize() {
   if (!mapElement || !mapContainer) return;
 
-  if (mapPoiState.isFullscreen) {
-    setMapInlineHeight(360);
+  if (isMapContainerFullscreen()) {
+    document.documentElement.style.removeProperty('--map-inline-height');
   } else if (isMobileMapLayout()) {
     const viewportHeight = getMapViewportHeight();
     const mapRect = mapElement.getBoundingClientRect();
@@ -859,32 +941,27 @@ function scheduleMapSizeSync() {
   });
 }
 
-function closeMapFullscreen() {
-  if (!mapPoiState.isFullscreen) return;
-  mapPoiState.isFullscreen = false;
-  document.body.classList.remove('map-fullscreen-open');
-  mapFullscreenOpenButton?.setAttribute('aria-expanded', 'false');
+function syncMapFullscreenState() {
+  const isFullscreen = isMapContainerFullscreen();
+
   if (mapPoiControls && mapPoiState.controlsParent) {
-    if (mapPoiState.controlsNextSibling && mapPoiState.controlsNextSibling.parentElement === mapPoiState.controlsParent) {
-      mapPoiState.controlsParent.insertBefore(mapPoiControls, mapPoiState.controlsNextSibling);
-    } else {
-      mapPoiState.controlsParent.appendChild(mapPoiControls);
+    if (isFullscreen) {
+      if (mapPoiControls.parentElement !== mapContainer) {
+        mapContainer.appendChild(mapPoiControls);
+      }
+    } else if (mapPoiControls.parentElement !== mapPoiState.controlsParent) {
+      if (
+        mapPoiState.controlsNextSibling &&
+        mapPoiState.controlsNextSibling.parentElement === mapPoiState.controlsParent
+      ) {
+        mapPoiState.controlsParent.insertBefore(mapPoiControls, mapPoiState.controlsNextSibling);
+      } else {
+        mapPoiState.controlsParent.appendChild(mapPoiControls);
+      }
     }
   }
-  syncMapSize();
-  mapFullscreenOpenButton?.focus({ preventScroll: true });
-}
 
-function openMapFullscreen() {
-  if (!mapContainer || mapPoiState.isFullscreen) return;
-  mapPoiState.isFullscreen = true;
-  document.body.classList.add('map-fullscreen-open');
-  mapFullscreenOpenButton?.setAttribute('aria-expanded', 'true');
-  if (mapPoiControls) {
-    document.body.appendChild(mapPoiControls);
-  }
-  syncMapSize();
-  mapFullscreenCloseButton?.focus({ preventScroll: true });
+  scheduleMapSizeSync();
 }
 
 function setupMapViewportSync() {
@@ -893,18 +970,10 @@ function setupMapViewportSync() {
   syncMapSize();
 
   const handleWindowResize = () => {
-    if (mapPoiState.isFullscreen) {
-      closeMapFullscreen();
-      return;
-    }
     scheduleMapSizeSync();
   };
 
   const handleOrientationChange = () => {
-    if (mapPoiState.isFullscreen) {
-      closeMapFullscreen();
-      return;
-    }
     scheduleMapSizeSync();
   };
 
@@ -913,11 +982,13 @@ function setupMapViewportSync() {
   window.addEventListener(
     'scroll',
     () => {
-      if (!isMobileMapLayout() || mapPoiState.isFullscreen) return;
+      if (!isMobileMapLayout() || isMapContainerFullscreen()) return;
       scheduleMapSizeSync();
     },
     { passive: true }
   );
+
+  document.addEventListener('fullscreenchange', syncMapFullscreenState);
 
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', scheduleMapSizeSync);
@@ -943,18 +1014,8 @@ function setupMapViewportSync() {
     );
     mapViewportObserver.observe(mapSection);
   }
-}
 
-function setupMapFullscreenControls() {
-  if (!mapContainer || !mapFullscreenOpenButton || !mapFullscreenCloseButton) return;
-
-  mapFullscreenOpenButton.setAttribute('aria-expanded', 'false');
-  mapFullscreenOpenButton.addEventListener('click', () => {
-    openMapFullscreen();
-  });
-  mapFullscreenCloseButton.addEventListener('click', () => {
-    closeMapFullscreen();
-  });
+  syncMapFullscreenState();
 }
 
 function initMap() {
@@ -972,6 +1033,7 @@ function initMap() {
     pitch: MAP_DEFAULTS.pitch,
     bearing: MAP_DEFAULTS.bearing,
   });
+  mapInstance.addControl(new mapboxgl.FullscreenControl({ container: mapContainer }), 'top-right');
 
   mapInstance.on('load', () => {
     mapLoaded = true;
@@ -2065,11 +2127,6 @@ function maintainModalFocus(event) {
 
 function handleModalEscape(event) {
   if (event.key !== 'Escape') return;
-  if (mapPoiState.isFullscreen) {
-    event.preventDefault();
-    closeMapFullscreen();
-    return;
-  }
   if (!rsvpSection || rsvpSection.hidden) return;
   event.preventDefault();
   void closeModal();
@@ -3049,7 +3106,6 @@ function setupFadeSections() {
 setupFadeSections();
 setupFaqAccordion();
 setupScheduleTimeline();
-setupMapFullscreenControls();
 initMap();
 setupRsvpEntryTriggers();
 setupHeroReturningLinks();
@@ -3252,6 +3308,7 @@ async function initializeRsvpOnLoad(options = {}) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  setupHeroMediaFallback();
   setupPasswordToggles();
   if (rsvpForm) {
     rsvpForm.addEventListener('keydown', handleRsvpFormKeydown);
