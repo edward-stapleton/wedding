@@ -1737,8 +1737,8 @@ textarea.form-control {
 }
 
 #rsvp-form fieldset {
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  padding: 1rem;
+  border: none;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -1757,6 +1757,7 @@ textarea.form-control {
 
 #rsvp-form fieldset legend {
   margin-bottom: 0.1rem;
+  padding: 0;
 }
 
 .form-field-optional {
@@ -1789,17 +1790,20 @@ textarea.form-control {
   justify-content: center;
   min-height: 3.25rem;
   padding: 0.8rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.34);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  color: inherit;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.88);
   text-align: center;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  font-weight: 600;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .rsvp-choice input:checked + span {
-  background: rgba(247, 251, 233, 0.22);
-  border-color: rgba(247, 251, 233, 0.95);
+  background: rgba(247, 251, 233, 0.96);
+  border-color: rgba(247, 251, 233, 0.98);
+  color: #243116;
+  box-shadow: 0 0 0 1px rgba(247, 251, 233, 0.45);
 }
 
 .rsvp-choice input:focus-visible + span {
@@ -1808,7 +1812,7 @@ textarea.form-control {
 }
 
 .rsvp-choice:hover span {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .guest-response {
@@ -2009,10 +2013,9 @@ html.no-js .schedule-desktop .schedule-track-line::after {
   }
 
   #rsvp-form fieldset {
-    padding: 0.9rem;
+    padding: 0;
     gap: 0.65rem;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0;
   }
 
   #rsvp-form .form-control {
@@ -2059,7 +2062,7 @@ html.no-js .schedule-desktop .schedule-track-line::after {
     bottom: calc(env(safe-area-inset-bottom) * -1);
     padding-top: 0.4rem;
     padding-bottom: calc(env(safe-area-inset-bottom) + 0.25rem);
-    background: linear-gradient(180deg, rgba(14, 25, 8, 0), rgba(14, 25, 8, 0.94) 34%);
+    background: transparent;
   }
 
   .rsvp-actions button {
