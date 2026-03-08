@@ -148,6 +148,7 @@ const NAV_LINK_TARGETS = {
   schedule: `${SITE_BASE_URL}#schedule`,
   guide: `${SITE_BASE_URL}#guide`,
   faqs: `${SITE_BASE_URL}#faqs`,
+  registry: `${SITE_BASE_URL}#registry`,
 };
 const RETURNING_QUERY_KEY = 'returning';
 
