@@ -75,6 +75,7 @@ if (returningEmailField) {
 }
 const rsvpSection = document.getElementById('rsvp-page');
 const rsvpModalContent = rsvpSection?.querySelector('.modal-content');
+const rsvpModalBody = rsvpSection?.querySelector('.modal-body');
 const rsvpModalCloseTargets = rsvpSection?.querySelectorAll('[data-rsvp-modal-close]') ?? [];
 const rsvpForm = document.getElementById('rsvp-form');
 const rsvpFeedback = document.getElementById('rsvp-feedback');
@@ -110,6 +111,11 @@ const stepPrevButton = document.querySelector('[data-step-prev]');
 const stepNextButton = document.querySelector('[data-step-next]');
 const stepSubmitButton = document.querySelector('[data-step-submit]');
 const stepEnterButton = document.querySelector('[data-step-enter]');
+const mobileRsvpMediaQuery = window.matchMedia('(max-width: 600px)');
+const RSVP_STEP_FOCUS_SELECTOR =
+  'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled])';
+const RSVP_SCROLLABLE_FIELD_SELECTOR =
+  'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])';
 const scrollCue = document.querySelector('[data-scroll-cue]');
 const mapContainer = document.querySelector('[data-map-container]');
 const mapPoiButtons = Array.from(document.querySelectorAll('[data-map-poi]'));
@@ -1291,13 +1297,16 @@ function setStep(step) {
   }
 
   const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === resolvedStep);
-  const focusTarget = activeSection?.querySelector(
-    'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled])'
-  );
-  if (focusTarget) {
-    setTimeout(() => focusTarget.focus(), 50);
+  if (rsvpModalBody && !rsvpSection?.hidden) {
+    rsvpModalBody.scrollTo({ top: 0, behavior: 'auto' });
   }
-
+  const focusTarget = activeSection?.querySelector(RSVP_STEP_FOCUS_SELECTOR);
+  if (focusTarget instanceof HTMLElement && !rsvpSection?.hidden) {
+    focusRsvpTarget(focusTarget, {
+      delay: 50,
+      allowScroll: isMobileRsvpLayout(),
+    });
+  }
 }
  
 function updateGuestUi(profile) {
@@ -1674,6 +1683,7 @@ function setRsvpSectionVisibility(shouldShow) {
   rsvpSection.setAttribute('aria-hidden', String(!shouldShow));
   rsvpSection.classList.toggle('open', shouldShow);
   document.body.classList.toggle('rsvp-modal-open', shouldShow);
+  syncRsvpViewportOffset();
 }
 
 function getModalFocusableElements() {
@@ -1690,13 +1700,109 @@ function focusInitialRsvpField() {
   const activeStep = Array.from(stepSections).find(section => !section.hidden) || stepSections[0];
   const target =
     activeStep?.querySelector('[data-initial-focus]') ||
-    activeStep?.querySelector(
-      'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled])'
-    ) ||
+    activeStep?.querySelector(RSVP_STEP_FOCUS_SELECTOR) ||
     rsvpModalContent;
   if (target instanceof HTMLElement) {
-    target.focus({ preventScroll: true });
+    focusRsvpTarget(target, {
+      allowScroll: isMobileRsvpLayout(),
+    });
   }
+}
+
+function isMobileRsvpLayout() {
+  return mobileRsvpMediaQuery.matches;
+}
+
+function getRsvpKeyboardOffset() {
+  if (!rsvpSection) return 0;
+  const rawValue = getComputedStyle(rsvpSection).getPropertyValue('--rsvp-keyboard-offset');
+  return Number.parseFloat(rawValue) || 0;
+}
+
+function syncRsvpViewportOffset() {
+  if (!rsvpSection) return;
+  if (!rsvpSection.hidden && isMobileRsvpLayout() && window.visualViewport) {
+    const viewportHeight = window.visualViewport.height;
+    const keyboardOffset = Math.max(
+      0,
+      window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop
+    );
+    rsvpSection.style.setProperty('--rsvp-modal-height', `${viewportHeight}px`);
+    rsvpSection.style.setProperty('--rsvp-keyboard-offset', `${keyboardOffset}px`);
+    return;
+  }
+
+  rsvpSection.style.setProperty('--rsvp-modal-height', '100dvh');
+  rsvpSection.style.setProperty('--rsvp-keyboard-offset', '0px');
+}
+
+function scrollRsvpFieldIntoView(target, { behavior = 'smooth' } = {}) {
+  if (!(target instanceof HTMLElement) || !rsvpModalBody || !rsvpSection || rsvpSection.hidden) return;
+
+  const containerRect = rsvpModalBody.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const topBuffer = 20;
+  const bottomBuffer = Math.max(40, 116 + getRsvpKeyboardOffset());
+  const overflowTop = targetRect.top - (containerRect.top + topBuffer);
+  const overflowBottom = targetRect.bottom - (containerRect.bottom - bottomBuffer);
+
+  if (overflowBottom > 0) {
+    rsvpModalBody.scrollBy({ top: overflowBottom, behavior });
+    return;
+  }
+
+  if (overflowTop < 0) {
+    rsvpModalBody.scrollBy({ top: overflowTop, behavior });
+  }
+}
+
+function focusRsvpTarget(target, { delay = 0, allowScroll = false } = {}) {
+  if (!(target instanceof HTMLElement)) return;
+
+  const runFocus = () => {
+    if (rsvpSection?.hidden) return;
+    if (allowScroll) {
+      target.focus();
+      requestAnimationFrame(() => {
+        scrollRsvpFieldIntoView(target, { behavior: 'auto' });
+      });
+      window.setTimeout(() => {
+        scrollRsvpFieldIntoView(target, { behavior: 'smooth' });
+      }, 180);
+      return;
+    }
+
+    target.focus({ preventScroll: true });
+  };
+
+  if (delay > 0) {
+    window.setTimeout(runFocus, delay);
+    return;
+  }
+
+  runFocus();
+}
+
+function keepActiveRsvpFieldVisible({ behavior = 'auto' } = {}) {
+  syncRsvpViewportOffset();
+  if (!rsvpSection || rsvpSection.hidden) return;
+  const activeElement = document.activeElement;
+  if (
+    activeElement instanceof HTMLElement &&
+    rsvpSection.contains(activeElement) &&
+    activeElement.matches(RSVP_SCROLLABLE_FIELD_SELECTOR)
+  ) {
+    scrollRsvpFieldIntoView(activeElement, { behavior });
+  }
+}
+
+function handleRsvpFocusIn(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement) || !target.matches(RSVP_SCROLLABLE_FIELD_SELECTOR)) return;
+  keepActiveRsvpFieldVisible({ behavior: 'auto' });
+  window.setTimeout(() => {
+    scrollRsvpFieldIntoView(target, { behavior: 'smooth' });
+  }, 180);
 }
 
 function maintainModalFocus(event) {
@@ -2893,11 +2999,29 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!rsvpSection) return;
   setRsvpSectionVisibility(false);
   rsvpSection?.addEventListener('keydown', maintainModalFocus);
+  rsvpSection?.addEventListener('focusin', handleRsvpFocusIn);
   rsvpModalCloseTargets.forEach(target => {
     target.addEventListener('click', () => {
       dismissRsvpSection();
     });
   });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      keepActiveRsvpFieldVisible({ behavior: 'auto' });
+    });
+    window.visualViewport.addEventListener('scroll', () => {
+      keepActiveRsvpFieldVisible({ behavior: 'auto' });
+    });
+  }
+  if (mobileRsvpMediaQuery.addEventListener) {
+    mobileRsvpMediaQuery.addEventListener('change', () => {
+      keepActiveRsvpFieldVisible({ behavior: 'auto' });
+    });
+  } else if (mobileRsvpMediaQuery.addListener) {
+    mobileRsvpMediaQuery.addListener(() => {
+      keepActiveRsvpFieldVisible({ behavior: 'auto' });
+    });
+  }
   document.addEventListener('keydown', handleModalEscape);
   resetReturningRsvpRequest();
   setStep(1);
