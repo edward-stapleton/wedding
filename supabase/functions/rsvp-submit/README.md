@@ -7,7 +7,7 @@ This function sends RSVP confirmation emails through Resend after successful RSV
 Set these in Supabase before deploying:
 
 - `RESEND_API_KEY`
-- `RESEND_FROM_EMAIL` (example: `Edward & Laura <hello@yourdomain.com>`)
+- `RESEND_FROM_EMAIL` (example: `Ed & Laura <hello@yourdomain.com>`)
 
 Optional:
 
@@ -30,7 +30,7 @@ Optional:
 
 1. Set secrets:
    - `supabase secrets set RESEND_API_KEY=...`
-   - `supabase secrets set RESEND_FROM_EMAIL='Edward & Laura <hello@yourdomain.com>'`
+   - `supabase secrets set RESEND_FROM_EMAIL='Ed & Laura <hello@yourdomain.com>'`
    - `supabase secrets set RSVP_CONFIRMATION_REPLY_TO='edwardstapleton@me.com,lem.harford@gmail.com'` (optional)
    - `supabase secrets set ANALYTICS_HASH_SALT='your-random-long-secret'` (optional but recommended for GA4 user hashing)
 2. Deploy function:

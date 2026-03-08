@@ -120,6 +120,44 @@ function cleanText(value: unknown) {
   return value?.toString().trim() ?? "";
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  return "Unknown error";
+}
+
+function isDuplicateEmailConstraintMessage(message: string) {
+  const normalized = message.toLowerCase();
+  return normalized.includes("duplicate key value") && normalized.includes("guests_email_unique");
+}
+
+function logServerError(event: string, error: unknown, extra: Record<string, unknown> = {}) {
+  console.error(
+    JSON.stringify({
+      event,
+      errorDetail: getErrorMessage(error),
+      build: BUILD_ID,
+      ...extra,
+    }),
+  );
+}
+
+function jsonError(status: number, errorCode: string, error?: unknown, extra: Record<string, unknown> = {}) {
+  const message = getErrorMessage(error);
+  if (isDuplicateEmailConstraintMessage(message)) {
+    logServerError("duplicate_email", error, extra);
+    return json(409, { error: "duplicate_email" });
+  }
+
+  if (error) {
+    logServerError(errorCode, error, extra);
+  }
+
+  return json(status, { error: errorCode });
+}
+
 function formatYesNo(value: unknown) {
   const normalized = normaliseYesNo(value);
   if (normalized === "yes") return "Yes";
@@ -573,7 +611,7 @@ Deno.serve(async req => {
     .eq("email", email);
 
   if (findErr) {
-    return json(500, { error: "guest_lookup_failed", details: findErr.message });
+    return jsonError(500, "guest_lookup_failed", findErr, { email, phase: "find_existing_guests" });
   }
 
   if (foundGuests && foundGuests.length > 0) {
@@ -595,7 +633,7 @@ Deno.serve(async req => {
       .eq("role", "primary");
 
     if (primaryUpdateErr) {
-      return json(500, { error: "guest_update_failed", details: primaryUpdateErr.message });
+      return jsonError(500, "guest_update_failed", primaryUpdateErr, { email, role: "primary", phase: "update_existing_guest" });
     }
 
     if (includesPlusOne) {
@@ -607,7 +645,7 @@ Deno.serve(async req => {
         .maybeSingle();
 
       if (plusOneLookupErr) {
-        return json(500, { error: "guest_lookup_failed", details: plusOneLookupErr.message });
+        return jsonError(500, "guest_lookup_failed", plusOneLookupErr, { email, role: "plusone", phase: "lookup_existing_plusone" });
       }
 
       if (plusOneRow?.id) {
@@ -628,7 +666,7 @@ Deno.serve(async req => {
           .eq("id", plusOneRow.id);
 
         if (plusOneUpdateErr) {
-          return json(500, { error: "guest_update_failed", details: plusOneUpdateErr.message });
+          return jsonError(500, "guest_update_failed", plusOneUpdateErr, { email, role: "plusone", phase: "update_existing_plusone" });
         }
       } else {
         const primaryGroupId = foundGuests.find(row => row.role === "primary")?.invitation_group_id;
@@ -655,7 +693,7 @@ Deno.serve(async req => {
           });
 
         if (plusOneInsertErr) {
-          return json(500, { error: "guest_insert_failed", details: plusOneInsertErr.message });
+          return jsonError(500, "guest_insert_failed", plusOneInsertErr, { email, role: "plusone", phase: "insert_missing_plusone" });
         }
       }
     }
@@ -667,7 +705,7 @@ Deno.serve(async req => {
       .order("role", { ascending: true });
 
     if (updatedSelectErr) {
-      return json(500, { error: "guest_lookup_failed", details: updatedSelectErr.message });
+      return jsonError(500, "guest_lookup_failed", updatedSelectErr, { email, phase: "select_updated_guests" });
     }
 
     const { error: inviteErr } = await supabaseAdmin
@@ -676,7 +714,7 @@ Deno.serve(async req => {
       .eq("primary_email", email);
 
     if (inviteErr) {
-      return json(500, { error: "invite_update_failed", details: inviteErr.message });
+      return jsonError(500, "invite_update_failed", inviteErr, { email, phase: "mark_invite_redeemed_existing" });
     }
 
     const emailDelivery = await maybeSendRsvpConfirmationEmail({
@@ -704,7 +742,7 @@ Deno.serve(async req => {
     .maybeSingle();
 
   if (inviteFindErr) {
-    return json(500, { error: "invite_lookup_failed", details: inviteFindErr.message });
+    return jsonError(500, "invite_lookup_failed", inviteFindErr, { email, phase: "find_existing_invite" });
   }
 
   let inviteId = inviteExisting?.id;
@@ -721,7 +759,7 @@ Deno.serve(async req => {
       .single();
 
     if (inviteCreateErr) {
-      return json(500, { error: "invite_create_failed", details: inviteCreateErr.message });
+      return jsonError(500, "invite_create_failed", inviteCreateErr, { email, phase: "create_invite" });
     }
 
     inviteId = inviteNew.id;
@@ -774,10 +812,10 @@ Deno.serve(async req => {
     .order("role", { ascending: true });
 
   if (guestInsertErr) {
-    return json(500, {
-      error: "guest_insert_failed",
-      details: guestInsertErr.message,
-      debug: { guestsToInsert },
+    return jsonError(500, "guest_insert_failed", guestInsertErr, {
+      email,
+      phase: "insert_new_guests",
+      guestCount: guestsToInsert.length,
     });
   }
 
@@ -787,7 +825,7 @@ Deno.serve(async req => {
     .eq("id", inviteId);
 
   if (inviteRedeemErr) {
-    return json(500, { error: "invite_update_failed", details: inviteRedeemErr.message });
+    return jsonError(500, "invite_update_failed", inviteRedeemErr, { email, phase: "mark_invite_redeemed_new" });
   }
 
   const emailDelivery = await maybeSendRsvpConfirmationEmail({

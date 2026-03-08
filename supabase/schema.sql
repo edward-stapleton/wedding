@@ -1,5 +1,7 @@
 create extension if not exists "pgcrypto";
 
+drop index if exists public.guests_email_unique;
+
 create table if not exists public.invites (
   id uuid primary key default gen_random_uuid(),
   token text not null,
