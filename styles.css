@@ -222,6 +222,10 @@ body.nav-open {
   display: none;
 }
 
+.site-gated .site-footer {
+  display: none;
+}
+
 .site-gated .hero-section {
   min-height: 100vh;
   min-height: 100svh;
