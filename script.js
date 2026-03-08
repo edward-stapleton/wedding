@@ -121,6 +121,7 @@ const RSVP_SCROLL_TARGET_SELECTOR = '.form-field, .form-field-optional, fieldset
 const scrollCue = document.querySelector('[data-scroll-cue]');
 const mapContainer = document.querySelector('[data-map-container]');
 const mapPoiButtons = Array.from(document.querySelectorAll('[data-map-poi]'));
+const mapPoiControls = document.querySelector('[data-map-poi-controls]');
 const mapSection = document.getElementById('map-section');
 const mapFullscreenOpenButton = document.querySelector('[data-map-fullscreen-open]');
 const mapFullscreenCloseButton = document.querySelector('[data-map-fullscreen-close]');
@@ -165,6 +166,8 @@ const MAP_POI_FILL_LAYER_IDS = {
 const mapPoiState = {
   popupsById: new Map(),
   isFullscreen: false,
+  controlsParent: mapPoiControls?.parentElement ?? null,
+  controlsNextSibling: mapPoiControls?.nextElementSibling ?? null,
 };
 const rsvpState = {
   guestProfile: null,
@@ -849,6 +852,13 @@ function closeMapFullscreen() {
   mapPoiState.isFullscreen = false;
   document.body.classList.remove('map-fullscreen-open');
   mapFullscreenOpenButton?.setAttribute('aria-expanded', 'false');
+  if (mapPoiControls && mapPoiState.controlsParent) {
+    if (mapPoiState.controlsNextSibling && mapPoiState.controlsNextSibling.parentElement === mapPoiState.controlsParent) {
+      mapPoiState.controlsParent.insertBefore(mapPoiControls, mapPoiState.controlsNextSibling);
+    } else {
+      mapPoiState.controlsParent.appendChild(mapPoiControls);
+    }
+  }
   syncMapSize();
   mapFullscreenOpenButton?.focus({ preventScroll: true });
 }
@@ -858,6 +868,9 @@ function openMapFullscreen() {
   mapPoiState.isFullscreen = true;
   document.body.classList.add('map-fullscreen-open');
   mapFullscreenOpenButton?.setAttribute('aria-expanded', 'true');
+  if (mapPoiControls) {
+    document.body.appendChild(mapPoiControls);
+  }
   syncMapSize();
   mapFullscreenCloseButton?.focus({ preventScroll: true });
 }

@@ -922,11 +922,10 @@ body.map-fullscreen-open .map-fullscreen-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  z-index: 3;
-}
-
-body.map-fullscreen-open .map-section .section-content {
-  position: static;
+  position: fixed;
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: max(0.75rem, env(safe-area-inset-right));
+  z-index: calc(var(--map-fullscreen-z-index) + 2);
 }
 
 body.map-fullscreen-open .map-poi-controls {
@@ -1075,8 +1074,6 @@ body.map-fullscreen-open .map-poi-controls {
   }
 
   .map-fullscreen-close {
-    top: 0.75rem;
-    right: 0.75rem;
     background: transparent;
     border: none;
     font-size: 1.5rem;
