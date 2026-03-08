@@ -76,6 +76,7 @@ if (returningEmailField) {
 const rsvpSection = document.getElementById('rsvp-page');
 const rsvpModalContent = rsvpSection?.querySelector('.modal-content');
 const rsvpModalBody = rsvpSection?.querySelector('.modal-body');
+const rsvpScrollBody = rsvpSection?.querySelector('.rsvp-body');
 const rsvpModalCloseTargets = rsvpSection?.querySelectorAll('[data-rsvp-modal-close]') ?? [];
 const rsvpForm = document.getElementById('rsvp-form');
 const rsvpFeedback = document.getElementById('rsvp-feedback');
@@ -116,6 +117,7 @@ const RSVP_STEP_FOCUS_SELECTOR =
   'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled])';
 const RSVP_SCROLLABLE_FIELD_SELECTOR =
   'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])';
+const RSVP_SCROLL_TARGET_SELECTOR = '.form-field, .form-field-optional, fieldset, .guest-response';
 const scrollCue = document.querySelector('[data-scroll-cue]');
 const mapContainer = document.querySelector('[data-map-container]');
 const mapPoiButtons = Array.from(document.querySelectorAll('[data-map-poi]'));
@@ -182,6 +184,7 @@ const analyticsState = {
 };
 const rsvpCompletionCache = new Map();
 let lastRsvpTrigger = null;
+let rsvpVisibilityTimeouts = [];
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -1297,8 +1300,9 @@ function setStep(step) {
   }
 
   const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === resolvedStep);
-  if (rsvpModalBody && !rsvpSection?.hidden) {
-    rsvpModalBody.scrollTo({ top: 0, behavior: 'auto' });
+  const scrollContainer = getRsvpScrollContainer();
+  if (scrollContainer && !rsvpSection?.hidden) {
+    scrollContainer.scrollTo({ top: 0, behavior: 'auto' });
   }
   const focusTarget = activeSection?.querySelector(RSVP_STEP_FOCUS_SELECTOR);
   if (focusTarget instanceof HTMLElement && !rsvpSection?.hidden) {
@@ -1679,6 +1683,9 @@ function updateHeroAccessUiState() {
 
 function setRsvpSectionVisibility(shouldShow) {
   if (!rsvpSection) return;
+  if (!shouldShow) {
+    clearScheduledRsvpVisibilitySync();
+  }
   rsvpSection.hidden = !shouldShow;
   rsvpSection.setAttribute('aria-hidden', String(!shouldShow));
   rsvpSection.classList.toggle('open', shouldShow);
@@ -1719,14 +1726,54 @@ function getRsvpKeyboardOffset() {
   return Number.parseFloat(rawValue) || 0;
 }
 
+function clearScheduledRsvpVisibilitySync() {
+  rsvpVisibilityTimeouts.forEach(timeoutId => window.clearTimeout(timeoutId));
+  rsvpVisibilityTimeouts = [];
+}
+
+function getRsvpScrollContainer() {
+  if (rsvpScrollBody instanceof HTMLElement) return rsvpScrollBody;
+  return rsvpModalBody instanceof HTMLElement ? rsvpModalBody : null;
+}
+
+function getRsvpScrollTarget(target) {
+  if (!(target instanceof HTMLElement)) return null;
+  return target.closest(RSVP_SCROLL_TARGET_SELECTOR) || target;
+}
+
+function getRsvpVisibleBounds(containerRect) {
+  if (!isMobileRsvpLayout() || !window.visualViewport || rsvpSection?.hidden) {
+    return {
+      top: containerRect.top,
+      bottom: containerRect.bottom,
+    };
+  }
+
+  const viewportTop = window.visualViewport.offsetTop;
+  const viewportBottom = window.visualViewport.offsetTop + window.visualViewport.height;
+  return {
+    top: Math.max(containerRect.top, viewportTop),
+    bottom: Math.min(containerRect.bottom, viewportBottom),
+  };
+}
+
+function getRsvpBottomOverlayOffset(containerRect) {
+  const actionsRect = document.querySelector('.rsvp-actions')?.getBoundingClientRect();
+  if (!actionsRect) {
+    return isMobileRsvpLayout() ? 104 : 40;
+  }
+
+  const overlayHeight = Math.max(0, containerRect.bottom - actionsRect.top);
+  return Math.max(isMobileRsvpLayout() ? 96 : 40, overlayHeight + 18);
+}
+
 function syncRsvpViewportOffset() {
   if (!rsvpSection) return;
   if (!rsvpSection.hidden && isMobileRsvpLayout() && window.visualViewport) {
+    const viewportTop = window.visualViewport.offsetTop;
     const viewportHeight = window.visualViewport.height;
-    const keyboardOffset = Math.max(
-      0,
-      window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop
-    );
+    const viewportBottom = viewportTop + viewportHeight;
+    const keyboardOffset = Math.max(0, window.innerHeight - viewportBottom);
     rsvpSection.style.setProperty('--rsvp-modal-height', `${viewportHeight}px`);
     rsvpSection.style.setProperty('--rsvp-keyboard-offset', `${keyboardOffset}px`);
     return;
@@ -1737,23 +1784,47 @@ function syncRsvpViewportOffset() {
 }
 
 function scrollRsvpFieldIntoView(target, { behavior = 'smooth' } = {}) {
-  if (!(target instanceof HTMLElement) || !rsvpModalBody || !rsvpSection || rsvpSection.hidden) return;
+  if (!(target instanceof HTMLElement) || !rsvpSection || rsvpSection.hidden) return;
 
-  const containerRect = rsvpModalBody.getBoundingClientRect();
-  const targetRect = target.getBoundingClientRect();
-  const topBuffer = 20;
-  const bottomBuffer = Math.max(40, 116 + getRsvpKeyboardOffset());
-  const overflowTop = targetRect.top - (containerRect.top + topBuffer);
-  const overflowBottom = targetRect.bottom - (containerRect.bottom - bottomBuffer);
+  const scrollContainer = getRsvpScrollContainer();
+  if (!scrollContainer) return;
+
+  const scrollTarget = getRsvpScrollTarget(target);
+  if (!(scrollTarget instanceof HTMLElement)) return;
+
+  const containerRect = scrollContainer.getBoundingClientRect();
+  const visibleBounds = getRsvpVisibleBounds(containerRect);
+  const targetRect = scrollTarget.getBoundingClientRect();
+  const topBuffer = isMobileRsvpLayout() ? 76 : 20;
+  const bottomBuffer = getRsvpBottomOverlayOffset(containerRect);
+  const visibleTop = visibleBounds.top + topBuffer;
+  const visibleBottom = visibleBounds.bottom - bottomBuffer;
+  const overflowTop = targetRect.top - visibleTop;
+  const overflowBottom = targetRect.bottom - visibleBottom;
 
   if (overflowBottom > 0) {
-    rsvpModalBody.scrollBy({ top: overflowBottom, behavior });
+    scrollContainer.scrollBy({ top: overflowBottom, behavior });
     return;
   }
 
   if (overflowTop < 0) {
-    rsvpModalBody.scrollBy({ top: overflowTop, behavior });
+    scrollContainer.scrollBy({ top: overflowTop, behavior });
   }
+}
+
+function scheduleRsvpVisibilitySync(target = null) {
+  clearScheduledRsvpVisibilitySync();
+  const delays = [0, 120, 260, 420];
+  rsvpVisibilityTimeouts = delays.map((delay, index) =>
+    window.setTimeout(() => {
+      const behavior = index === 0 ? 'auto' : 'smooth';
+      if (target instanceof HTMLElement) {
+        scrollRsvpFieldIntoView(target, { behavior });
+        return;
+      }
+      keepActiveRsvpFieldVisible({ behavior });
+    }, delay)
+  );
 }
 
 function focusRsvpTarget(target, { delay = 0, allowScroll = false } = {}) {
@@ -1762,13 +1833,8 @@ function focusRsvpTarget(target, { delay = 0, allowScroll = false } = {}) {
   const runFocus = () => {
     if (rsvpSection?.hidden) return;
     if (allowScroll) {
-      target.focus();
-      requestAnimationFrame(() => {
-        scrollRsvpFieldIntoView(target, { behavior: 'auto' });
-      });
-      window.setTimeout(() => {
-        scrollRsvpFieldIntoView(target, { behavior: 'smooth' });
-      }, 180);
+      target.focus({ preventScroll: true });
+      scheduleRsvpVisibilitySync(target);
       return;
     }
 
@@ -1800,9 +1866,7 @@ function handleRsvpFocusIn(event) {
   const target = event.target;
   if (!(target instanceof HTMLElement) || !target.matches(RSVP_SCROLLABLE_FIELD_SELECTOR)) return;
   keepActiveRsvpFieldVisible({ behavior: 'auto' });
-  window.setTimeout(() => {
-    scrollRsvpFieldIntoView(target, { behavior: 'smooth' });
-  }, 180);
+  scheduleRsvpVisibilitySync(target);
 }
 
 function maintainModalFocus(event) {
@@ -2876,8 +2940,8 @@ function applyThankYouStepContent({ isReturningRsvp }) {
   }
   if (thankYouIntroEl) {
     thankYouIntroEl.textContent = isReturningRsvp
-      ? 'Your RSVP has been edited'
-      : 'Your RSVP has been sent.';
+      ? "Your RSVP has been edited. You should receive an email confirmation from hi@edlaura.com shortly - check your spam if you can't see it!"
+      : "Your RSVP has been sent. You should receive an email confirmation from hi@edlaura.com shortly - check your spam if you can't see it!";
   }
   if (stepEnterButton) {
     stepEnterButton.textContent = isReturningRsvp ? 'Return' : 'Enter';
@@ -3007,19 +3071,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
-      keepActiveRsvpFieldVisible({ behavior: 'auto' });
+      scheduleRsvpVisibilitySync();
     });
     window.visualViewport.addEventListener('scroll', () => {
-      keepActiveRsvpFieldVisible({ behavior: 'auto' });
+      scheduleRsvpVisibilitySync();
     });
   }
   if (mobileRsvpMediaQuery.addEventListener) {
     mobileRsvpMediaQuery.addEventListener('change', () => {
-      keepActiveRsvpFieldVisible({ behavior: 'auto' });
+      scheduleRsvpVisibilitySync();
     });
   } else if (mobileRsvpMediaQuery.addListener) {
     mobileRsvpMediaQuery.addListener(() => {
-      keepActiveRsvpFieldVisible({ behavior: 'auto' });
+      scheduleRsvpVisibilitySync();
     });
   }
   document.addEventListener('keydown', handleModalEscape);
