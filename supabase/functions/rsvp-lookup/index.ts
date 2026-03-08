@@ -54,6 +54,33 @@ async function validateAccess(sitePassword?: string) {
   return { ok: false as const, reason: "bad_password" };
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  return "Unknown error";
+}
+
+function logServerError(event: string, error: unknown, extra: Record<string, unknown> = {}) {
+  console.error(
+    JSON.stringify({
+      event,
+      errorDetail: getErrorMessage(error),
+      build: BUILD_ID,
+      ...extra,
+    }),
+  );
+}
+
+function jsonError(status: number, errorCode: string, error?: unknown, extra: Record<string, unknown> = {}) {
+  if (error) {
+    logServerError(errorCode, error, extra);
+  }
+
+  return json(status, { error: errorCode });
+}
+
 Deno.serve(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
@@ -82,7 +109,7 @@ Deno.serve(async req => {
     .select("*")
     .eq("email", email);
 
-  if (guestsErr) return json(500, { error: "guest_lookup_failed", details: guestsErr.message });
+  if (guestsErr) return jsonError(500, "guest_lookup_failed", guestsErr, { email, phase: "lookup_guests" });
 
   const { data: invite, error: inviteErr } = await supabaseAdmin
     .from("invites")
@@ -90,7 +117,7 @@ Deno.serve(async req => {
     .eq("primary_email", email)
     .maybeSingle();
 
-  if (inviteErr) return json(500, { error: "invite_lookup_failed", details: inviteErr.message });
+  if (inviteErr) return jsonError(500, "invite_lookup_failed", inviteErr, { email, phase: "lookup_invite" });
   const analyticsUserIdHash = await buildAnalyticsUserIdHash(email);
 
   return json(200, {

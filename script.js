@@ -256,9 +256,7 @@ function trackSiteVisitOnce() {
 }
 
 function classifyRsvpSubmitError(error) {
-  const status = Number.isFinite(error?.rsvpStatus) ? error.rsvpStatus : 0;
-  const bodyError = error?.rsvpBody?.error;
-  const bodyReason = error?.rsvpBody?.reason;
+  const { status, bodyError, bodyReason } = getRsvpErrorMeta(error);
   const errorCode =
     (typeof bodyError === 'string' && bodyError) ||
     (typeof bodyReason === 'string' && bodyReason) ||
@@ -266,6 +264,118 @@ function classifyRsvpSubmitError(error) {
   const httpStatusBucket =
     status >= 500 ? '5xx' : status >= 400 ? '4xx' : status >= 300 ? '3xx' : status >= 200 ? '2xx' : '0xx';
   return { errorCode, httpStatusBucket };
+}
+
+function getRsvpErrorMeta(error) {
+  const status = Number.isFinite(error?.rsvpStatus) ? error.rsvpStatus : 0;
+  const bodyError = error?.rsvpBody?.error;
+  const bodyReason = error?.rsvpBody?.reason;
+  const bodyMessage = error?.rsvpBody?.message;
+  const bodyDetails = error?.rsvpBody?.details;
+  const rawMessage = typeof error?.message === 'string' ? error.message : '';
+
+  return {
+    status,
+    bodyError: typeof bodyError === 'string' ? bodyError : '',
+    bodyReason: typeof bodyReason === 'string' ? bodyReason : '',
+    bodyMessage: typeof bodyMessage === 'string' ? bodyMessage : '',
+    bodyDetails: typeof bodyDetails === 'string' ? bodyDetails : '',
+    rawMessage,
+  };
+}
+
+function hasDuplicateEmailConstraint(error) {
+  const { bodyDetails, rawMessage } = getRsvpErrorMeta(error);
+  const combined = `${bodyDetails} ${rawMessage}`.toLowerCase();
+  return (
+    combined.includes('duplicate key value') &&
+    (combined.includes('guests_email_unique') || combined.includes('email'))
+  );
+}
+
+function translateRsvpError(error, context = 'submit') {
+  if (!error) {
+    return "We couldn't process your RSVP just now. Please try again in a moment.";
+  }
+
+  if (hasDuplicateEmailConstraint(error)) {
+    return "We seem to already have an RSVP saved for that email address. Try again in a second, and if it doesn't work again, please let us know!";
+  }
+
+  const { status, bodyError, bodyReason, rawMessage } = getRsvpErrorMeta(error);
+  const errorCode = bodyError || bodyReason || '';
+
+  if (rawMessage === 'RSVP service returned an invalid response.') {
+    return "We couldn't process your RSVP just now. Please try again in a moment.";
+  }
+
+  if (context === 'lookup') {
+    if (status === 401 || errorCode === 'unauthorised' || errorCode === 'bad_password' || errorCode === 'server_password_not_set') {
+      return "We couldn't verify your RSVP just now. Please try again in a moment. If it still doesn't work, contact us.";
+    }
+
+    if (errorCode === 'invalid_email') {
+      return 'Please enter a valid email address to continue.';
+    }
+  }
+
+  if (context === 'load_saved_rsvp') {
+    if (errorCode === 'guest_lookup_failed' || errorCode === 'invite_lookup_failed') {
+      return "We couldn't load your saved RSVP just now. Please try again soon.";
+    }
+  }
+
+  switch (errorCode) {
+    case 'duplicate_email':
+      return "We seem to already have an RSVP saved for that email address. Try again in a second, and if it doesn't work again, please let us know!";
+    case 'guest_insert_failed':
+    case 'invite_create_failed':
+      return "We couldn't save your RSVP just yet. Please try again in a moment.";
+    case 'guest_update_failed':
+      return "We couldn't update your RSVP just yet. Please try again in a moment.";
+    case 'guest_lookup_failed':
+      return context === 'lookup'
+        ? "We couldn't verify your RSVP just now. Please try again in a moment."
+        : "We couldn't load your RSVP just now. Please try again in a moment.";
+    case 'invite_lookup_failed':
+      return "We couldn't verify your invite just now. Please try again in a moment.";
+    case 'invite_update_failed':
+      return 'Your RSVP may not have been saved properly. Please try again in a moment.';
+    case 'missing_invitation_group':
+      return "We couldn't match your RSVP to your invitation. Please contact us and we'll fix it.";
+    case 'missing_server_secrets':
+    case 'server_password_not_set':
+      return 'The RSVP page is having a technical problem at the moment. Please try again later.';
+    case 'bad_password':
+    case 'unauthorised':
+      return "That password doesn't look right. Please try again.";
+    case 'invalid_json':
+      return 'Something went wrong while sending your RSVP. Please try again.';
+    case 'invalid_email':
+      return 'Please enter a valid email address so we can keep in touch.';
+    case 'invalid_attendance_value':
+      return 'Please let us know whether you can make the wedding.';
+    case 'invalid_cricket_attendance_value':
+      return 'Please let us know whether you can make the cricket and drinks on Friday.';
+    case 'invalid_plusone_attendance_value':
+      return 'Please let us know whether your guest can make the wedding.';
+    case 'invalid_plusone_cricket_attendance_value':
+      return 'Please let us know whether your guest can make the cricket and drinks on Friday.';
+    case 'missing_name':
+      return 'Please enter your first name and surname.';
+    case 'missing_address':
+      return 'Please enter your house number, street name, city, and postcode.';
+    case 'method_not_allowed':
+      return "We couldn't process that request. Please refresh the page and try again.";
+    default:
+      if (status >= 500) {
+        return "We couldn't save your RSVP just now. Please try again in a moment.";
+      }
+      if (status >= 400) {
+        return 'Something looks incomplete. Please check your details and try again.';
+      }
+      return "We couldn't process your RSVP just now. Please try again in a moment.";
+  }
 }
 
 initAnalytics();
@@ -891,15 +1001,15 @@ async function lookupGuestByEmail(email) {
       analyticsUserIdHash,
     };
   } catch (error) {
-    const statusText = typeof error?.message === 'string' ? error.message.toLowerCase() : '';
+    const { status: httpStatus, bodyError, bodyReason } = getRsvpErrorMeta(error);
     const status =
-      statusText.includes('unauthorised') ||
-      statusText.includes('unauthorized') ||
-      statusText.includes('bad_password') ||
-      statusText.includes('server_password_not_set')
+      httpStatus === 401 ||
+      bodyError === 'unauthorised' ||
+      bodyReason === 'bad_password' ||
+      bodyReason === 'server_password_not_set'
         ? 'unauthorized'
         : 'lookup_failed';
-    const details = typeof error?.message === 'string' ? error.message : 'unknown_error';
+    const details = bodyError || bodyReason || 'unknown_error';
 
     if (RSVP_DEBUG) {
       console.error('RSVP lookup failed', {
@@ -910,7 +1020,7 @@ async function lookupGuestByEmail(email) {
       });
     }
 
-    return { status, details, rsvpCompleted: false };
+    return { status, details, rsvpCompleted: false, guestMessage: translateRsvpError(error, 'lookup') };
   }
 }
 
@@ -1466,7 +1576,7 @@ async function loadGuestRowsByEmail(email) {
     return result.guests || [];
   } catch (error) {
     if (rsvpFeedback) {
-      rsvpFeedback.textContent = 'We could not load your saved RSVP yet. Please try again soon.';
+      rsvpFeedback.textContent = translateRsvpError(error, 'load_saved_rsvp');
     }
     return [];
   }
@@ -1802,11 +1912,16 @@ async function handleHeroAccessSubmit() {
       return false;
     }
     if (lookup.status === 'unauthorized') {
-      setRsvpAccessFeedback('Access check failed. Please contact us; RSVP lookup config may be out of sync.');
+      setRsvpAccessFeedback(
+        lookup.guestMessage ||
+          "We couldn't verify your RSVP just now. Please try again in a moment. If it still doesn't work, contact us."
+      );
       return false;
     }
     if (lookup.status === 'lookup_failed') {
-      setRsvpAccessFeedback("We couldn't verify your RSVP right now. Please try again in a moment.");
+      setRsvpAccessFeedback(
+        lookup.guestMessage || "We couldn't verify your RSVP just now. Please try again in a moment."
+      );
       return false;
     }
 
@@ -3003,7 +3118,7 @@ async function submitRsvp(event) {
     if (rsvpFeedback) {
       rsvpFeedback.textContent =
         rsvpState.inviteLookupFailed
-          ? 'This invite link looks invalid or expired. Please contact us for a fresh link.'
+          ? 'This invite link looks invalid or has expired. Please contact us for a fresh link.'
           : 'We could not detect your invite details. Please use your invite link or contact us for help.';
     }
     return;
@@ -3172,7 +3287,8 @@ async function submitRsvp(event) {
       http_status_bucket: httpStatusBucket,
     });
     if (rsvpFeedback) {
-      rsvpFeedback.textContent = error?.message || 'We could not save your RSVP right now. Please try again.';
+      const submissionContext = rsvpState.isReturningRsvp ? 'submit_update' : 'submit_create';
+      rsvpFeedback.textContent = translateRsvpError(error, submissionContext);
     }
     return;
   }

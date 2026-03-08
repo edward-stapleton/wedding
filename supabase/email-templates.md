@@ -16,7 +16,7 @@ Here’s your secure link to access the wedding website and your RSVP details:
 If you didn’t request this link, you can ignore this email.
 
 With love,
-Edward & Laura
+Ed & Laura
 
 ## RSVP confirmation email
 
@@ -36,7 +36,7 @@ If you need to change any details, you can use the magic link anytime:
 If you want to check the details of the wedding at any point, feel free to return to [the website](https://edlaura.com/) and log in using your email and the website password!
 
 With love,
-Edward & Laura
+Ed & Laura
 
 ### Attending = no
 
@@ -54,4 +54,4 @@ If you need to update anything, you can use this link:
 If you want to check the details of the wedding at any point, feel free to return to [the website](https://edlaura.com/) and log in using your email and the website password!
 
 With love,
-Edward & Laura
+Ed & Laura
