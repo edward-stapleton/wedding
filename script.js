@@ -20,11 +20,17 @@ const ANALYTICS_DEBUG = APP_CONFIG.analyticsDebug === true;
 const SITE_BASE_URL =
   APP_CONFIG.siteBaseUrl ?? `${window.location.origin}/`;
 const SITE_BASE_PATH = new URL(SITE_BASE_URL).pathname.replace(/\/?$/, '/');
+const isLoopbackHost = hostname =>
+  hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]';
+const RUNTIME_SITE_BASE_URL =
+  isLoopbackHost(window.location.hostname) && new URL(SITE_BASE_URL).origin !== window.location.origin
+    ? new URL(SITE_BASE_PATH, `${window.location.origin}/`).toString()
+    : SITE_BASE_URL;
 const RSVP_ROUTE_PATH = 'rsvp/';
-const RSVP_ROUTE_URL = new URL(RSVP_ROUTE_PATH, SITE_BASE_URL).toString();
+const RSVP_ROUTE_URL = new URL(RSVP_ROUTE_PATH, RUNTIME_SITE_BASE_URL).toString();
 const RSVP_COUPLE_ROUTE_PATH = 'rsvp-couple/';
 const HEADER_TEMPLATE_PATH = 'partials/site-header.html';
-const HEADER_TEMPLATE_URL = new URL(HEADER_TEMPLATE_PATH, SITE_BASE_URL).toString();
+const HEADER_TEMPLATE_URL = new URL(HEADER_TEMPLATE_PATH, RUNTIME_SITE_BASE_URL).toString();
 const normalizePath = path => {
   let normalized = path || '/';
   if (SITE_BASE_PATH !== '/' && normalized.startsWith(SITE_BASE_PATH)) {
@@ -147,12 +153,12 @@ const thankYouStepSection = document.querySelector('[data-rsvp-step="4"]');
 const thankYouTitleEl = thankYouStepSection?.querySelector('.rsvp-step-title');
 const thankYouIntroEl = thankYouStepSection?.querySelector('.rsvp-step-intro');
 const NAV_LINK_TARGETS = {
-  home: `${SITE_BASE_URL}#home`,
-  schedule: `${SITE_BASE_URL}#schedule`,
-  map: `${SITE_BASE_URL}#map-section`,
-  guide: `${SITE_BASE_URL}#guide`,
-  faqs: `${SITE_BASE_URL}#faqs`,
-  registry: `${SITE_BASE_URL}#registry`,
+  home: `${RUNTIME_SITE_BASE_URL}#home`,
+  schedule: `${RUNTIME_SITE_BASE_URL}#schedule`,
+  map: `${RUNTIME_SITE_BASE_URL}#map-section`,
+  guide: `${RUNTIME_SITE_BASE_URL}#guide`,
+  faqs: `${RUNTIME_SITE_BASE_URL}#faqs`,
+  registry: `${RUNTIME_SITE_BASE_URL}#registry`,
 };
 const RETURNING_QUERY_KEY = 'returning';
 const HERO_VIDEO_AUTOPLAY_TIMEOUT_MS = 1200;
@@ -521,11 +527,11 @@ function resolveRsvpInviteType() {
 
 function resolveRsvpEntryUrl() {
   const path = resolveRsvpInviteType() === 'plusone' ? RSVP_COUPLE_ROUTE_PATH : RSVP_ROUTE_PATH;
-  return new URL(path, SITE_BASE_URL).toString();
+  return new URL(path, RUNTIME_SITE_BASE_URL).toString();
 }
 
 function getHomeAnchorUrl() {
-  const homeUrl = new URL(SITE_BASE_PATH, window.location.origin);
+  const homeUrl = new URL(RUNTIME_SITE_BASE_URL);
   homeUrl.hash = 'home';
   return homeUrl.toString();
 }
