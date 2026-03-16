@@ -133,6 +133,9 @@ const scheduleDetailsPanel = scheduleTimeline?.querySelector('[data-schedule-det
 const scheduleDetailsName = scheduleTimeline?.querySelector('[data-schedule-details-name]');
 const scheduleDetailsLocation = scheduleTimeline?.querySelector('[data-schedule-details-location]');
 const scheduleDetailsDescription = scheduleTimeline?.querySelector('[data-schedule-details-description]');
+const mobileScheduleButtons = Array.from(
+  scheduleSection?.querySelectorAll('.schedule-mobile-button[aria-controls]') ?? []
+);
 let siteNav = document.querySelector('.site-nav');
 let navToggle = document.querySelector('.nav-toggle');
 let navLinks = Array.from(document.querySelectorAll('.nav-links a'));
@@ -2902,6 +2905,58 @@ function setupFaqAccordion() {
   });
 }
 
+function setupMobileScheduleAccordion() {
+  if (!scheduleSection || !mobileScheduleButtons.length) return;
+
+  const items = mobileScheduleButtons
+    .map(button => {
+      const panelId = button.getAttribute('aria-controls');
+      const panel = panelId ? document.getElementById(panelId) : null;
+      if (!panel) return null;
+      return { button, panel };
+    })
+    .filter(Boolean);
+
+  if (!items.length) return;
+
+  const closeItem = ({ button, panel }) => {
+    button.setAttribute('aria-expanded', 'false');
+    panel.hidden = true;
+    panel.classList.remove('open');
+    panel.style.maxHeight = '';
+  };
+
+  const openItem = ({ button, panel }) => {
+    button.setAttribute('aria-expanded', 'true');
+    panel.hidden = false;
+    panel.classList.add('open');
+    panel.style.maxHeight = `${panel.scrollHeight}px`;
+  };
+
+  const closeAllItems = () => {
+    items.forEach(closeItem);
+  };
+
+  closeAllItems();
+
+  items.forEach(item => {
+    item.button.addEventListener('click', () => {
+      const isExpanded = item.button.getAttribute('aria-expanded') === 'true';
+      closeAllItems();
+      if (!isExpanded) {
+        openItem(item);
+      }
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    const openPanel = items.find(item => item.button.getAttribute('aria-expanded') === 'true');
+    if (openPanel) {
+      openPanel.panel.style.maxHeight = `${openPanel.panel.scrollHeight}px`;
+    }
+  });
+}
+
 function setupScheduleTimeline() {
   if (
     !scheduleSection ||
@@ -3185,6 +3240,7 @@ window.addEventListener('load', updateHeaderOffset);
 updateHeaderOffset();
 
 setupGuestSectionToggles();
+setupMobileScheduleAccordion();
 
 function dismissRsvpSection() {
   void closeModal();
