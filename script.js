@@ -1275,14 +1275,21 @@ function initMap() {
     console.warn('Mapbox GL JS failed to load.');
     return;
   }
-  mapboxgl.accessToken = MAPBOX_TOKEN;
-  mapInstance = new mapboxgl.Map({
-    container: 'map',
-    style: MAPBOX_STYLE,
+  const [initialFlyoverStop] = getFlyoverStops();
+  const initialMapCamera = initialFlyoverStop ?? {
     center: CHURCH_COORDS,
     zoom: MAP_DEFAULTS.zoom,
     pitch: MAP_DEFAULTS.pitch,
     bearing: MAP_DEFAULTS.bearing,
+  };
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+  mapInstance = new mapboxgl.Map({
+    container: 'map',
+    style: MAPBOX_STYLE,
+    center: initialMapCamera.center,
+    zoom: initialMapCamera.zoom,
+    pitch: initialMapCamera.pitch,
+    bearing: initialMapCamera.bearing,
   });
   mapInstance.addControl(new mapboxgl.FullscreenControl({ container: mapContainer }), 'top-right');
 
@@ -1292,14 +1299,6 @@ function initMap() {
     bindMapPoiLayerInteractions(mapInstance);
     setupMapViewportSync();
     routeBoundsCache = buildRouteBounds();
-    if (routeBoundsCache) {
-      mapInstance.fitBounds(routeBoundsCache, {
-        padding: 64,
-        duration: 0,
-        pitch: MAP_DEFAULTS.pitch,
-        bearing: MAP_DEFAULTS.bearing,
-      });
-    }
     applyMapLabelTypeface(mapInstance);
     mapInstance.once('idle', () => applyMapLabelTypeface(mapInstance));
     if (pendingMapPoiId) {
@@ -3255,13 +3254,24 @@ function setupScheduleTimeline() {
   let selectedPoint = null;
   let detailsHideTimeoutId = null;
   let animationFrameId = null;
+  let detailsHeightFrameId = null;
 
   const syncDesktopDetailsHeight = () => {
     if (scheduleDetailsPanel.hidden || !scheduleDetailsPanel.classList.contains('is-open')) {
       scheduleDetailsPanel.style.maxHeight = '';
       return;
     }
-    scheduleDetailsPanel.style.maxHeight = `${scheduleDetailsPanel.scrollHeight}px`;
+    scheduleDetailsPanel.style.maxHeight = `${Math.ceil(scheduleDetailsPanel.scrollHeight) + 2}px`;
+  };
+
+  const queueDesktopDetailsHeightSync = () => {
+    if (detailsHeightFrameId != null) {
+      window.cancelAnimationFrame(detailsHeightFrameId);
+    }
+    detailsHeightFrameId = window.requestAnimationFrame(() => {
+      detailsHeightFrameId = null;
+      syncDesktopDetailsHeight();
+    });
   };
 
   const clearDetailsHideTimeout = () => {
@@ -3302,12 +3312,12 @@ function setupScheduleTimeline() {
       scheduleDetailsPanel.hidden = false;
       requestAnimationFrame(() => {
         scheduleDetailsPanel.classList.add('is-open');
-        syncDesktopDetailsHeight();
+        queueDesktopDetailsHeightSync();
       });
       return;
     }
     scheduleDetailsPanel.classList.add('is-open');
-    syncDesktopDetailsHeight();
+    queueDesktopDetailsHeightSync();
   };
 
   const togglePoint = point => {
@@ -3419,10 +3429,20 @@ function setupScheduleTimeline() {
     reducedMotionMediaQuery.addListener(handleReducedMotionChange);
   }
 
-  window.addEventListener('resize', syncDesktopDetailsHeight);
+  window.addEventListener('resize', queueDesktopDetailsHeightSync);
+
+  if (window.ResizeObserver) {
+    const detailsResizeObserver = new ResizeObserver(() => {
+      queueDesktopDetailsHeightSync();
+    });
+    detailsResizeObserver.observe(scheduleDetailsPanel);
+    detailsResizeObserver.observe(scheduleDetailsName);
+    detailsResizeObserver.observe(scheduleDetailsLocation);
+    detailsResizeObserver.observe(scheduleDetailsDescription);
+  }
 
   if (document.fonts?.ready) {
-    document.fonts.ready.then(syncDesktopDetailsHeight).catch(() => {});
+    document.fonts.ready.then(queueDesktopDetailsHeightSync).catch(() => {});
   }
 
   closeDetails({ immediate: true });

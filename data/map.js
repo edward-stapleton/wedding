@@ -455,7 +455,7 @@ export const WEDDING_POIS = [
     zoom: 15.8,
     pitch: 38,
     bearing: -6,
-    popupHtml: '22/08 14:00 Guided walk from the church to the reception venue',
+    popupHtml: '22/08 14:00 Guided Meadow Walk to Reception',
   },
   {
     id: 'parkrun',
