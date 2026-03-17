@@ -2303,8 +2303,15 @@ async function handleHeroAccessSubmit() {
   const emailValue = rsvpAccessEmailInput?.value.trim() || '';
   const passwordValue = rsvpPasswordInput?.value?.trim().toUpperCase() || '';
 
-  if (!passwordValue || passwordValue !== RSVP_PASSWORD) {
+  if (!passwordValue) {
     setRsvpAccessFeedback('Please enter the website password to continue.');
+    rsvpPasswordInput?.setAttribute('aria-invalid', 'true');
+    rsvpPasswordInput?.focus();
+    return false;
+  }
+
+  if (passwordValue !== RSVP_PASSWORD) {
+    setRsvpAccessFeedback("That password doesn't look right. Please try again.");
     rsvpPasswordInput?.setAttribute('aria-invalid', 'true');
     rsvpPasswordInput?.focus();
     return false;
@@ -2925,6 +2932,11 @@ function setupMobileScheduleAccordion() {
 
   if (!items.length) return;
 
+  const syncOpenPanelHeight = panel => {
+    if (!panel.classList.contains('open') || panel.hidden) return;
+    panel.style.maxHeight = `${panel.scrollHeight}px`;
+  };
+
   const closeItem = ({ button, panel }) => {
     button.setAttribute('aria-expanded', 'false');
     panel.hidden = true;
@@ -2936,7 +2948,7 @@ function setupMobileScheduleAccordion() {
     button.setAttribute('aria-expanded', 'true');
     panel.hidden = false;
     panel.classList.add('open');
-    panel.style.maxHeight = `${panel.scrollHeight}px`;
+    syncOpenPanelHeight(panel);
   };
 
   const closeAllItems = () => {
@@ -2958,9 +2970,17 @@ function setupMobileScheduleAccordion() {
   window.addEventListener('resize', () => {
     const openPanel = items.find(item => item.button.getAttribute('aria-expanded') === 'true');
     if (openPanel) {
-      openPanel.panel.style.maxHeight = `${openPanel.panel.scrollHeight}px`;
+      syncOpenPanelHeight(openPanel.panel);
     }
   });
+
+  if (document.fonts?.ready) {
+    document.fonts.ready
+      .then(() => {
+        items.forEach(({ panel }) => syncOpenPanelHeight(panel));
+      })
+      .catch(() => {});
+  }
 }
 
 function setupScheduleTimeline() {
@@ -2991,6 +3011,14 @@ function setupScheduleTimeline() {
   let detailsHideTimeoutId = null;
   let animationFrameId = null;
 
+  const syncDesktopDetailsHeight = () => {
+    if (scheduleDetailsPanel.hidden || !scheduleDetailsPanel.classList.contains('is-open')) {
+      scheduleDetailsPanel.style.maxHeight = '';
+      return;
+    }
+    scheduleDetailsPanel.style.maxHeight = `${scheduleDetailsPanel.scrollHeight}px`;
+  };
+
   const clearDetailsHideTimeout = () => {
     if (detailsHideTimeoutId) {
       window.clearTimeout(detailsHideTimeoutId);
@@ -3007,6 +3035,7 @@ function setupScheduleTimeline() {
   const closeDetails = ({ immediate = false } = {}) => {
     clearDetailsHideTimeout();
     scheduleDetailsPanel.classList.remove('is-open');
+    scheduleDetailsPanel.style.maxHeight = '';
     if (immediate || reducedMotionMediaQuery.matches) {
       scheduleDetailsPanel.hidden = true;
       return;
@@ -3028,10 +3057,12 @@ function setupScheduleTimeline() {
       scheduleDetailsPanel.hidden = false;
       requestAnimationFrame(() => {
         scheduleDetailsPanel.classList.add('is-open');
+        syncDesktopDetailsHeight();
       });
       return;
     }
     scheduleDetailsPanel.classList.add('is-open');
+    syncDesktopDetailsHeight();
   };
 
   const togglePoint = point => {
@@ -3141,6 +3172,12 @@ function setupScheduleTimeline() {
     reducedMotionMediaQuery.addEventListener('change', handleReducedMotionChange);
   } else if (reducedMotionMediaQuery.addListener) {
     reducedMotionMediaQuery.addListener(handleReducedMotionChange);
+  }
+
+  window.addEventListener('resize', syncDesktopDetailsHeight);
+
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(syncDesktopDetailsHeight).catch(() => {});
   }
 
   closeDetails({ immediate: true });
