@@ -251,6 +251,7 @@ let activeFlyoverId = 0;
 let mapResizeFrame = null;
 let mapScrollFrame = null;
 let mapViewportObserver = null;
+let pendingMapPoiId = '';
 const MAP_POI_FILL_LAYER_IDS = {
   parkrun: 'parkrun-route-line-hitarea',
   cricket: 'cricket-footprint-fill',
@@ -699,9 +700,15 @@ function setActiveMapPoiButton(activeId) {
 }
 
 function focusMapPoi(poiId) {
-  if (!mapInstance || !mapLoaded) return;
   const poi = WEDDING_POIS.find(item => item.id === poiId);
   if (!poi) return;
+  if (!mapInstance || !mapLoaded) {
+    pendingMapPoiId = poiId;
+    setActiveMapPoiButton(poiId);
+    return;
+  }
+
+  pendingMapPoiId = '';
   activeFlyoverId += 1;
   mapInstance.stop();
   if (poiId === 'parkrun') {
@@ -1012,6 +1019,8 @@ function bindMapPoiLayerInteractions(map) {
 function bindMapPoiControls() {
   if (!mapPoiButtons.length) return;
   mapPoiButtons.forEach(button => {
+    if (button.dataset.mapPoiBound === 'true') return;
+    button.dataset.mapPoiBound = 'true';
     button.addEventListener('click', () => {
       focusMapPoi(button.dataset.mapPoi);
     });
@@ -1180,6 +1189,7 @@ function setupMapViewportSync() {
 
 function initMap() {
   if (!mapElement || !MAPBOX_TOKEN) return;
+  bindMapPoiControls();
   if (!window.mapboxgl) {
     console.warn('Mapbox GL JS failed to load.');
     return;
@@ -1199,7 +1209,6 @@ function initMap() {
     mapLoaded = true;
     addMapSourcesAndLayers(mapInstance);
     bindMapPoiLayerInteractions(mapInstance);
-    bindMapPoiControls();
     setupMapViewportSync();
     routeBoundsCache = buildRouteBounds();
     if (routeBoundsCache) {
@@ -1212,7 +1221,11 @@ function initMap() {
     }
     applyMapLabelTypeface(mapInstance);
     mapInstance.once('idle', () => applyMapLabelTypeface(mapInstance));
-    playMapFlyover();
+    if (pendingMapPoiId) {
+      focusMapPoi(pendingMapPoiId);
+    } else {
+      playMapFlyover();
+    }
   });
 }
 
