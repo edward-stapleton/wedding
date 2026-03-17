@@ -6,6 +6,8 @@ import {
   PARKRUN_ROUTE,
   PARKRUN_START,
   WALKING_ROUTE,
+  WALKING_ROUTE_FINISH,
+  WALKING_ROUTE_START,
   WEDDING_POIS,
 } from './data/map.js';
 import { GUIDE_CATEGORY_INTROS } from './data/guide.js';
@@ -253,6 +255,7 @@ let mapScrollFrame = null;
 let mapViewportObserver = null;
 let pendingMapPoiId = '';
 const MAP_POI_FILL_LAYER_IDS = {
+  walk: 'walking-route-line-hitarea',
   parkrun: 'parkrun-route-line-hitarea',
   cricket: 'cricket-footprint-fill',
   church: 'church-footprint-fill',
@@ -711,8 +714,9 @@ function focusMapPoi(poiId) {
   pendingMapPoiId = '';
   activeFlyoverId += 1;
   mapInstance.stop();
-  if (poiId === 'parkrun') {
-    const bounds = buildBoundsForFeatureCollection(PARKRUN_ROUTE);
+  if (poiId === 'walk' || poiId === 'parkrun') {
+    const routeFeatureCollection = poiId === 'walk' ? WALKING_ROUTE : PARKRUN_ROUTE;
+    const bounds = buildBoundsForFeatureCollection(routeFeatureCollection);
     if (bounds) {
       mapInstance.fitBounds(bounds, {
         padding: getMapPoiFitPadding(),
@@ -750,6 +754,9 @@ function focusMapPoi(poiId) {
 }
 
 function getPoiPopupCenter(poiId) {
+  if (poiId === 'walk') {
+    return getFeatureCenter(WALKING_ROUTE_START, WEDDING_POIS.find(item => item.id === poiId)?.coords);
+  }
   if (poiId === 'parkrun') {
     return getFeatureCenter(PARKRUN_START, WEDDING_POIS.find(item => item.id === poiId)?.coords);
   }
@@ -794,6 +801,18 @@ function addMapSourcesAndLayers(map) {
       data: WALKING_ROUTE,
     });
   }
+  if (!map.getSource('walking-route-start')) {
+    map.addSource('walking-route-start', {
+      type: 'geojson',
+      data: WALKING_ROUTE_START,
+    });
+  }
+  if (!map.getSource('walking-route-finish')) {
+    map.addSource('walking-route-finish', {
+      type: 'geojson',
+      data: WALKING_ROUTE_FINISH,
+    });
+  }
   if (!map.getSource('parkrun-route')) {
     map.addSource('parkrun-route', {
       type: 'geojson',
@@ -831,6 +850,23 @@ function addMapSourcesAndLayers(map) {
     });
   }
 
+  if (!map.getLayer('walking-route-line-hitarea')) {
+    map.addLayer({
+      id: 'walking-route-line-hitarea',
+      type: 'line',
+      source: 'walking-route',
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round',
+      },
+      paint: {
+        'line-color': '#000000',
+        'line-opacity': 0,
+        'line-width': 16,
+      },
+    });
+  }
+
   if (!map.getLayer('walking-route-line')) {
     map.addLayer({
       id: 'walking-route-line',
@@ -841,8 +877,37 @@ function addMapSourcesAndLayers(map) {
         'line-join': 'round',
       },
       paint: {
-        'line-color': '#0a6c7d',
-        'line-width': 4,
+        'line-color': '#f6b73c',
+        'line-width': 4.5,
+        'line-opacity': 0.95,
+      },
+    });
+  }
+
+  if (!map.getLayer('walk-start-circle')) {
+    map.addLayer({
+      id: 'walk-start-circle',
+      type: 'circle',
+      source: 'walking-route-start',
+      paint: {
+        'circle-radius': 7,
+        'circle-color': '#227a4b',
+        'circle-stroke-color': '#f7fbe9',
+        'circle-stroke-width': 2,
+      },
+    });
+  }
+
+  if (!map.getLayer('walk-finish-circle')) {
+    map.addLayer({
+      id: 'walk-finish-circle',
+      type: 'circle',
+      source: 'walking-route-finish',
+      paint: {
+        'circle-radius': 7,
+        'circle-color': '#b73d4f',
+        'circle-stroke-color': '#f7fbe9',
+        'circle-stroke-width': 2,
       },
     });
   }
@@ -990,6 +1055,22 @@ function bindMapPoiLayerInteractions(map) {
       map.stop();
       openMapPoiPopup(poiId);
       setActiveMapPoiButton(poiId);
+    });
+    map.on('mouseenter', layerId, () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', layerId, () => {
+      map.getCanvas().style.cursor = '';
+    });
+  });
+
+  ['walk-start-circle', 'walk-finish-circle'].forEach(layerId => {
+    if (!map.getLayer(layerId)) return;
+    map.on('click', layerId, () => {
+      activeFlyoverId += 1;
+      map.stop();
+      openMapPoiPopup('walk');
+      setActiveMapPoiButton('walk');
     });
     map.on('mouseenter', layerId, () => {
       map.getCanvas().style.cursor = 'pointer';

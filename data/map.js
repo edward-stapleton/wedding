@@ -415,7 +415,48 @@ export const PARKRUN_FINISH = {
   ],
 };
 
+export const WALKING_ROUTE_START = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        name: 'Walk start',
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: [-1.268910374597823, 51.76645696949447],
+      },
+    },
+  ],
+};
+
+export const WALKING_ROUTE_FINISH = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        name: 'Walk finish',
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: [-1.2803336416793627, 51.763438376441684],
+      },
+    },
+  ],
+};
+
 export const WEDDING_POIS = [
+  {
+    id: 'walk',
+    label: 'Walk from Church to Venue',
+    coords: [-1.268910374597823, 51.76645696949447],
+    zoom: 15.8,
+    pitch: 38,
+    bearing: -6,
+    popupHtml: '22/08 14:00 Guided walk from the church to the reception venue',
+  },
   {
     id: 'parkrun',
     label: 'Parkrun University Parks',
