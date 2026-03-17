@@ -343,6 +343,7 @@ body.nav-open {
   font-size: clamp(2.4375rem, 7.5vw, 3.75rem);
   line-height: 1.1;
   text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
 }
 
 .hero-date {
@@ -350,17 +351,19 @@ body.nav-open {
   font-size: clamp(0.95rem, 3.5vw, 1.25rem);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
 }
 
 .hero-location {
   margin: 0;
   font-size: clamp(1.05rem, 3.5vw, 1.35rem);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
 }
 
 .primary {
   background: #ffffff;
   color: #4f752a;
-  border: none;
+  border: 2px solid var(--page-background);
   padding: 0.85rem 2.5rem;
   font-size: 1rem;
   cursor: pointer;
@@ -410,6 +413,7 @@ body.nav-open {
   margin-top: 0.5rem;
   color: #ffffff;
   font-weight: 600;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
   z-index: 2001;
 }
 
@@ -447,6 +451,7 @@ body.nav-open {
   margin: 0.25rem 0 0;
   color: #ffffff;
   font-size: 0.95rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
 }
 
 .scroll-invite {

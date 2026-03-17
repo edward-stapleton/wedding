@@ -2,6 +2,9 @@ import {
   CHURCH_FOOTPRINT,
   CRICKET_FOOTPRINT,
   GARDEN_FOOTPRINT,
+  PARKRUN_FINISH,
+  PARKRUN_ROUTE,
+  PARKRUN_START,
   WALKING_ROUTE,
   WEDDING_POIS,
 } from './data/map.js';
@@ -70,6 +73,7 @@ const MAP_DEFAULTS = {
   bearing: -15,
 };
 const WALKING_ROUTE_COORDS = WALKING_ROUTE?.features?.[0]?.geometry?.coordinates ?? [];
+const PARKRUN_ROUTE_COORDS = PARKRUN_ROUTE?.features?.[0]?.geometry?.coordinates ?? [];
 
 const heroAccessForm = document.querySelector('[data-hero-access-form]');
 const heroSection = document.querySelector('[data-hero-section]');
@@ -248,6 +252,7 @@ let mapResizeFrame = null;
 let mapScrollFrame = null;
 let mapViewportObserver = null;
 const MAP_POI_FILL_LAYER_IDS = {
+  parkrun: 'parkrun-route-line-hitarea',
   cricket: 'cricket-footprint-fill',
   church: 'church-footprint-fill',
   venue: 'garden-footprint-fill',
@@ -607,6 +612,28 @@ function buildRouteBounds() {
   return bounds;
 }
 
+function buildBoundsForFeatureCollection(featureCollection) {
+  if (!window.mapboxgl) return null;
+  const coordinates = featureCollection?.features?.flatMap(feature => {
+    const geometry = feature?.geometry;
+    if (!geometry) return [];
+    if (geometry.type === 'LineString') return geometry.coordinates ?? [];
+    if (geometry.type === 'Polygon') return geometry.coordinates?.[0] ?? [];
+    if (geometry.type === 'Point') return geometry.coordinates ? [geometry.coordinates] : [];
+    return [];
+  });
+  if (!coordinates?.length) return null;
+  const bounds = new mapboxgl.LngLatBounds();
+  coordinates.forEach(coord => bounds.extend(coord));
+  return bounds;
+}
+
+function getMapPoiFitPadding() {
+  return isMobileMapLayout()
+    ? { top: 88, right: 28, bottom: 88, left: 28 }
+    : { top: 96, right: 96, bottom: 96, left: 96 };
+}
+
 function getFlyoverStops() {
   const midpoint = WALKING_ROUTE_COORDS[Math.floor(WALKING_ROUTE_COORDS.length / 2)] || CHURCH_COORDS;
   const gardenCenter = getFeatureCenter(GARDEN_FOOTPRINT, midpoint);
@@ -677,6 +704,31 @@ function focusMapPoi(poiId) {
   if (!poi) return;
   activeFlyoverId += 1;
   mapInstance.stop();
+  if (poiId === 'parkrun') {
+    const bounds = buildBoundsForFeatureCollection(PARKRUN_ROUTE);
+    if (bounds) {
+      mapInstance.fitBounds(bounds, {
+        padding: getMapPoiFitPadding(),
+        duration: 1600,
+        pitch: poi.pitch,
+        bearing: poi.bearing,
+        essential: true,
+      });
+    } else {
+      mapInstance.flyTo({
+        center: poi.coords,
+        zoom: poi.zoom,
+        pitch: poi.pitch,
+        bearing: poi.bearing,
+        speed: 0.75,
+        curve: 1.35,
+        essential: true,
+      });
+    }
+    openMapPoiPopup(poiId);
+    setActiveMapPoiButton(poiId);
+    return;
+  }
   mapInstance.flyTo({
     center: poi.coords,
     zoom: poi.zoom,
@@ -691,6 +743,9 @@ function focusMapPoi(poiId) {
 }
 
 function getPoiPopupCenter(poiId) {
+  if (poiId === 'parkrun') {
+    return getFeatureCenter(PARKRUN_START, WEDDING_POIS.find(item => item.id === poiId)?.coords);
+  }
   if (poiId === 'cricket') {
     return getFeatureCenter(CRICKET_FOOTPRINT, WEDDING_POIS.find(item => item.id === poiId)?.coords);
   }
@@ -732,6 +787,24 @@ function addMapSourcesAndLayers(map) {
       data: WALKING_ROUTE,
     });
   }
+  if (!map.getSource('parkrun-route')) {
+    map.addSource('parkrun-route', {
+      type: 'geojson',
+      data: PARKRUN_ROUTE,
+    });
+  }
+  if (!map.getSource('parkrun-start')) {
+    map.addSource('parkrun-start', {
+      type: 'geojson',
+      data: PARKRUN_START,
+    });
+  }
+  if (!map.getSource('parkrun-finish')) {
+    map.addSource('parkrun-finish', {
+      type: 'geojson',
+      data: PARKRUN_FINISH,
+    });
+  }
   if (!map.getSource('cricket-footprint')) {
     map.addSource('cricket-footprint', {
       type: 'geojson',
@@ -763,6 +836,68 @@ function addMapSourcesAndLayers(map) {
       paint: {
         'line-color': '#0a6c7d',
         'line-width': 4,
+      },
+    });
+  }
+
+  if (!map.getLayer('parkrun-route-line-hitarea')) {
+    map.addLayer({
+      id: 'parkrun-route-line-hitarea',
+      type: 'line',
+      source: 'parkrun-route',
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round',
+      },
+      paint: {
+        'line-color': '#000000',
+        'line-opacity': 0,
+        'line-width': 16,
+      },
+    });
+  }
+
+  if (!map.getLayer('parkrun-route-line')) {
+    map.addLayer({
+      id: 'parkrun-route-line',
+      type: 'line',
+      source: 'parkrun-route',
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round',
+      },
+      paint: {
+        'line-color': '#f6b73c',
+        'line-width': 4.5,
+        'line-opacity': 0.95,
+      },
+    });
+  }
+
+  if (!map.getLayer('parkrun-start-circle')) {
+    map.addLayer({
+      id: 'parkrun-start-circle',
+      type: 'circle',
+      source: 'parkrun-start',
+      paint: {
+        'circle-radius': 7,
+        'circle-color': '#227a4b',
+        'circle-stroke-color': '#f7fbe9',
+        'circle-stroke-width': 2,
+      },
+    });
+  }
+
+  if (!map.getLayer('parkrun-finish-circle')) {
+    map.addLayer({
+      id: 'parkrun-finish-circle',
+      type: 'circle',
+      source: 'parkrun-finish',
+      paint: {
+        'circle-radius': 7,
+        'circle-color': '#b73d4f',
+        'circle-stroke-color': '#f7fbe9',
+        'circle-stroke-width': 2,
       },
     });
   }
@@ -848,6 +983,22 @@ function bindMapPoiLayerInteractions(map) {
       map.stop();
       openMapPoiPopup(poiId);
       setActiveMapPoiButton(poiId);
+    });
+    map.on('mouseenter', layerId, () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', layerId, () => {
+      map.getCanvas().style.cursor = '';
+    });
+  });
+
+  ['parkrun-start-circle', 'parkrun-finish-circle'].forEach(layerId => {
+    if (!map.getLayer(layerId)) return;
+    map.on('click', layerId, () => {
+      activeFlyoverId += 1;
+      map.stop();
+      openMapPoiPopup('parkrun');
+      setActiveMapPoiButton('parkrun');
     });
     map.on('mouseenter', layerId, () => {
       map.getCanvas().style.cursor = 'pointer';
