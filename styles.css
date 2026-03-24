@@ -2253,8 +2253,8 @@ html.no-js .schedule-desktop .schedule-track-line::after {
   .rsvp-header {
     position: sticky;
     top: 0;
-    margin: 0 4rem 0 0;
-    padding: 0.15rem 0 0.65rem;
+    margin: 0 -1rem 0;
+    padding: 0.15rem calc(4rem + 1rem) 0.65rem 1rem;
     background: linear-gradient(180deg, rgba(118, 164, 223, 0.28), rgba(118, 164, 223, 0));
     backdrop-filter: blur(10px);
   }
@@ -2323,6 +2323,9 @@ html.no-js .schedule-desktop .schedule-track-line::after {
   .rsvp-actions {
     position: sticky;
     bottom: 0;
+    margin: 0 -1rem calc(env(safe-area-inset-bottom) * -1);
+    padding-left: 1rem;
+    padding-right: 1rem;
     padding-top: 0.5rem;
     padding-bottom: calc(env(safe-area-inset-bottom) + 0.35rem);
     background: rgba(129, 159, 114, 0.98);
