@@ -2333,6 +2333,7 @@ html.no-js .schedule-desktop .schedule-track-line::after {
   }
 
   .rsvp-step {
+    flex: 1 0 auto;
     gap: 0.85rem;
     padding-top: 0.25rem;
   }
@@ -2342,7 +2343,7 @@ html.no-js .schedule-desktop .schedule-track-line::after {
     font-size: 1.15rem;
   }
 
-  #rsvp-form:not(.rsvp-step-four) .rsvp-step-title {
+  #rsvp-form .rsvp-step-title {
     display: none;
   }
 
@@ -2428,6 +2429,14 @@ html.no-js .schedule-desktop .schedule-track-line::after {
 
   .rsvp-field-message {
     max-width: min(100%, 18rem);
+  }
+
+  #rsvp-form.rsvp-step-four .rsvp-actions {
+    grid-template-columns: 1fr;
+  }
+
+  #rsvp-form.rsvp-step-four .rsvp-actions > * {
+    grid-column: 1 / -1;
   }
 }
 
