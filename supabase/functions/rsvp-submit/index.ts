@@ -324,11 +324,11 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
     : "";
 
   const html = [
-    "<style>@media only screen and (max-width: 640px) {.rsvp-email-shell{background-color:#4F752A !important;}.rsvp-email-shell-cell{padding:0 !important;background-color:#4F752A !important;}.rsvp-email-panel{max-width:none !important;width:100% !important;}.rsvp-email-content{padding:28px 24px 32px !important;}}</style>",
-    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"rsvp-email-shell\" style=\"width:100%;min-width:100%;background-color:#EEF3E6;border-collapse:collapse;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;\">",
+    "<style>html,body{margin:0 !important;padding:0 !important;background-color:#4F752A !important;}table{border-collapse:collapse;}@media only screen and (min-width: 641px) {.rsvp-email-shell{background-color:#EEF3E6 !important;}.rsvp-email-shell-cell{padding:32px 16px !important;background-color:#EEF3E6 !important;}.rsvp-email-panel{max-width:640px !important;}.rsvp-email-content{padding:28px 24px 32px !important;}}</style>",
+    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"rsvp-email-shell\" style=\"width:100%;min-width:100%;background-color:#4F752A;border-collapse:collapse;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;\">",
     "<tr>",
-    "<td align=\"center\" class=\"rsvp-email-shell-cell\" style=\"padding:32px 16px;background-color:#EEF3E6;\">",
-    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"rsvp-email-panel\" style=\"width:100%;max-width:640px;border-collapse:collapse;\">",
+    "<td align=\"center\" class=\"rsvp-email-shell-cell\" style=\"padding:0;background-color:#4F752A;\">",
+    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"rsvp-email-panel\" style=\"width:100%;border-collapse:collapse;\">",
     "<tr>",
     "<td class=\"rsvp-email-content\" style=\"background-color:#4F752A;color:#FFFFFF;line-height:1.5;padding:28px 24px 32px;text-align:left;\">",
     `<div style="text-align:center;margin:0 0 24px;"><img src="${EMAIL_LOGO_URL}" alt="Ed and Laura wedding logo" width="120" height="120" style="display:inline-block;width:120px;height:120px;max-width:120px;border:0;outline:none;text-decoration:none;" /></div>`,

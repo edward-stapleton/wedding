@@ -132,6 +132,10 @@ const stepSubmitHitbox = document.querySelector('[data-step-submit-hitbox]');
 const stepNextSlot = document.querySelector('[data-step-next-slot]');
 const stepSubmitSlot = document.querySelector('[data-step-submit-slot]');
 const mobileRsvpMediaQuery = window.matchMedia('(max-width: 600px)');
+let rsvpBodyLockScrollY = 0;
+let rsvpBodyLockActive = false;
+let rsvpBodyLockBodyStyles = null;
+let rsvpBodyLockDocumentStyles = null;
 const RSVP_STEP_FOCUS_SELECTOR =
   'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled])';
 const RSVP_SCROLLABLE_FIELD_SELECTOR =
@@ -2227,7 +2231,61 @@ function setRsvpSectionVisibility(shouldShow) {
   rsvpSection.setAttribute('aria-hidden', String(!shouldShow));
   rsvpSection.classList.toggle('open', shouldShow);
   document.body.classList.toggle('rsvp-modal-open', shouldShow);
+  if (shouldShow) {
+    lockBodyScrollForRsvp();
+  } else {
+    unlockBodyScrollForRsvp();
+  }
   syncRsvpViewportOffset();
+}
+
+function lockBodyScrollForRsvp() {
+  if (rsvpBodyLockActive) return;
+
+  rsvpBodyLockScrollY = window.scrollY || window.pageYOffset || 0;
+  rsvpBodyLockBodyStyles = {
+    position: document.body.style.position,
+    top: document.body.style.top,
+    left: document.body.style.left,
+    right: document.body.style.right,
+    width: document.body.style.width,
+    overflow: document.body.style.overflow,
+  };
+  rsvpBodyLockDocumentStyles = {
+    overflow: document.documentElement.style.overflow,
+    overscrollBehavior: document.documentElement.style.overscrollBehavior,
+  };
+
+  document.documentElement.style.overflow = 'hidden';
+  document.documentElement.style.overscrollBehavior = 'none';
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${rsvpBodyLockScrollY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+  document.body.style.overflow = 'hidden';
+  rsvpBodyLockActive = true;
+}
+
+function unlockBodyScrollForRsvp() {
+  if (!rsvpBodyLockActive) return;
+
+  document.documentElement.style.overflow = rsvpBodyLockDocumentStyles?.overflow || '';
+  document.documentElement.style.overscrollBehavior =
+    rsvpBodyLockDocumentStyles?.overscrollBehavior || '';
+  document.body.style.position = rsvpBodyLockBodyStyles?.position || '';
+  document.body.style.top = rsvpBodyLockBodyStyles?.top || '';
+  document.body.style.left = rsvpBodyLockBodyStyles?.left || '';
+  document.body.style.right = rsvpBodyLockBodyStyles?.right || '';
+  document.body.style.width = rsvpBodyLockBodyStyles?.width || '';
+  document.body.style.overflow = rsvpBodyLockBodyStyles?.overflow || '';
+
+  const scrollY = rsvpBodyLockScrollY;
+  rsvpBodyLockBodyStyles = null;
+  rsvpBodyLockDocumentStyles = null;
+  rsvpBodyLockActive = false;
+  rsvpBodyLockScrollY = 0;
+  window.scrollTo(0, scrollY);
 }
 
 function getModalFocusableElements() {
