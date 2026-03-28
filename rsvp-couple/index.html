@@ -206,17 +206,28 @@
                 <div class="rsvp-body">
                   <form id="rsvp-form" novalidate>
                   <div class="rsvp-header" data-rsvp-header>
-                    <ol class="rsvp-steps rsvp-progress" aria-label="RSVP progress">
-                      <li class="rsvp-step-indicator" data-step-indicator="1">
-                        <span class="rsvp-step-label">Guest 1</span>
-                      </li>
-                      <li class="rsvp-step-indicator" data-step-indicator="2">
-                        <span class="rsvp-step-label">Guest 2</span>
-                      </li>
-                      <li class="rsvp-step-indicator" data-step-indicator="3">
-                        <span class="rsvp-step-label">Contact Details</span>
-                      </li>
-                    </ol>
+                    <div class="rsvp-header-top">
+                      <button
+                        type="button"
+                        class="rsvp-header-close"
+                        data-rsvp-modal-close
+                        aria-label="Close RSVP form"
+                      >
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                      <ol class="rsvp-steps rsvp-progress" aria-label="RSVP progress">
+                        <li class="rsvp-step-indicator" data-step-indicator="1">
+                          <span class="rsvp-step-label">Guest 1</span>
+                        </li>
+                        <li class="rsvp-step-indicator" data-step-indicator="2">
+                          <span class="rsvp-step-label">Guest 2</span>
+                        </li>
+                        <li class="rsvp-step-indicator" data-step-indicator="3">
+                          <span class="rsvp-step-label">Contact Details</span>
+                        </li>
+                      </ol>
+                    </div>
+                    <h3 class="rsvp-header-title" data-rsvp-header-title aria-live="polite"></h3>
                   </div>
 
                   <section class="rsvp-step" data-rsvp-step="1" hidden>

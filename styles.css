@@ -1625,6 +1625,15 @@ body.rsvp-modal-open {
   z-index: 3;
 }
 
+.rsvp-header-top {
+  display: block;
+}
+
+.rsvp-header-close,
+.rsvp-header-title {
+  display: none;
+}
+
 .rsvp-steps {
   position: relative;
   list-style: none;
@@ -2231,10 +2240,82 @@ html.no-js .schedule-desktop .schedule-track-line::after {
     position: sticky;
     top: 0;
     margin: 0 -1rem 0;
-    padding: 0.35rem calc(4rem + 1rem) 0.85rem 1rem;
-    background: linear-gradient(180deg, rgba(129, 159, 114, 0.95), rgba(129, 159, 114, 0.78) 78%, rgba(129, 159, 114, 0));
+    padding: 0.5rem 1rem 0.9rem;
+    background: linear-gradient(180deg, rgba(129, 159, 114, 0.97), rgba(129, 159, 114, 0.82) 78%, rgba(129, 159, 114, 0));
     backdrop-filter: blur(10px);
     z-index: 4;
+  }
+
+  .modal-close {
+    display: none;
+  }
+
+  .rsvp-header-top {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .rsvp-header-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    background: rgba(28, 44, 14, 0.18);
+    color: inherit;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .rsvp-header-close:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.72);
+    outline-offset: 2px;
+  }
+
+  .rsvp-steps {
+    gap: 0.45rem;
+    align-items: center;
+  }
+
+  .rsvp-steps::before,
+  .rsvp-step-indicator::before {
+    display: none;
+  }
+
+  .rsvp-step-indicator {
+    min-height: 0;
+    height: 0.42rem;
+    border-radius: 999px;
+    background: rgba(247, 251, 233, 0.24);
+    color: transparent;
+    overflow: hidden;
+  }
+
+  .rsvp-step-indicator:first-child,
+  .rsvp-step-indicator:last-child {
+    align-items: stretch;
+  }
+
+  .rsvp-step-indicator.is-active,
+  .rsvp-step-indicator.is-complete {
+    background: rgba(247, 251, 233, 0.98);
+  }
+
+  .rsvp-step-label {
+    display: none;
+  }
+
+  .rsvp-header-title {
+    display: block;
+    margin: 0.9rem 0 0;
+    font-size: 1.5rem;
+    line-height: 1.1;
   }
 
   #rsvp-form fieldset {
@@ -2259,6 +2340,10 @@ html.no-js .schedule-desktop .schedule-track-line::after {
   .rsvp-step-title {
     margin-top: 0.15rem;
     font-size: 1.15rem;
+  }
+
+  #rsvp-form:not(.rsvp-step-four) .rsvp-step-title {
+    display: none;
   }
 
   .guest-title {
