@@ -1668,7 +1668,9 @@ function resetGuestSectionState() {
 }
 
 function getRsvpStepSequence() {
-  return stepIndicators.length >= 3 ? [1, 2, 3] : [1, 3];
+  const visibleIndicators = Array.from(stepIndicators).filter(indicator => !indicator.hidden);
+  if (visibleIndicators.length === 0) return [1, 3];
+  return visibleIndicators.map(indicator => Number(indicator.dataset.stepIndicator));
 }
 
 function getRsvpNavigationSequence() {
@@ -1703,11 +1705,11 @@ function updateStepIndicators(activeStep) {
   const isAfterProgress = activeIndex === -1 && activeStep > maxStep;
 
   stepIndicators.forEach(indicator => {
-    const indicatorIndex = Number(indicator.dataset.stepIndicator) - 1;
-    const indicatorStep = sequence[indicatorIndex];
+    const indicatorStep = Number(indicator.dataset.stepIndicator);
+    const indicatorIndex = sequence.indexOf(indicatorStep);
     const isActive = indicatorStep === activeStep;
     const isComplete =
-      typeof indicatorStep === 'number' &&
+      indicatorIndex !== -1 &&
       ((activeIndex !== -1 && indicatorIndex < activeIndex) || (isAfterProgress && indicatorStep <= maxStep));
 
     indicator.classList.toggle('is-active', Boolean(isActive));
