@@ -1799,7 +1799,7 @@ function setStep(step) {
   updateStepIndicatorVisibility();
 
   if (rsvpProgress) {
-    const shouldHideProgress = resolvedStep === 4;
+    const shouldHideProgress = false;
     rsvpProgress.hidden = shouldHideProgress;
     rsvpProgress.setAttribute('aria-hidden', String(shouldHideProgress));
   }
