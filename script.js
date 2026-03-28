@@ -94,6 +94,7 @@ const rsvpScrollBody = rsvpSection?.querySelector('.rsvp-body');
 const rsvpModalCloseTargets = rsvpSection?.querySelectorAll('[data-rsvp-modal-close]') ?? [];
 const rsvpForm = document.getElementById('rsvp-form');
 const rsvpFeedback = document.getElementById('rsvp-feedback');
+const rsvpHeaderTitle = document.querySelector('[data-rsvp-header-title]');
 const primaryNameEl = document.querySelector('[data-guest-name="primary"]');
 const plusOneNameEl = document.querySelector('[data-guest-name="plusOne"]');
 const plusOneSections = document.querySelectorAll('[data-guest-section="plusOne"]');
@@ -1727,6 +1728,17 @@ function updateStepIndicatorVisibility() {
   plusOneIndicator.setAttribute('aria-hidden', String(shouldHide));
 }
 
+function updateRsvpHeaderTitle(activeStep, activeSection = null) {
+  if (!(rsvpHeaderTitle instanceof HTMLElement)) return;
+
+  const currentSection =
+    activeSection instanceof HTMLElement
+      ? activeSection
+      : Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === activeStep);
+  const sectionTitle = currentSection?.querySelector('.rsvp-step-title')?.textContent?.trim();
+  rsvpHeaderTitle.textContent = sectionTitle || (activeStep === 4 ? 'Thank you!' : '');
+}
+
 function setEntryMode(mode) {
   const nextMode = mode === 'returning' ? 'returning' : 'new';
   const isReturning = nextMode === 'returning';
@@ -1814,6 +1826,7 @@ function setStep(step) {
   }
 
   const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === resolvedStep);
+  updateRsvpHeaderTitle(resolvedStep, activeSection);
   const scrollContainer = getRsvpScrollContainer();
   if (scrollContainer && !rsvpSection?.hidden) {
     scrollContainer.scrollTo({ top: 0, behavior: 'auto' });
