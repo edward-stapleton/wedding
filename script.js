@@ -136,8 +136,6 @@ const RSVP_STEP_FOCUS_SELECTOR =
 const RSVP_SCROLLABLE_FIELD_SELECTOR =
   'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])';
 const RSVP_SCROLL_TARGET_SELECTOR = '.form-field, .form-field-optional, fieldset, .guest-response';
-const HERO_GATE_SCROLLABLE_SELECTOR =
-  'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])';
 const scrollCue = document.querySelector('[data-scroll-cue]');
 const mapContainer = document.querySelector('[data-map-container]');
 const mapPoiButtons = Array.from(document.querySelectorAll('[data-map-poi]'));
@@ -302,7 +300,6 @@ let lastRsvpTrigger = null;
 let rsvpVisibilityTimeouts = [];
 let activeRsvpFieldMessage = null;
 let activeRsvpFieldMessageTarget = null;
-let heroGateVisibilityTimeouts = [];
 
 function isFocusedElementWithin(root, selector) {
   const activeElement = document.activeElement;
@@ -2300,16 +2297,6 @@ function getRsvpTopOverlayOffset() {
 
 function syncRsvpViewportOffset() {
   if (!rsvpSection) return;
-  if (!rsvpSection.hidden && isMobileRsvpLayout() && window.visualViewport) {
-    const viewportTop = window.visualViewport.offsetTop;
-    const viewportHeight = window.visualViewport.height;
-    const viewportBottom = viewportTop + viewportHeight;
-    const keyboardOffset = Math.max(0, window.innerHeight - viewportBottom);
-    rsvpSection.style.setProperty('--rsvp-modal-height', `${viewportHeight}px`);
-    rsvpSection.style.setProperty('--rsvp-keyboard-offset', `${keyboardOffset}px`);
-    return;
-  }
-
   rsvpSection.style.setProperty('--rsvp-modal-height', '100dvh');
   rsvpSection.style.setProperty('--rsvp-keyboard-offset', '0px');
 }
@@ -2508,61 +2495,6 @@ function showCurrentStepValidation({ includeAllSteps = false } = {}) {
     }
   }
   return true;
-}
-
-function clearScheduledHeroGateVisibilitySync() {
-  heroGateVisibilityTimeouts.forEach(timeoutId => window.clearTimeout(timeoutId));
-  heroGateVisibilityTimeouts = [];
-}
-
-function scrollHeroGateFieldIntoView(target, { behavior = 'smooth' } = {}) {
-  if (
-    !(target instanceof HTMLElement) ||
-    !heroAccessForm ||
-    !heroAccessForm.contains(target) ||
-    !mobileRsvpMediaQuery.matches
-  ) {
-    return;
-  }
-
-  const rect = target.getBoundingClientRect();
-  const viewportTop = window.visualViewport?.offsetTop ?? 0;
-  const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-  const viewportBottom = viewportTop + viewportHeight;
-  const visibleTop = viewportTop + 18;
-  const visibleBottom = viewportBottom - 18;
-  const overflowTop = rect.top - visibleTop;
-  const overflowBottom = rect.bottom - visibleBottom;
-
-  if (overflowBottom > 0) {
-    window.scrollBy({ top: overflowBottom, behavior });
-    return;
-  }
-
-  if (overflowTop < 0) {
-    window.scrollBy({ top: overflowTop, behavior });
-  }
-}
-
-function scheduleHeroGateVisibilitySync(target = null) {
-  clearScheduledHeroGateVisibilitySync();
-  const delays = [0, 180];
-  heroGateVisibilityTimeouts = delays.map((delay, index) =>
-    window.setTimeout(() => {
-      const behavior = index === 0 ? 'auto' : 'smooth';
-      const activeTarget =
-        target instanceof HTMLElement ? target : document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      if (activeTarget instanceof HTMLElement) {
-        scrollHeroGateFieldIntoView(activeTarget, { behavior });
-      }
-    }, delay)
-  );
-}
-
-function handleHeroGateFocusIn(event) {
-  const target = event.target;
-  if (!(target instanceof HTMLElement) || !target.matches(HERO_GATE_SCROLLABLE_SELECTOR)) return;
-  scheduleHeroGateVisibilitySync(target);
 }
 
 function maintainModalFocus(event) {
@@ -3894,7 +3826,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   if (heroAccessForm) {
-    heroAccessForm.addEventListener('focusin', handleHeroGateFocusIn);
   }
   if (!rsvpSection) return;
   setRsvpSectionVisibility(false);
@@ -3910,16 +3841,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isFocusedElementWithin(rsvpSection, RSVP_SCROLLABLE_FIELD_SELECTOR)) {
         scheduleRsvpVisibilitySync();
       }
-      if (isFocusedElementWithin(heroAccessForm, HERO_GATE_SCROLLABLE_SELECTOR)) {
-        scheduleHeroGateVisibilitySync();
-      }
     });
     window.visualViewport.addEventListener('scroll', () => {
       if (isFocusedElementWithin(rsvpSection, RSVP_SCROLLABLE_FIELD_SELECTOR)) {
         scheduleRsvpVisibilitySync();
-      }
-      if (isFocusedElementWithin(heroAccessForm, HERO_GATE_SCROLLABLE_SELECTOR)) {
-        scheduleHeroGateVisibilitySync();
       }
     });
   }
@@ -3928,18 +3853,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isFocusedElementWithin(rsvpSection, RSVP_SCROLLABLE_FIELD_SELECTOR)) {
         scheduleRsvpVisibilitySync();
       }
-      if (isFocusedElementWithin(heroAccessForm, HERO_GATE_SCROLLABLE_SELECTOR)) {
-        scheduleHeroGateVisibilitySync();
-      }
       syncRsvpActionState();
     });
   } else if (mobileRsvpMediaQuery.addListener) {
     mobileRsvpMediaQuery.addListener(() => {
       if (isFocusedElementWithin(rsvpSection, RSVP_SCROLLABLE_FIELD_SELECTOR)) {
         scheduleRsvpVisibilitySync();
-      }
-      if (isFocusedElementWithin(heroAccessForm, HERO_GATE_SCROLLABLE_SELECTOR)) {
-        scheduleHeroGateVisibilitySync();
       }
       syncRsvpActionState();
     });

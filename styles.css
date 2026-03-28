@@ -2303,8 +2303,8 @@ html.no-js .schedule-desktop .schedule-track-line::after {
     position: sticky;
     bottom: 0;
     margin: 0 -1rem calc(env(safe-area-inset-bottom) * -1);
-    display: flex;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
     align-items: center;
     padding-left: 1rem;
@@ -2315,18 +2315,17 @@ html.no-js .schedule-desktop .schedule-track-line::after {
     backdrop-filter: blur(10px);
   }
 
+  .rsvp-actions > :only-child {
+    grid-column: 1 / -1;
+  }
+
   .rsvp-actions button {
     min-height: 2.9rem;
+    width: 100%;
   }
 
   .rsvp-action-slot {
-    width: auto;
-  }
-
-  .rsvp-actions [data-step-next-slot],
-  .rsvp-actions [data-step-submit-slot] {
-    margin-left: auto;
-    width: min(100%, 11rem);
+    width: 100%;
   }
 
   .rsvp-action-slot > .primary {
