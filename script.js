@@ -3646,9 +3646,37 @@ function setupNavigation() {
   }
 
   navLinks.forEach(link => {
-    link.addEventListener('click', () => {
+    link.addEventListener('click', event => {
+      let pendingHash = '';
+      const href = link.getAttribute('href') || '';
+      if (href && href !== '#') {
+        const targetUrl = new URL(href, window.location.href);
+        const currentUrl = new URL(window.location.href);
+        const isSameDocument =
+          targetUrl.origin === currentUrl.origin &&
+          targetUrl.pathname === currentUrl.pathname &&
+          Boolean(targetUrl.hash);
+
+        if (isSameDocument) {
+          event.preventDefault();
+          pendingHash = targetUrl.hash;
+        } else if (isHomeRoute && targetUrl.hash) {
+          event.preventDefault();
+          pendingHash = targetUrl.hash;
+        }
+      }
+
       if (siteNav?.classList.contains('open')) {
         toggleNavigation(false);
+      }
+
+      if (pendingHash) {
+        window.requestAnimationFrame(() => {
+          if (!scrollToSectionHash(pendingHash)) {
+            const fallbackUrl = new URL(pendingHash, RUNTIME_SITE_BASE_URL);
+            window.location.assign(fallbackUrl.toString());
+          }
+        });
       }
     });
   });
@@ -3685,6 +3713,27 @@ function updateHeaderOffset() {
   const isDesktop = window.matchMedia('(min-width: 768px)').matches;
   const height = isDesktop ? header.offsetHeight : 0;
   document.documentElement.style.setProperty('--header-height', `${height}px`);
+}
+
+function scrollToSectionHash(hash) {
+  if (!hash) return false;
+  const targetId = hash.replace(/^#/, '');
+  if (!targetId) return false;
+  const target = document.getElementById(targetId);
+  if (!(target instanceof HTMLElement)) return false;
+
+  const headerHeight = header?.offsetHeight ?? 0;
+  if (headerHeight <= 0) {
+    target.scrollIntoView({ behavior: 'auto', block: 'start' });
+    return true;
+  }
+
+  const targetTop = target.getBoundingClientRect().top + window.scrollY - headerHeight;
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior: 'auto',
+  });
+  return true;
 }
 
 function updateRsvpNavigationVisibility() {
