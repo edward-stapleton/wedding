@@ -2404,12 +2404,21 @@ html.no-js .schedule-desktop .schedule-track-line::after {
     grid-column: 1 / -1;
   }
 
+  .rsvp-actions > [hidden] {
+    display: none !important;
+  }
+
   .rsvp-actions button {
     min-height: 2.9rem;
     width: 100%;
   }
 
+  .rsvp-actions > .secondary {
+    grid-column: 1;
+  }
+
   .rsvp-action-slot {
+    grid-column: 2;
     width: 100%;
   }
 

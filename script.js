@@ -1724,7 +1724,10 @@ function updateStepIndicatorVisibility() {
   );
   if (!plusOneIndicator) return;
   const hasPlusOne =
-    rsvpState.inviteDetails?.invite_type === 'plusone' || isPlusOneActive(rsvpState.guestProfile);
+    isRsvpCoupleRoute ||
+    routeInviteTypeOverride === 'plusone' ||
+    rsvpState.inviteDetails?.invite_type === 'plusone' ||
+    isPlusOneActive(rsvpState.guestProfile);
   const shouldHide = !hasPlusOne;
   plusOneIndicator.hidden = shouldHide;
   plusOneIndicator.setAttribute('aria-hidden', String(shouldHide));
