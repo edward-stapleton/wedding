@@ -1,6 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const BUILD_ID = "rsvp-submit-2026-03-08a";
+const BUILD_ID = "rsvp-submit-2026-03-28a";
+const SITE_URL = "https://edlaura.com";
+const EMAIL_LOGO_URL = `${SITE_URL}/assets/e-and-l-logo.jpg?v=20260222`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -322,17 +324,24 @@ function buildRsvpConfirmationEmail(model: RsvpEmailModel) {
     : "";
 
   const html = [
-    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;min-width:100%;background-color:#4F752A;border-collapse:collapse;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;\">",
+    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;min-width:100%;background-color:#EEF3E6;border-collapse:collapse;font-family:'Stack Sans Headline', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;\">",
     "<tr>",
-    "<td style=\"background-color:#4F752A;color:#FFFFFF;line-height:1.5;padding:24px 24px 32px;\">",
+    "<td align=\"center\" style=\"padding:32px 16px;background-color:#EEF3E6;\">",
+    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;max-width:640px;border-collapse:collapse;\">",
+    "<tr>",
+    "<td style=\"background-color:#4F752A;color:#FFFFFF;line-height:1.5;padding:28px 24px 32px;text-align:left;\">",
+    `<div style="text-align:center;margin:0 0 24px;"><img src="${EMAIL_LOGO_URL}" alt="Ed and Laura wedding logo" width="120" height="120" style="display:inline-block;width:120px;height:120px;max-width:120px;border:0;outline:none;text-decoration:none;" /></div>`,
     `<p style="margin:0 0 12px;color:#ffffff;line-height:1.5;">Hi ${escapeHtml(greetingName)},</p>`,
     `<p style="margin:0 0 12px;color:#f7fbe9;line-height:1.5;">${escapeHtml(intro)}</p>`,
     renderGuestHtml(model.primaryGuest),
     model.plusOneGuest ? renderGuestHtml(model.plusOneGuest) : "",
     addressHtml,
     `<p style="margin:16px 0 12px;color:#f7fbe9;line-height:1.5;"><strong style="color:#ffffff;">Saved at (UTC):</strong> ${escapeHtml(submittedAtDisplay)}</p>`,
-    "<p style=\"margin:0 0 12px;color:#f7fbe9;line-height:1.5;\">If you want to check the details of the wedding at any point, feel free to return to <a href=\"https://edlaura.com/\" style=\"color:#ffffff;text-decoration:underline;\">the website</a> and log in using your email and the website password!</p>",
+    `<p style="margin:0 0 12px;color:#f7fbe9;line-height:1.5;">If you want to check the details of the wedding at any point, feel free to return to <a href="${SITE_URL}/" style="color:#ffffff;text-decoration:underline;">the website</a> and log in using your email and the website password!</p>`,
     "<p style=\"margin:0;color:#ffffff;line-height:1.5;\">With love,<br/>Ed &amp; Laura</p>",
+    "</td>",
+    "</tr>",
+    "</table>",
     "</td>",
     "</tr>",
     "</table>",
