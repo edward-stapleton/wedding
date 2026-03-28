@@ -128,6 +128,8 @@ const stepSubmitButton = document.querySelector('[data-step-submit]');
 const stepEnterButton = document.querySelector('[data-step-enter]');
 const stepNextHitbox = document.querySelector('[data-step-next-hitbox]');
 const stepSubmitHitbox = document.querySelector('[data-step-submit-hitbox]');
+const stepNextSlot = document.querySelector('[data-step-next-slot]');
+const stepSubmitSlot = document.querySelector('[data-step-submit-slot]');
 const mobileRsvpMediaQuery = window.matchMedia('(max-width: 600px)');
 const RSVP_STEP_FOCUS_SELECTOR =
   'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled])';
@@ -257,6 +259,7 @@ let activeFlyoverId = 0;
 let mapResizeFrame = null;
 let mapScrollFrame = null;
 let mapViewportObserver = null;
+let lastMapInlineHeight = null;
 let pendingMapPoiId = '';
 const MAP_POI_FILL_LAYER_IDS = {
   walk: 'walking-route-line-hitarea',
@@ -300,6 +303,16 @@ let rsvpVisibilityTimeouts = [];
 let activeRsvpFieldMessage = null;
 let activeRsvpFieldMessageTarget = null;
 let heroGateVisibilityTimeouts = [];
+
+function isFocusedElementWithin(root, selector) {
+  const activeElement = document.activeElement;
+  return (
+    root instanceof HTMLElement &&
+    activeElement instanceof HTMLElement &&
+    root.contains(activeElement) &&
+    activeElement.matches(selector)
+  );
+}
 
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -1161,23 +1174,32 @@ function isMapContainerFullscreen() {
 }
 
 function setMapInlineHeight(height) {
-  document.documentElement.style.setProperty('--map-inline-height', `${Math.round(height)}px`);
+  const roundedHeight = Math.round(height);
+  if (lastMapInlineHeight === roundedHeight) return false;
+  document.documentElement.style.setProperty('--map-inline-height', `${roundedHeight}px`);
+  lastMapInlineHeight = roundedHeight;
+  return true;
 }
 
 function syncMapSize() {
   if (!mapElement || !mapContainer) return;
+  let shouldResizeMap = true;
 
   if (isMapContainerFullscreen()) {
     document.documentElement.style.removeProperty('--map-inline-height');
+    lastMapInlineHeight = null;
   } else if (isMobileMapLayout()) {
     const viewportHeight = getMapViewportHeight();
     const mapRect = mapElement.getBoundingClientRect();
     const safeAreaBottom = getSafeAreaInsetBottom();
     const nextHeight = Math.max(320, viewportHeight - Math.max(mapRect.top, 0) - safeAreaBottom);
-    setMapInlineHeight(nextHeight);
+    shouldResizeMap = setMapInlineHeight(nextHeight);
   } else {
     document.documentElement.style.removeProperty('--map-inline-height');
+    lastMapInlineHeight = null;
   }
+
+  if (!shouldResizeMap && !isMapContainerFullscreen()) return;
 
   if (mapResizeFrame != null) {
     window.cancelAnimationFrame(mapResizeFrame);
@@ -1236,20 +1258,11 @@ function setupMapViewportSync() {
 
   window.addEventListener('resize', handleWindowResize);
   window.addEventListener('orientationchange', handleOrientationChange);
-  window.addEventListener(
-    'scroll',
-    () => {
-      if (!isMobileMapLayout() || isMapContainerFullscreen()) return;
-      scheduleMapSizeSync();
-    },
-    { passive: true }
-  );
 
   document.addEventListener('fullscreenchange', syncMapFullscreenState);
 
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', scheduleMapSizeSync);
-    window.visualViewport.addEventListener('scroll', scheduleMapSizeSync);
   }
 
   if (mobileMapMediaQuery.addEventListener) {
@@ -1785,9 +1798,15 @@ function setStep(step) {
     stepNextButton.hidden = resolvedStep < 1 || resolvedStep >= 3;
     stepNextButton.textContent = 'Next';
   }
+  if (stepNextSlot) {
+    stepNextSlot.hidden = !(stepNextButton && !stepNextButton.hidden);
+  }
 
   if (stepSubmitButton) {
     stepSubmitButton.hidden = resolvedStep !== 3;
+  }
+  if (stepSubmitSlot) {
+    stepSubmitSlot.hidden = !(stepSubmitButton && !stepSubmitButton.hidden);
   }
 
   if (stepEnterButton) {
@@ -2270,6 +2289,15 @@ function getRsvpBottomOverlayOffset(containerRect) {
   return Math.max(isMobileRsvpLayout() ? 96 : 40, overlayHeight + 18);
 }
 
+function getRsvpTopOverlayOffset() {
+  const headerRect = rsvpForm?.querySelector('.rsvp-header')?.getBoundingClientRect();
+  if (!headerRect) {
+    return isMobileRsvpLayout() ? 88 : 20;
+  }
+
+  return Math.max(isMobileRsvpLayout() ? 88 : 20, headerRect.height + 18);
+}
+
 function syncRsvpViewportOffset() {
   if (!rsvpSection) return;
   if (!rsvpSection.hidden && isMobileRsvpLayout() && window.visualViewport) {
@@ -2298,7 +2326,7 @@ function scrollRsvpFieldIntoView(target, { behavior = 'smooth' } = {}) {
   const containerRect = scrollContainer.getBoundingClientRect();
   const visibleBounds = getRsvpVisibleBounds(containerRect);
   const targetRect = scrollTarget.getBoundingClientRect();
-  const topBuffer = isMobileRsvpLayout() ? 76 : 20;
+  const topBuffer = getRsvpTopOverlayOffset();
   const bottomBuffer = getRsvpBottomOverlayOffset(containerRect);
   const visibleTop = visibleBounds.top + topBuffer;
   const visibleBottom = visibleBounds.bottom - bottomBuffer;
@@ -2317,7 +2345,7 @@ function scrollRsvpFieldIntoView(target, { behavior = 'smooth' } = {}) {
 
 function scheduleRsvpVisibilitySync(target = null) {
   clearScheduledRsvpVisibilitySync();
-  const delays = [0, 120, 260, 420];
+  const delays = [0, 180];
   rsvpVisibilityTimeouts = delays.map((delay, index) =>
     window.setTimeout(() => {
       const behavior = index === 0 ? 'auto' : 'smooth';
@@ -2518,7 +2546,7 @@ function scrollHeroGateFieldIntoView(target, { behavior = 'smooth' } = {}) {
 
 function scheduleHeroGateVisibilitySync(target = null) {
   clearScheduledHeroGateVisibilitySync();
-  const delays = [0, 140, 280];
+  const delays = [0, 180];
   heroGateVisibilityTimeouts = delays.map((delay, index) =>
     window.setTimeout(() => {
       const behavior = index === 0 ? 'auto' : 'smooth';
@@ -3879,24 +3907,40 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
-      scheduleRsvpVisibilitySync();
-      scheduleHeroGateVisibilitySync();
+      if (isFocusedElementWithin(rsvpSection, RSVP_SCROLLABLE_FIELD_SELECTOR)) {
+        scheduleRsvpVisibilitySync();
+      }
+      if (isFocusedElementWithin(heroAccessForm, HERO_GATE_SCROLLABLE_SELECTOR)) {
+        scheduleHeroGateVisibilitySync();
+      }
     });
     window.visualViewport.addEventListener('scroll', () => {
-      scheduleRsvpVisibilitySync();
-      scheduleHeroGateVisibilitySync();
+      if (isFocusedElementWithin(rsvpSection, RSVP_SCROLLABLE_FIELD_SELECTOR)) {
+        scheduleRsvpVisibilitySync();
+      }
+      if (isFocusedElementWithin(heroAccessForm, HERO_GATE_SCROLLABLE_SELECTOR)) {
+        scheduleHeroGateVisibilitySync();
+      }
     });
   }
   if (mobileRsvpMediaQuery.addEventListener) {
     mobileRsvpMediaQuery.addEventListener('change', () => {
-      scheduleRsvpVisibilitySync();
-      scheduleHeroGateVisibilitySync();
+      if (isFocusedElementWithin(rsvpSection, RSVP_SCROLLABLE_FIELD_SELECTOR)) {
+        scheduleRsvpVisibilitySync();
+      }
+      if (isFocusedElementWithin(heroAccessForm, HERO_GATE_SCROLLABLE_SELECTOR)) {
+        scheduleHeroGateVisibilitySync();
+      }
       syncRsvpActionState();
     });
   } else if (mobileRsvpMediaQuery.addListener) {
     mobileRsvpMediaQuery.addListener(() => {
-      scheduleRsvpVisibilitySync();
-      scheduleHeroGateVisibilitySync();
+      if (isFocusedElementWithin(rsvpSection, RSVP_SCROLLABLE_FIELD_SELECTOR)) {
+        scheduleRsvpVisibilitySync();
+      }
+      if (isFocusedElementWithin(heroAccessForm, HERO_GATE_SCROLLABLE_SELECTOR)) {
+        scheduleHeroGateVisibilitySync();
+      }
       syncRsvpActionState();
     });
   }
