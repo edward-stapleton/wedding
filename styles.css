@@ -877,7 +877,7 @@ body.nav-open {
 .guide-tabs {
   align-items: center;
   text-align: center;
-  margin: 0.75rem 0 0.625rem;
+  margin: 0;
   scroll-snap-type: x proximity;
 }
 
@@ -1310,6 +1310,10 @@ body.nav-open {
     padding: 0;
   }
 
+  .section:not(.hero-section) {
+    padding: 2rem 0 3rem;
+  }
+
   .site-nav {
     width: 100%;
     margin: 0;
@@ -1318,7 +1322,7 @@ body.nav-open {
   }
 
   .nav-toggle {
-    top: calc(1.25rem + env(safe-area-inset-top));
+    top: calc(1.4rem + env(safe-area-inset-top));
     right: 1.25rem;
   }
 
