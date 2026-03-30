@@ -404,3 +404,14 @@ entrypoint = "./functions/rsvp-lookup/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/rsvp-lookup/*.html" ]
+
+[functions.guests-sheet-export]
+enabled = true
+verify_jwt = false
+import_map = "./functions/guests-sheet-export/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/guests-sheet-export/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/guests-sheet-export/*.html" ]
