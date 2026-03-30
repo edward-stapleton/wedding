@@ -131,6 +131,7 @@ const stepNextHitbox = document.querySelector('[data-step-next-hitbox]');
 const stepSubmitHitbox = document.querySelector('[data-step-submit-hitbox]');
 const stepNextSlot = document.querySelector('[data-step-next-slot]');
 const stepSubmitSlot = document.querySelector('[data-step-submit-slot]');
+const rsvpActions = document.querySelector('.rsvp-actions');
 const mobileRsvpMediaQuery = window.matchMedia('(max-width: 600px)');
 let rsvpBodyLockScrollY = 0;
 let rsvpBodyLockActive = false;
@@ -1748,6 +1749,13 @@ function updateRsvpHeaderTitle(activeStep, activeSection = null) {
   rsvpHeaderTitle.textContent = sectionTitle || (activeStep === 4 ? 'Thank you!' : '');
 }
 
+function syncRsvpActionLayout() {
+  if (!(rsvpActions instanceof HTMLElement)) return;
+  const visibleActions = Array.from(rsvpActions.children).filter(child => child instanceof HTMLElement && !child.hidden);
+  rsvpActions.classList.toggle('rsvp-actions--single', visibleActions.length === 1);
+  rsvpActions.classList.toggle('rsvp-actions--pair', visibleActions.length === 2);
+}
+
 function setEntryMode(mode) {
   const nextMode = mode === 'returning' ? 'returning' : 'new';
   const isReturning = nextMode === 'returning';
@@ -1833,6 +1841,8 @@ function setStep(step) {
       stepEnterButton.textContent = rsvpState.isReturningRsvp ? 'Return' : 'Enter';
     }
   }
+
+  syncRsvpActionLayout();
 
   const activeSection = Array.from(stepSections).find(section => Number(section.dataset.rsvpStep) === resolvedStep);
   updateRsvpHeaderTitle(resolvedStep, activeSection);
