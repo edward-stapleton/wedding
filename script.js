@@ -261,9 +261,6 @@ let mapInstance;
 let routeBoundsCache = null;
 let activeFlyoverId = 0;
 let mapResizeFrame = null;
-let mapScrollFrame = null;
-let mapViewportObserver = null;
-let lastMapInlineHeight = null;
 let pendingMapPoiId = '';
 const MAP_POI_FILL_LAYER_IDS = {
   walk: 'walking-route-line-hitarea',
@@ -1161,48 +1158,12 @@ function isMobileMapLayout() {
   return mobileMapMediaQuery.matches;
 }
 
-function getSafeAreaInsetBottom() {
-  const safeArea = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-bottom').trim();
-  const parsed = Number.parseFloat(safeArea);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function getMapViewportHeight() {
-  if (window.visualViewport?.height) return window.visualViewport.height;
-  return window.innerHeight || document.documentElement.clientHeight || 0;
-}
-
 function isMapContainerFullscreen() {
   return document.fullscreenElement === mapContainer;
 }
 
-function setMapInlineHeight(height) {
-  const roundedHeight = Math.round(height);
-  if (lastMapInlineHeight === roundedHeight) return false;
-  document.documentElement.style.setProperty('--map-inline-height', `${roundedHeight}px`);
-  lastMapInlineHeight = roundedHeight;
-  return true;
-}
-
 function syncMapSize() {
   if (!mapElement || !mapContainer) return;
-  let shouldResizeMap = true;
-
-  if (isMapContainerFullscreen()) {
-    document.documentElement.style.removeProperty('--map-inline-height');
-    lastMapInlineHeight = null;
-  } else if (isMobileMapLayout()) {
-    const viewportHeight = getMapViewportHeight();
-    const mapRect = mapElement.getBoundingClientRect();
-    const safeAreaBottom = getSafeAreaInsetBottom();
-    const nextHeight = Math.max(320, viewportHeight - Math.max(mapRect.top, 0) - safeAreaBottom);
-    shouldResizeMap = setMapInlineHeight(nextHeight);
-  } else {
-    document.documentElement.style.removeProperty('--map-inline-height');
-    lastMapInlineHeight = null;
-  }
-
-  if (!shouldResizeMap && !isMapContainerFullscreen()) return;
 
   if (mapResizeFrame != null) {
     window.cancelAnimationFrame(mapResizeFrame);
@@ -1216,11 +1177,7 @@ function syncMapSize() {
 }
 
 function scheduleMapSizeSync() {
-  if (mapScrollFrame != null) return;
-  mapScrollFrame = window.requestAnimationFrame(() => {
-    syncMapSize();
-    mapScrollFrame = null;
-  });
+  syncMapSize();
 }
 
 function syncMapFullscreenState() {
@@ -1264,28 +1221,10 @@ function setupMapViewportSync() {
 
   document.addEventListener('fullscreenchange', syncMapFullscreenState);
 
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', scheduleMapSizeSync);
-  }
-
   if (mobileMapMediaQuery.addEventListener) {
     mobileMapMediaQuery.addEventListener('change', handleWindowResize);
   } else if (mobileMapMediaQuery.addListener) {
     mobileMapMediaQuery.addListener(handleWindowResize);
-  }
-
-  if ('IntersectionObserver' in window && mapSection) {
-    mapViewportObserver = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (entry.target === mapSection && entry.isIntersecting) {
-            scheduleMapSizeSync();
-          }
-        });
-      },
-      { threshold: [0, 0.25, 0.5, 0.75, 1] }
-    );
-    mapViewportObserver.observe(mapSection);
   }
 
   syncMapFullscreenState();
@@ -2772,14 +2711,14 @@ async function handleHeroAccessSubmit() {
   const passwordValue = rsvpPasswordInput?.value?.trim().toUpperCase() || '';
 
   if (!passwordValue) {
-    setRsvpAccessFeedback('Please enter the website password to continue.');
+    setRsvpAccessFeedback('');
     rsvpPasswordInput?.setAttribute('aria-invalid', 'true');
     rsvpPasswordInput?.focus();
     return false;
   }
 
   if (passwordValue !== RSVP_PASSWORD) {
-    setRsvpAccessFeedback("That password doesn't look right. Please try again.");
+    setRsvpAccessFeedback('');
     rsvpPasswordInput?.setAttribute('aria-invalid', 'true');
     rsvpPasswordInput?.focus();
     return false;
@@ -2787,7 +2726,7 @@ async function handleHeroAccessSubmit() {
 
   if (rsvpState.isReturningRsvp) {
     if (!emailValue || !emailValue.includes('@')) {
-      setRsvpAccessFeedback('Please enter a valid email address to continue.');
+      setRsvpAccessFeedback('');
       rsvpAccessEmailInput?.setAttribute('aria-invalid', 'true');
       rsvpAccessEmailInput?.focus();
       return false;
@@ -2802,7 +2741,7 @@ async function handleHeroAccessSubmit() {
       rsvp_completed: Boolean(lookup.rsvpCompleted),
     });
     if (lookup.status === 'not_found') {
-      setRsvpAccessFeedback('We could not find an RSVP for that email address.');
+      setRsvpAccessFeedback('');
       rsvpAccessEmailInput?.setAttribute('aria-invalid', 'true');
       rsvpAccessEmailInput?.focus();
       return false;
