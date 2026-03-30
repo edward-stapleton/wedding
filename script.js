@@ -303,6 +303,48 @@ let lastRsvpTrigger = null;
 let rsvpVisibilityTimeouts = [];
 let activeRsvpFieldMessage = null;
 let activeRsvpFieldMessageTarget = null;
+let heroAccessButtonState = null;
+let heroAccessButtonStateTimeout = null;
+
+function delay(ms) {
+  return new Promise(resolve => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function getHeroAccessDefaultLabel() {
+  if (hasSiteGatePassed()) return 'Edit RSVP';
+  return rsvpState.isReturningRsvp ? 'Enter' : 'RSVP';
+}
+
+function clearHeroAccessButtonState() {
+  if (heroAccessButtonStateTimeout != null) {
+    window.clearTimeout(heroAccessButtonStateTimeout);
+    heroAccessButtonStateTimeout = null;
+  }
+  heroAccessButtonState = null;
+}
+
+function applyHeroAccessButtonState() {
+  if (!heroAccessSubmitButton) return;
+  const state = heroAccessButtonState;
+  heroAccessSubmitButton.textContent = state?.label || getHeroAccessDefaultLabel();
+  heroAccessSubmitButton.disabled = Boolean(state?.disabled);
+}
+
+function setHeroAccessButtonState(label, { disabled = true, resetAfterMs = null } = {}) {
+  clearHeroAccessButtonState();
+  heroAccessButtonState = { label, disabled };
+  applyHeroAccessButtonState();
+
+  if (Number.isFinite(resetAfterMs) && resetAfterMs > 0) {
+    heroAccessButtonStateTimeout = window.setTimeout(() => {
+      clearHeroAccessButtonState();
+      updateHeroAccessUiState();
+      updatePasswordGate();
+    }, resetAfterMs);
+  }
+}
 
 function isFocusedElementWithin(root, selector) {
   const activeElement = document.activeElement;
@@ -2131,11 +2173,7 @@ function updateHeroAccessUiState() {
   const isAuthenticated = hasSiteGatePassed();
   const shouldShowReturningEmail = !isAuthenticated && rsvpState.isReturningRsvp;
 
-  heroAccessSubmitButton.textContent = isAuthenticated
-    ? 'Edit RSVP'
-    : rsvpState.isReturningRsvp
-      ? 'Enter'
-      : 'RSVP';
+  applyHeroAccessButtonState();
 
   if (heroPasswordField) {
     heroPasswordField.hidden = isAuthenticated;
@@ -2691,6 +2729,8 @@ async function handleHeroAccessSubmit() {
   if (!rsvpPasswordInput) return false;
 
   setRsvpAccessFeedback('');
+  clearHeroAccessButtonState();
+  updateHeroAccessUiState();
   rsvpPasswordInput.removeAttribute('aria-invalid');
   rsvpAccessEmailInput?.removeAttribute('aria-invalid');
 
@@ -2711,28 +2751,33 @@ async function handleHeroAccessSubmit() {
   const passwordValue = rsvpPasswordInput?.value?.trim().toUpperCase() || '';
 
   if (!passwordValue) {
-    setRsvpAccessFeedback('');
     rsvpPasswordInput?.setAttribute('aria-invalid', 'true');
     rsvpPasswordInput?.focus();
+    if (rsvpState.isReturningRsvp) {
+      setHeroAccessButtonState('Try Again', { disabled: true, resetAfterMs: 900 });
+    }
     return false;
   }
 
   if (passwordValue !== RSVP_PASSWORD) {
-    setRsvpAccessFeedback('');
     rsvpPasswordInput?.setAttribute('aria-invalid', 'true');
     rsvpPasswordInput?.focus();
+    if (rsvpState.isReturningRsvp) {
+      setHeroAccessButtonState('Try Again', { disabled: true, resetAfterMs: 900 });
+    }
     return false;
   }
 
   if (rsvpState.isReturningRsvp) {
+    setHeroAccessButtonState('Checking...');
+
     if (!emailValue || !emailValue.includes('@')) {
-      setRsvpAccessFeedback('');
       rsvpAccessEmailInput?.setAttribute('aria-invalid', 'true');
       rsvpAccessEmailInput?.focus();
+      setHeroAccessButtonState('Try Again', { disabled: true, resetAfterMs: 900 });
       return false;
     }
 
-    setRsvpAccessFeedback('Checking your RSVP...');
     trackEvent('rsvp_lookup_attempt', { source: 'hero_access' });
     const lookup = await lookupGuestByEmail(emailValue);
     trackEvent('rsvp_lookup_result', {
@@ -2741,9 +2786,9 @@ async function handleHeroAccessSubmit() {
       rsvp_completed: Boolean(lookup.rsvpCompleted),
     });
     if (lookup.status === 'not_found') {
-      setRsvpAccessFeedback('');
       rsvpAccessEmailInput?.setAttribute('aria-invalid', 'true');
       rsvpAccessEmailInput?.focus();
+      setHeroAccessButtonState('Try Again', { disabled: true, resetAfterMs: 900 });
       return false;
     }
     if (lookup.status === 'unauthorized') {
@@ -2751,12 +2796,14 @@ async function handleHeroAccessSubmit() {
         lookup.guestMessage ||
           "We couldn't verify your RSVP just now. Please try again in a moment. If it still doesn't work, contact us."
       );
+      setHeroAccessButtonState('Try Again', { disabled: true, resetAfterMs: 900 });
       return false;
     }
     if (lookup.status === 'lookup_failed') {
       setRsvpAccessFeedback(
         lookup.guestMessage || "We couldn't verify your RSVP just now. Please try again in a moment."
       );
+      setHeroAccessButtonState('Try Again', { disabled: true, resetAfterMs: 900 });
       return false;
     }
 
@@ -2772,6 +2819,9 @@ async function handleHeroAccessSubmit() {
         source: 'hero_access',
       });
     }
+    setHeroAccessButtonState('✔ Entering...');
+    await delay(450);
+    clearHeroAccessButtonState();
   } else {
     if (heroAccessSubmitButton instanceof HTMLElement) {
       await openModal({ trigger: heroAccessSubmitButton, preferDetailsStep: false });
@@ -4047,8 +4097,13 @@ function isRsvpPasswordValid(value) {
 
 function updatePasswordGate() {
   if (!heroAccessSubmitButton) return;
+  if (heroAccessButtonState?.disabled) {
+    applyHeroAccessButtonState();
+    return;
+  }
   if (hasSiteGatePassed()) {
     heroAccessSubmitButton.disabled = false;
+    heroAccessSubmitButton.textContent = getHeroAccessDefaultLabel();
     if (rsvpPasswordInput) {
       rsvpPasswordInput.setAttribute('aria-invalid', 'false');
     }
@@ -4059,9 +4114,11 @@ function updatePasswordGate() {
   if (rsvpState.isReturningRsvp) {
     const emailValue = rsvpAccessEmailInput?.value?.trim() || '';
     heroAccessSubmitButton.disabled = !(isValid && emailValue.includes('@'));
+    heroAccessSubmitButton.textContent = getHeroAccessDefaultLabel();
     return;
   }
   heroAccessSubmitButton.disabled = !isValid;
+  heroAccessSubmitButton.textContent = getHeroAccessDefaultLabel();
   if (rsvpPasswordInput) {
     const shouldFlag = passwordValue.trim() !== '' && !isValid;
     rsvpPasswordInput.setAttribute('aria-invalid', String(shouldFlag));

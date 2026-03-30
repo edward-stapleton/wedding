@@ -444,6 +444,10 @@ body.nav-open {
   width: 100%;
 }
 
+.hero-access-form .primary {
+  min-width: 10rem;
+}
+
 .hero-access-form .form-control {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -469,6 +473,12 @@ body.nav-open {
 
 .hero-access-form .form-control[aria-invalid='true']:focus {
   outline-color: rgba(255, 181, 181, 0.95);
+}
+
+.hero-access-form .primary:disabled {
+  cursor: default;
+  opacity: 0.78;
+  transform: none;
 }
 
 .hero-access-feedback {
