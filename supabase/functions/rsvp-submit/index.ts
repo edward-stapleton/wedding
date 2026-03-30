@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const BUILD_ID = "rsvp-submit-2026-03-28a";
+const BUILD_ID = "rsvp-submit-2026-03-30a";
 const SITE_URL = "https://edlaura.com";
 const EMAIL_LOGO_URL = `${SITE_URL}/assets/e-and-l-logo.jpg?v=20260222`;
 
@@ -30,6 +30,7 @@ type SubmitPayload = {
   debug?: boolean;
   // required by this flow
   address_line_1?: string;
+  address_line_2?: string;
   city?: string;
   postcode?: string;
   country?: string;
@@ -601,6 +602,7 @@ Deno.serve(async req => {
   }
 
   const addressLine1 = (payload.address_line_1 ?? "").trim();
+  const addressLine2 = (payload.address_line_2 ?? "").trim() || null;
   const city = (payload.city ?? "").trim();
   const postcode = (payload.postcode ?? "").trim();
   const country = (payload.country ?? "").trim() || null;
@@ -633,6 +635,7 @@ Deno.serve(async req => {
         first_name: firstName,
         last_name: lastName,
         address_line_1: addressLine1,
+        address_line_2: addressLine2,
         city,
         postcode,
         country,
@@ -667,6 +670,7 @@ Deno.serve(async req => {
             first_name: (plusOnePayload?.first_name ?? "").trim(),
             last_name: (plusOnePayload?.last_name ?? "").trim(),
             address_line_1: addressLine1,
+            address_line_2: addressLine2,
             city,
             postcode,
             country,
@@ -695,6 +699,7 @@ Deno.serve(async req => {
             cricket_attendance: plusOneCricketAttendance,
             dietary: plusOnePayload?.dietary_requirements ?? null,
             address_line_1: addressLine1,
+            address_line_2: addressLine2,
             city,
             postcode,
             country,
@@ -783,6 +788,7 @@ Deno.serve(async req => {
       first_name: firstName,
       last_name: lastName,
       address_line_1: addressLine1,
+      address_line_2: addressLine2,
       city,
       postcode,
       country,
@@ -801,6 +807,7 @@ Deno.serve(async req => {
       first_name: (plusOnePayload?.first_name ?? "").trim(),
       last_name: (plusOnePayload?.last_name ?? "").trim(),
       address_line_1: addressLine1,
+      address_line_2: addressLine2,
       city,
       postcode,
       country,
