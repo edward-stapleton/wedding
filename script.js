@@ -2750,6 +2750,10 @@ async function handleHeroAccessSubmit() {
   const emailValue = rsvpAccessEmailInput?.value.trim() || '';
   const passwordValue = rsvpPasswordInput?.value?.trim().toUpperCase() || '';
 
+  if (rsvpState.isReturningRsvp) {
+    setHeroAccessButtonState('Checking...');
+  }
+
   if (!passwordValue) {
     rsvpPasswordInput?.setAttribute('aria-invalid', 'true');
     rsvpPasswordInput?.focus();
@@ -2769,8 +2773,6 @@ async function handleHeroAccessSubmit() {
   }
 
   if (rsvpState.isReturningRsvp) {
-    setHeroAccessButtonState('Checking...');
-
     if (!emailValue || !emailValue.includes('@')) {
       rsvpAccessEmailInput?.setAttribute('aria-invalid', 'true');
       rsvpAccessEmailInput?.focus();
@@ -4112,8 +4114,7 @@ function updatePasswordGate() {
   const passwordValue = rsvpPasswordInput?.value || '';
   const isValid = isRsvpPasswordValid(passwordValue);
   if (rsvpState.isReturningRsvp) {
-    const emailValue = rsvpAccessEmailInput?.value?.trim() || '';
-    heroAccessSubmitButton.disabled = !(isValid && emailValue.includes('@'));
+    heroAccessSubmitButton.disabled = false;
     heroAccessSubmitButton.textContent = getHeroAccessDefaultLabel();
     return;
   }
