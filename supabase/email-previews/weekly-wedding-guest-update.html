@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weekly Wedding Guest Update - 31/03/2026</title>
+    <style>
+      :root {
+        color-scheme: light only;
+        --brand-green: #4f752a;
+        --brand-green-deep: #39561f;
+        --brand-cream: #eef3e6;
+        --brand-card: #f7fbe9;
+        --brand-border: rgba(57, 86, 31, 0.16);
+        --brand-muted: #5f6f4f;
+        --brand-text: #203012;
+        --brand-white: #ffffff;
+        --brand-accent: #dce8c7;
+        --brand-warning: #fff2d8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 24px 12px;
+        background: linear-gradient(180deg, #4f752a 0%, #6f9046 100%);
+        color: var(--brand-text);
+        font-family: "Stack Sans Headline", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+          sans-serif;
+      }
+
+      .email-shell {
+        width: 100%;
+        max-width: 680px;
+        margin: 0 auto;
+        background: var(--brand-cream);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 28px 80px rgba(24, 37, 13, 0.28);
+      }
+
+      .email-header {
+        padding: 28px 28px 22px;
+        background:
+          radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 34%),
+          linear-gradient(135deg, var(--brand-green) 0%, var(--brand-green-deep) 100%);
+        color: var(--brand-white);
+      }
+
+      .header-mark {
+        display: inline-block;
+        margin-bottom: 14px;
+        padding: 6px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .email-header h1 {
+        margin: 0 0 8px;
+        font-size: 30px;
+        line-height: 1.1;
+      }
+
+      .email-header p {
+        margin: 0;
+        max-width: 34rem;
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .email-body {
+        padding: 24px;
+      }
+
+      .subject-line {
+        margin: 0 0 18px;
+        padding: 14px 16px;
+        background: var(--brand-white);
+        border: 1px solid var(--brand-border);
+        border-radius: 16px;
+        font-size: 14px;
+        color: var(--brand-muted);
+      }
+
+      .subject-line strong {
+        color: var(--brand-text);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .stat-card,
+      .section-card {
+        background: var(--brand-white);
+        border: 1px solid var(--brand-border);
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      .stat-card h2,
+      .section-card h2 {
+        margin: 0 0 12px;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--brand-muted);
+      }
+
+      .stat-value {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 38px;
+        line-height: 1;
+        color: var(--brand-green-deep);
+        font-weight: 800;
+      }
+
+      .stat-note {
+        margin: 0;
+        color: var(--brand-muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .section-stack {
+        display: grid;
+        gap: 14px;
+      }
+
+      .breakdown-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .breakdown-table th,
+      .breakdown-table td {
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(57, 86, 31, 0.1);
+        text-align: left;
+        font-size: 14px;
+      }
+
+      .breakdown-table th {
+        color: var(--brand-muted);
+        font-weight: 600;
+      }
+
+      .breakdown-table tr:last-child th,
+      .breakdown-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .breakdown-table td:last-child {
+        text-align: right;
+        font-weight: 700;
+        color: var(--brand-green-deep);
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 999px;
+        background: var(--brand-card);
+        border: 1px solid rgba(57, 86, 31, 0.1);
+        font-size: 14px;
+        color: var(--brand-text);
+      }
+
+      .pill strong {
+        color: var(--brand-green-deep);
+      }
+
+      .alert-card {
+        background: var(--brand-warning);
+      }
+
+      .alert-list,
+      .recent-list {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .alert-list li,
+      .recent-list li {
+        margin-bottom: 10px;
+        line-height: 1.5;
+        color: var(--brand-text);
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .footer-note {
+        margin-top: 18px;
+        padding: 16px 18px;
+        border-radius: 16px;
+        background: rgba(79, 117, 42, 0.08);
+        color: var(--brand-muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 0;
+          background: var(--brand-green);
+        }
+
+        .email-shell {
+          border-radius: 0;
+        }
+
+        .email-header,
+        .email-body {
+          padding: 20px;
+        }
+
+        .stats-grid,
+        .meta-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .email-header h1 {
+          font-size: 26px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="email-shell">
+      <header class="email-header">
+        <div class="header-mark">Weekly Guest Summary</div>
+        <h1>Ed &amp; Laura Wedding Update</h1>
+        <p>
+          Your weekly RSVP summary for Wednesday 31/03/2026. This digest covers guest-row updates recorded between
+          Wednesday 24/03/2026 16:56 and Wednesday 31/03/2026 16:55 UK time, making headcount, event planning, and
+          catering changes easy to scan.
+        </p>
+      </header>
+
+      <section class="email-body">
+        <p class="subject-line">
+          <strong>Subject:</strong> Weekly Wedding Guest Update - 31/03/2026
+        </p>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <h2>Total Responses Recorded</h2>
+            <span class="stat-value">84</span>
+            <p class="stat-note">84 guest rows have submitted RSVP choices across the wedding and cricket events.</p>
+          </article>
+          <article class="stat-card">
+            <h2>Updates This Reporting Week</h2>
+            <span class="stat-value">11</span>
+            <p class="stat-note">7 new responses and 4 edited RSVPs recorded within this Wednesday-to-Wednesday window.</p>
+          </article>
+        </div>
+
+        <div class="section-stack">
+          <article class="section-card">
+            <h2>Wedding Attendance Breakdown</h2>
+            <table class="breakdown-table" aria-label="Wedding attendance breakdown">
+              <tbody>
+                <tr>
+                  <th scope="row">Attending</th>
+                  <td>62</td>
+                </tr>
+                <tr>
+                  <th scope="row">Not attending</th>
+                  <td>22</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+
+          <article class="section-card">
+            <h2>Cricket Attendance Breakdown</h2>
+            <table class="breakdown-table" aria-label="Cricket attendance breakdown">
+              <tbody>
+                <tr>
+                  <th scope="row">Attending</th>
+                  <td>38</td>
+                </tr>
+                <tr>
+                  <th scope="row">Not attending</th>
+                  <td>46</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+
+          <div class="meta-grid">
+            <article class="section-card">
+              <h2>Primary vs Plus-One Split</h2>
+              <table class="breakdown-table" aria-label="Primary and plus-one split">
+                <tbody>
+                  <tr>
+                    <th scope="row">Primary guests</th>
+                    <td>49</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Plus-ones</th>
+                    <td>35</td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
+
+            <article class="section-card">
+              <h2>Dietary Notes Logged</h2>
+              <table class="breakdown-table" aria-label="Dietary note counts">
+                <tbody>
+                  <tr>
+                    <th scope="row">Guests with notes</th>
+                    <td>14</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Need manual review</th>
+                    <td>3</td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
+          </div>
+
+          <article class="section-card">
+            <h2>Dietary Requirements Summary</h2>
+            <div class="pill-row" aria-label="Dietary requirement counts">
+              <div class="pill"><strong>5</strong> Vegetarian</div>
+              <div class="pill"><strong>3</strong> Vegan</div>
+              <div class="pill"><strong>2</strong> Gluten-free</div>
+              <div class="pill"><strong>2</strong> Nut allergy</div>
+              <div class="pill"><strong>1</strong> Dairy-free</div>
+              <div class="pill"><strong>1</strong> No shellfish</div>
+            </div>
+          </article>
+
+          <article class="section-card alert-card">
+            <h2>Dietary Notes Needing Manual Review</h2>
+            <ul class="alert-list">
+              <li><strong>James K.</strong> “Vegetarian, but okay with fish stock depending on the dish.”</li>
+              <li><strong>Alice P.</strong> “Severe nut allergy, especially pistachio and hazelnut.”</li>
+              <li><strong>Tom &amp; guest</strong> “One guest is gluten-free, unsure whether oats are okay.”</li>
+            </ul>
+          </article>
+
+          <article class="section-card">
+            <h2>Last Week's RSVP Updates</h2>
+            <p class="stat-note" style="margin: 0 0 12px;">
+              Changes from Wed 24/03/2026 16:56 to Wed 31/03/2026 16:55 (UK time).
+            </p>
+            <ol class="recent-list">
+              <li><strong>31/03/2026 16:42</strong> — Laura M. updated wedding attendance from “no” to “yes”.</li>
+              <li><strong>30/03/2026 20:18</strong> — Ben R. added a plus-one and a vegan dietary note.</li>
+              <li><strong>29/03/2026 11:07</strong> — Sophie T. confirmed cricket attendance for both guests.</li>
+              <li><strong>24/03/2026 17:08</strong> — Daniel W. submitted address details and wedding “yes”.</li>
+            </ol>
+          </article>
+        </div>
+
+        <div class="footer-note">
+          This summary is based on guest rows currently stored in the RSVP database. Headcounts above are calculated
+          per guest rather than per invitation, so they should align with wedding, cricket, and catering planning.
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

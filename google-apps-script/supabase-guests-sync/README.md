@@ -9,7 +9,7 @@ This is a bound Google Apps Script project for syncing `public.guests` into a wo
 - Replaces the tab contents with the latest export from Supabase
 - Freezes the header row and reapplies a filter
 - Stores sync metadata in `R1:R2`
-- Can install an hourly refresh trigger
+- Can install a 12-hour refresh trigger
 
 ## Script Properties
 
@@ -27,6 +27,6 @@ Set these in the bound Apps Script project under:
 4. Replace the manifest with `appsscript.json` from this folder.
 5. Add the required Script Properties.
 6. Run `syncSupabaseGuests` once and grant permissions.
-7. Run `installHourlyGuestsSyncTrigger` once.
+7. Run `installTwelveHourGuestsSyncTrigger` once.
 
-After that, the spreadsheet will have a manual sync menu and an hourly refresh trigger.
+After that, the spreadsheet will have a manual sync menu and a 12-hour refresh trigger.
