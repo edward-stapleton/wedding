@@ -11,7 +11,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Supabase Sync')
     .addItem('Sync Supabase Guests', 'syncSupabaseGuests')
-    .addItem('Install hourly guests sync', 'installHourlyGuestsSyncTrigger')
+    .addItem('Install 12-hour guests sync', 'installTwelveHourGuestsSyncTrigger')
     .addToUi();
 }
 
@@ -23,7 +23,7 @@ function syncSupabaseGuests() {
   replaceSheetData_(sheet, payload.columns, payload.rows, payload.exported_at);
 }
 
-function installHourlyGuestsSyncTrigger() {
+function installTwelveHourGuestsSyncTrigger() {
   const handlerName = 'syncSupabaseGuests';
 
   ScriptApp.getProjectTriggers()
@@ -32,8 +32,12 @@ function installHourlyGuestsSyncTrigger() {
 
   ScriptApp.newTrigger(handlerName)
     .timeBased()
-    .everyHours(1)
+    .everyHours(12)
     .create();
+}
+
+function installHourlyGuestsSyncTrigger() {
+  installTwelveHourGuestsSyncTrigger();
 }
 
 function getSyncConfig_() {
