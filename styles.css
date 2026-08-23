@@ -1146,6 +1146,43 @@ body.nav-open {
   align-self: center;
 }
 
+.registry-bank-details {
+  width: min(100%, var(--faq-content-width));
+  margin: 0.5rem auto 0;
+  display: grid;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.registry-bank-details__intro {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.registry-bank-details__list {
+  margin: 0 auto;
+  display: inline-grid;
+  gap: 0.4rem;
+  text-align: left;
+}
+
+.registry-bank-details__list > div {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.registry-bank-details__list dt {
+  opacity: 0.65;
+}
+
+.registry-bank-details__list dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 .guide-carousel {
   position: relative;
   width: 100%;
