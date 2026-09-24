@@ -79,6 +79,8 @@ A bound Apps Script that calls `guests-sheet-export` and writes the result into 
 
 ## Auth / access model — two gates, easy to conflate
 
+> **Post-wedding mode (Sept 2026):** the RSVP flow is retired. The hero shows a thank-you message plus a small arrow that reveals the site-password field (`setupHeroGate` in `script.js`); a correct password unlocks the rest of the page for the browser session. The RSVP modal markup is gone, `/rsvp/` and `/rsvp-couple/` just redirect home, and `initAuth` is no longer called — the remaining RSVP functions in `script.js` are dormant.
+
 1. **Site password gate** — a single shared password (`STARFORD`, in `config.js`'s `rsvpPassword`) for the whole guest-facing site, referenced in guest emails. This ships in public client code — it's a soft gate to keep casual visitors out, not real security.
 2. **Guest identity** — no per-guest passwords. Guests are looked up by email; session state ("who's logged in", RSVP-completion flags) lives in the browser's `localStorage`, not a server session.
 

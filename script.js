@@ -2925,10 +2925,87 @@ async function initAuth() {
   });
 }
 
-const shouldInitRsvp = enforceSiteGate();
-if (shouldInitRsvp) {
-  initAuth();
+// The wedding has happened, so the RSVP flow is retired: the hero now only offers
+// a password reveal that unlocks the rest of the site.
+const heroGate = document.querySelector('[data-hero-gate]');
+const heroGateToggle = document.querySelector('[data-hero-gate-toggle]');
+const heroGateForm = document.querySelector('[data-hero-gate-form]');
+const heroGateInput = document.getElementById('site-password');
+const HERO_GATE_UNLOCK_DELAY_MS = 650;
+
+function setHeroGateOpen(isOpen) {
+  if (!heroGate || !heroGateForm || !heroGateToggle) return;
+  heroGate.classList.toggle('is-open', isOpen);
+  heroGateToggle.setAttribute('aria-expanded', String(isOpen));
+  heroGateToggle.setAttribute('aria-label', isOpen ? 'Hide password field' : 'Enter the website');
+  if (isOpen) {
+    heroGateForm.hidden = false;
+    // Let the form render before focusing so the reveal transition still plays.
+    requestAnimationFrame(() => {
+      heroGate.classList.add('is-revealed');
+      heroGateInput?.focus({ preventScroll: true });
+    });
+  } else {
+    heroGate.classList.remove('is-revealed');
+    heroGateInput?.removeAttribute('aria-invalid');
+  }
 }
+
+function rejectHeroGatePassword() {
+  if (!heroGateInput) return;
+  heroGateInput.setAttribute('aria-invalid', 'true');
+  heroGate?.classList.remove('is-shaking');
+  // Force a reflow so the shake animation restarts on repeated attempts.
+  void heroGate?.offsetWidth;
+  heroGate?.classList.add('is-shaking');
+  heroGateInput.select();
+}
+
+async function handleHeroGateSubmit(event) {
+  event.preventDefault();
+  if (!heroGateInput) return;
+  if (!isRsvpPasswordValid(heroGateInput.value)) {
+    rejectHeroGatePassword();
+    return;
+  }
+
+  heroGateInput.setAttribute('aria-invalid', 'false');
+  heroGateInput.blur();
+  heroGate?.classList.add('is-unlocked');
+  setSiteGatePassed();
+  trackEvent('site_gate_passed', { source: 'hero_gate' });
+  await delay(HERO_GATE_UNLOCK_DELAY_MS);
+  updateRsvpNavigationVisibility();
+  scheduleMapSizeSync();
+  requestAnimationFrame(() => {
+    scheduleSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+function setupHeroGate() {
+  if (!heroGate) return;
+  heroGateToggle?.addEventListener('click', () => {
+    setHeroGateOpen(!heroGate.classList.contains('is-open'));
+  });
+  heroGateForm?.addEventListener('submit', event => {
+    void handleHeroGateSubmit(event);
+  });
+  heroGateForm?.addEventListener('transitionend', event => {
+    if (event.target === heroGateForm && !heroGate.classList.contains('is-open')) {
+      heroGateForm.hidden = true;
+    }
+  });
+  heroGateInput?.addEventListener('input', () => {
+    heroGateInput.removeAttribute('aria-invalid');
+  });
+  heroGate.addEventListener('animationend', () => {
+    heroGate.classList.remove('is-shaking');
+  });
+}
+
+setupHeroGate();
+trackSiteVisitOnce();
+enforceSiteGate();
 
 async function handleReturningRsvpRequest() {
   setEntryMode(rsvpState.entryMode === 'returning' ? 'new' : 'returning');

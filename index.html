@@ -143,60 +143,46 @@
       <main>
         <div data-site-content>
         <section id="home" class="section hero-section fade-section" data-section data-hero-section>
-          <video
+          <img
             class="hero-image"
-            autoplay
-            muted
-            loop
-            playsinline
-            preload="metadata"
-            poster="assets/hero-video-poster.jpg"
+            src="assets/hero-garden.jpg"
+            alt=""
             aria-hidden="true"
-            data-hero-video
-          >
-            <source src="assets/hero-video.mp4" type="video/mp4" />
-          </video>
+            fetchpriority="high"
+          />
           <div class="hero-content">
             <p class="hero-date">The Wedding of</p>
             <p class="hero-names">Ed Stapleton &amp; Laura Harford</p>
             <p class="hero-date">Saturday 22 August 2026</p>
             <p class="hero-location">Oxford</p>
-            <form class="hero-access-form" data-hero-access-form novalidate>
-              <div class="form-field password-field">
-                <label class="visually-hidden" for="rsvp-password">Website password</label>
-                <div class="password-input">
-                  <input
-                    id="rsvp-password"
-                    name="rsvp-password"
-                    type="password"
-                    class="form-control"
-                    placeholder="Password"
-                    autocomplete="current-password"
-                    required
-                  />
-                  <button type="button" class="password-toggle" data-password-toggle aria-label="Show password">
-                    <span class="material-icons" aria-hidden="true">visibility</span>
-                  </button>
-                </div>
-              </div>
-              <div class="form-field" data-returning-email hidden aria-hidden="true">
-                <label class="visually-hidden" for="rsvp-access-email">Email address</label>
-                <input
-                  id="rsvp-access-email"
-                  name="rsvp-access-email"
-                  type="email"
-                  inputmode="email"
-                  autocomplete="email"
-                  class="form-control"
-                  placeholder="Email address"
-                />
-              </div>
-              <button type="submit" class="primary" data-hero-access-submit data-hero-cta>RSVP</button>
-              <button type="button" class="rsvp-access-link hero-access-link" data-hero-returning-link>
-                Already RSVP&rsquo;d?
+            <p class="hero-thanks">Thanks so much for joining us!</p>
+          </div>
+          <div class="hero-gate" data-hero-gate>
+            <form class="hero-gate-form" data-hero-gate-form novalidate hidden>
+              <label class="visually-hidden" for="site-password">Website password</label>
+              <input
+                id="site-password"
+                name="site-password"
+                type="password"
+                class="hero-gate-input"
+                placeholder="Password"
+                autocomplete="current-password"
+                autocapitalize="characters"
+                spellcheck="false"
+              />
+              <button type="submit" class="hero-gate-submit" aria-label="Enter website">
+                <span class="material-icons" aria-hidden="true">arrow_forward</span>
               </button>
-              <p id="rsvp-access-feedback" class="hero-access-feedback" role="status" aria-live="polite"></p>
             </form>
+            <button
+              type="button"
+              class="hero-gate-toggle"
+              data-hero-gate-toggle
+              aria-expanded="false"
+              aria-label="Enter the website"
+            >
+              <span class="material-icons" aria-hidden="true">expand_more</span>
+            </button>
           </div>
           <div class="scroll-invite" aria-hidden="true" data-scroll-cue>&#8595;</div>
           <p class="visually-hidden">Scroll for the schedule and details.</p>
@@ -1352,305 +1338,6 @@
           </section>
         </div>
         </div>
-        <section id="rsvp-page" class="modal rsvp-page" data-rsvp-modal hidden aria-hidden="true">
-          <div class="modal-backdrop" data-rsvp-modal-close></div>
-          <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="rsvp-modal-title">
-            <button type="button" class="modal-close" data-rsvp-modal-close aria-label="Close RSVP form">&times;</button>
-            <div class="modal-body">
-              <h2 id="rsvp-modal-title" class="visually-hidden">RSVP form</h2>
-              <div class="rsvp-panel" data-rsvp-panel>
-                <div class="rsvp-body">
-                  <form id="rsvp-form" novalidate>
-                  <div class="rsvp-header" data-rsvp-header>
-                    <div class="rsvp-header-top">
-                      <button
-                        type="button"
-                        class="rsvp-header-close"
-                        data-rsvp-modal-close
-                        aria-label="Close RSVP form"
-                      >
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                      <ol class="rsvp-steps rsvp-progress" aria-label="RSVP progress">
-                        <li class="rsvp-step-indicator" data-step-indicator="1">
-                          <span class="rsvp-step-label">Guest 1</span>
-                        </li>
-                        <li class="rsvp-step-indicator" data-step-indicator="2">
-                          <span class="rsvp-step-label">Guest 2</span>
-                        </li>
-                        <li class="rsvp-step-indicator" data-step-indicator="3">
-                          <span class="rsvp-step-label">Contact Details</span>
-                        </li>
-                      </ol>
-                    </div>
-                    <h3 class="rsvp-header-title" data-rsvp-header-title aria-live="polite"></h3>
-                  </div>
-
-                  <section class="rsvp-step" data-rsvp-step="1" hidden>
-                    <h3 class="rsvp-step-title">Guest 1</h3>
-                    <section class="guest-response" data-guest-section="primary">
-                      <div class="form-grid">
-                        <div class="form-field">
-                          <input
-                            id="primary-first-name"
-                            name="primary-first-name"
-                            type="text"
-                            autocomplete="given-name"
-                            class="form-control"
-                            placeholder="First Name"
-                            aria-label="First Name"
-                            required
-                          />
-                        </div>
-                        <div class="form-field">
-                          <input
-                            id="primary-last-name"
-                            name="primary-last-name"
-                            type="text"
-                            autocomplete="family-name"
-                            class="form-control"
-                            placeholder="Surname"
-                            aria-label="Surname"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <fieldset class="rsvp-choice-group">
-                        <legend data-cricket-attendance-legend="primary">
-                          Able to come to cricket and drinks on Friday 21 August afternoon?
-                        </legend>
-                        <div class="rsvp-choice-row">
-                          <label class="rsvp-choice">
-                            <input type="radio" name="primary-cricket-attendance" value="Yes" required />
-                            <span>Yes</span>
-                          </label>
-                          <label class="rsvp-choice">
-                            <input type="radio" name="primary-cricket-attendance" value="No" required />
-                            <span>No</span>
-                          </label>
-                        </div>
-                      </fieldset>
-                      <fieldset class="rsvp-choice-group">
-                        <legend data-attendance-legend="primary">Able to come to our wedding on Saturday 22 August?</legend>
-                        <div class="rsvp-choice-row">
-                          <label class="rsvp-choice">
-                            <input id="primary-attending" type="radio" name="primary-attendance" value="Yes" required />
-                            <span>Yes</span>
-                          </label>
-                          <label class="rsvp-choice">
-                            <input type="radio" name="primary-attendance" value="No" required />
-                            <span>No</span>
-                          </label>
-                        </div>
-                      </fieldset>
-                      <div class="form-field form-field-optional">
-                        <label for="primary-dietary" data-dietary-label="primary">Any dietary requirements?</label>
-                        <textarea
-                          id="primary-dietary"
-                          name="primary-dietary"
-                          class="form-control"
-                          rows="3"
-                          placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
-                        ></textarea>
-                      </div>
-                    </section>
-                  </section>
-
-                  <section class="rsvp-step" data-rsvp-step="2" hidden>
-                    <h3 class="rsvp-step-title">Guest 2</h3>
-                    <section class="guest-response" data-guest-section="plusOne">
-                      <div class="form-grid">
-                        <div class="form-field">
-                          <input
-                            id="plusone-first-name"
-                            name="plusone-first-name"
-                            type="text"
-                            autocomplete="given-name"
-                            class="form-control"
-                            placeholder="First Name"
-                            aria-label="First Name"
-                            required
-                          />
-                        </div>
-                        <div class="form-field">
-                          <input
-                            id="plusone-last-name"
-                            name="plusone-last-name"
-                            type="text"
-                            autocomplete="family-name"
-                            class="form-control"
-                            placeholder="Surname"
-                            aria-label="Surname"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <fieldset class="rsvp-choice-group">
-                        <legend data-cricket-attendance-legend="plusOne">
-                          Able to come to cricket and drinks on Friday 21 August afternoon?
-                        </legend>
-                        <div class="rsvp-choice-row">
-                          <label class="rsvp-choice">
-                            <input type="radio" name="plusone-cricket-attendance" value="Yes" required />
-                            <span>Yes</span>
-                          </label>
-                          <label class="rsvp-choice">
-                            <input type="radio" name="plusone-cricket-attendance" value="No" required />
-                            <span>No</span>
-                          </label>
-                        </div>
-                      </fieldset>
-                      <fieldset class="rsvp-choice-group">
-                        <legend data-attendance-legend="plusOne">Able to come to our wedding on Saturday 22 August?</legend>
-                        <div class="rsvp-choice-row">
-                          <label class="rsvp-choice">
-                            <input type="radio" name="plusone-attendance" value="Yes" required />
-                            <span>Yes</span>
-                          </label>
-                          <label class="rsvp-choice">
-                            <input type="radio" name="plusone-attendance" value="No" required />
-                            <span>No</span>
-                          </label>
-                        </div>
-                      </fieldset>
-                      <div class="form-field form-field-optional">
-                        <label for="plusone-dietary" data-dietary-label="plusOne">Any dietary requirements?</label>
-                        <textarea
-                          id="plusone-dietary"
-                          name="plusone-dietary"
-                          class="form-control"
-                          rows="3"
-                          placeholder="e.g. vegetarian, vegan, gluten-intolerant, allergies"
-                        ></textarea>
-                      </div>
-                    </section>
-                  </section>
-
-                    <section class="rsvp-step" data-rsvp-step="3" hidden>
-                    <h3 class="rsvp-step-title">Contact Details</h3>
-                    <div class="form-field">
-                      <input
-                        id="rsvp-email"
-                        name="guest-email"
-                        type="email"
-                        inputmode="email"
-                        autocomplete="email"
-                        class="form-control"
-                        placeholder="Email Address"
-                        aria-label="Email Address"
-                        required
-                      />
-                    </div>
-
-                    <div class="form-grid">
-                      <div class="form-field">
-                        <input
-                          id="address-line-1"
-                          name="address-line-1"
-                          type="text"
-                          autocomplete="address-line1"
-                          class="form-control"
-                          placeholder="Address Line 1"
-                          aria-label="Address Line 1"
-                          required
-                        />
-                      </div>
-                      <div class="form-field">
-                        <input
-                          id="address-line-2"
-                          name="address-line-2"
-                          type="text"
-                          autocomplete="address-line2"
-                          class="form-control"
-                          placeholder="Address Line 2"
-                          aria-label="Address Line 2"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="form-grid">
-                      <div class="form-field">
-                        <input
-                          id="address-city"
-                          name="address-city"
-                          type="text"
-                          autocomplete="address-level2"
-                          class="form-control"
-                          placeholder="City"
-                          aria-label="City"
-                          required
-                        />
-                      </div>
-                      <div class="form-field">
-                        <input
-                          id="address-postcode"
-                          name="address-postcode"
-                          type="text"
-                          autocomplete="postal-code"
-                          class="form-control"
-                          placeholder="Postcode"
-                          aria-label="Postcode"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div class="form-field">
-                      <input
-                        id="address-country"
-                        name="address-country"
-                        type="text"
-                        autocomplete="country-name"
-                        class="form-control"
-                        placeholder="Country"
-                        aria-label="Country"
-                      />
-                    </div>
-                  </section>
-
-                  <section class="rsvp-step" data-rsvp-step="4" hidden>
-                    <h3 class="rsvp-step-title">Thank you!</h3>
-                    <p class="rsvp-step-intro">Your RSVP has been sent. You should receive an email confirmation from hi@edlaura.com shortly - check your spam if you can't see it!</p>
-                    <p id="rsvp-thank-you-message" class="thank-you"></p>
-                    <p id="rsvp-thank-you-personal"></p>
-                  </section>
-
-                  <input type="hidden" name="invite-token" id="invite-token" />
-                  <div class="rsvp-actions">
-                    <button type="button" class="secondary" data-step-prev hidden>Back</button>
-                    <div class="rsvp-action-slot" data-step-next-slot>
-                      <button type="button" class="primary" data-step-next>Next</button>
-                      <button
-                        type="button"
-                        class="rsvp-action-hitbox"
-                        data-step-next-hitbox
-                        hidden
-                        aria-hidden="true"
-                        tabindex="-1"
-                        aria-label="Show the next required field"
-                      ></button>
-                    </div>
-                    <div class="rsvp-action-slot" data-step-submit-slot>
-                      <button type="submit" class="primary" data-step-submit hidden>Submit</button>
-                      <button
-                        type="button"
-                        class="rsvp-action-hitbox"
-                        data-step-submit-hitbox
-                        hidden
-                        aria-hidden="true"
-                        tabindex="-1"
-                        aria-label="Show the next required field"
-                      ></button>
-                    </div>
-                    <button type="button" class="primary" data-step-enter hidden>Enter</button>
-                  </div>
-                  <p id="rsvp-feedback" role="status" aria-live="polite"></p>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer class="site-footer">
