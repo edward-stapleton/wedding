@@ -501,8 +501,8 @@ body.nav-open {
 }
 
 .hero-section[data-hero-section] {
-  justify-content: flex-start;
-  padding-top: clamp(4.5rem, 13vh, 8rem);
+  justify-content: center;
+  padding-block: 4.5rem;
 }
 
 .hero-section[data-hero-section] .hero-image {
