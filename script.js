@@ -15,11 +15,6 @@ import { GUIDE_CATEGORY_INTROS } from './data/guide.js';
 window.__WEDDING_APP_BOOTED__ = true;
 
 const APP_CONFIG = window.__APP_CONFIG__ ?? window.APP_CONFIG ?? {};
-const SUPABASE_URL =
-  APP_CONFIG.supabaseUrl ?? 'https://ipxbndockmhkfuwjyevi.supabase.co';
-const SUPABASE_ANON_KEY =
-  APP_CONFIG.supabaseAnonKey ??
-  'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT';
 const GA_MEASUREMENT_ID = APP_CONFIG.gaMeasurementId?.toString().trim() || '';
 const ANALYTICS_DEBUG = APP_CONFIG.analyticsDebug === true;
 const SITE_BASE_URL =
@@ -355,8 +350,6 @@ function isFocusedElementWithin(root, selector) {
     activeElement.matches(selector)
   );
 }
-
-const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function sanitizeAnalyticsParams(params = {}) {
   return Object.fromEntries(
@@ -1313,36 +1306,18 @@ function initMap() {
   });
 }
 
-// --- Supabase Edge Functions (RSVP) ---
-const EDGE_FUNCTION_BASE_URL = `${SUPABASE_URL}/functions/v1`;
-const RSVP_LOOKUP_FUNCTION_URL = `${EDGE_FUNCTION_BASE_URL}/rsvp-lookup`;
-const RSVP_SUBMIT_FUNCTION_URL = `${EDGE_FUNCTION_BASE_URL}/rsvp-submit`;
+// --- RSVP backend (retired) ---
+// RSVPs closed after the wedding and the Supabase project behind them was shut down;
+// the guest data now lives in the wedding planner Google Sheet. Any leftover call fails
+// the same way the old service did when it was unreachable.
+const RSVP_LOOKUP_FUNCTION = 'rsvp-lookup';
+const RSVP_SUBMIT_FUNCTION = 'rsvp-submit';
 
-async function callRsvpFunction(url, payload) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-
-  let json;
-  try {
-    json = await response.json();
-  } catch {
-    throw new Error('RSVP service returned an invalid response.');
-  }
-
-  if (!response.ok || !json?.ok) {
-    const status = Number.isFinite(response.status) ? response.status : 0;
-    const message = json?.details || json?.message || json?.error || 'RSVP service error.';
-    const reasonSuffix = json?.reason ? ` (${json.reason})` : '';
-    const error = new Error(`${status}: ${message}${reasonSuffix}`);
-    error.rsvpStatus = status;
-    error.rsvpBody = json;
-    throw error;
-  }
-
-  return json;
+async function callRsvpFunction(functionName) {
+  const error = new Error(`503: RSVP service retired (${functionName}).`);
+  error.rsvpStatus = 503;
+  error.rsvpBody = null;
+  throw error;
 }
 
 const ATTENDANCE_PROMPT = 'Able to come to our wedding on Saturday 22 August?';
@@ -1434,7 +1409,7 @@ async function fetchRsvpCompletionStatus(email) {
 
   // Fallback to local storage if Edge Functions are unreachable.
   try {
-    const result = await callRsvpFunction(RSVP_LOOKUP_FUNCTION_URL, {
+    const result = await callRsvpFunction(RSVP_LOOKUP_FUNCTION, {
       email: normalizedEmail,
       sitePassword: RSVP_PASSWORD,
       inviteToken: rsvpState.inviteToken || '',
@@ -1474,7 +1449,7 @@ async function lookupGuestByEmail(email) {
   if (!normalized) return { status: 'not_found' };
 
   try {
-    const result = await callRsvpFunction(RSVP_LOOKUP_FUNCTION_URL, {
+    const result = await callRsvpFunction(RSVP_LOOKUP_FUNCTION, {
       email: normalized,
       sitePassword: RSVP_PASSWORD,
       inviteToken: rsvpState.inviteToken || '',
@@ -1501,7 +1476,7 @@ async function lookupGuestByEmail(email) {
 
     if (RSVP_DEBUG) {
       console.error('RSVP lookup failed', {
-        endpoint: RSVP_LOOKUP_FUNCTION_URL,
+        endpoint: RSVP_LOOKUP_FUNCTION,
         statusCode: error?.rsvpStatus ?? null,
         details,
         payload: error?.rsvpBody ?? null,
@@ -2094,7 +2069,7 @@ async function loadGuestRowsByEmail(email) {
   if (!email) return [];
 
   try {
-    const result = await callRsvpFunction(RSVP_LOOKUP_FUNCTION_URL, {
+    const result = await callRsvpFunction(RSVP_LOOKUP_FUNCTION, {
       email: normalizeEmailForStorage(email),
       sitePassword: RSVP_PASSWORD,
       inviteToken: rsvpState.inviteToken || '',
@@ -2868,54 +2843,11 @@ async function initAuth() {
     rsvpAccessEmailInput.value = rsvpState.storedEmail;
   }
 
-  if (!supabaseClient) {
-    if (rsvpState.inviteTypeOverride) {
-      applyInviteTypeOverride(rsvpState.inviteTypeOverride, rsvpState.storedEmail);
-    } else {
-      applyInviteDetailsToProfile(null, rsvpState.storedEmail);
-    }
-    if (rsvpState.hasRequestedReturning) {
-      await applyRsvpCompletionDismissal();
-    }
-    finalizeAuthenticatedAccess({
-      redirectHome: shouldRedirectAuthenticatedRsvpRouteHome({ bootstrap: true }),
-      replaceHistory: true,
-    });
-    return;
-  }
-
-  if (rsvpState.inviteToken) {
-    const invite = await fetchInviteDetails(rsvpState.inviteToken);
-    if (invite) {
-      applyInviteDetailsToProfile(invite, rsvpState.storedEmail);
-    } else if (!applyInviteTypeOverride(rsvpState.inviteTypeOverride, rsvpState.storedEmail)) {
-      applyInviteDetailsToProfile(null, rsvpState.storedEmail);
-      setRsvpAccessFeedback(
-        'This invite link looks invalid or has expired. Please contact us for a fresh link.'
-      );
-    }
-  } else if (!applyInviteTypeOverride(rsvpState.inviteTypeOverride, rsvpState.storedEmail)) {
+  if (rsvpState.inviteTypeOverride) {
+    applyInviteTypeOverride(rsvpState.inviteTypeOverride, rsvpState.storedEmail);
+  } else {
     applyInviteDetailsToProfile(null, rsvpState.storedEmail);
   }
-
-  if (storedAccessEmail && rsvpState.hasRequestedReturning) {
-    await setAuthEmail(storedAccessEmail);
-    const guestRows = await loadGuestRowsByEmail(storedAccessEmail);
-    populateRsvpFromGuests(guestRows, storedAccessEmail);
-  } else if (allowDirectInvite) {
-    applyInviteDetailsToProfile(rsvpState.inviteDetails, rsvpState.storedEmail);
-  } else {
-    applyInviteDetailsToProfile(rsvpState.inviteDetails, rsvpState.storedEmail);
-    if (
-      rsvpState.hasRequestedReturning &&
-      rsvpState.storedEmail &&
-      (await fetchRsvpCompletionStatus(rsvpState.storedEmail))
-    ) {
-      const guestRows = await loadGuestRowsByEmail(rsvpState.storedEmail);
-      populateRsvpFromGuests(guestRows, rsvpState.storedEmail);
-    }
-  }
-
   if (rsvpState.hasRequestedReturning) {
     await applyRsvpCompletionDismissal();
   }
@@ -4387,7 +4319,7 @@ async function submitRsvp(event) {
     const primaryRow = guestRows.find(row => row.role === 'primary') || guestRows[0];
     const plusOneRow = guestRows.find(row => row.role === 'plusone') || null;
 
-    const result = await callRsvpFunction(RSVP_SUBMIT_FUNCTION_URL, {
+    const result = await callRsvpFunction(RSVP_SUBMIT_FUNCTION, {
       email: primaryRow.email,
       sitePassword: RSVP_PASSWORD,
       inviteToken: rsvpState.inviteToken || '',

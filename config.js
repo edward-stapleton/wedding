@@ -1,6 +1,4 @@
 window.__APP_CONFIG__ = {
-  supabaseUrl: 'https://ipxbndockmhkfuwjyevi.supabase.co',
-  supabaseAnonKey: 'sb_publishable_VatpUfqGmaOnMBMvbEr8sQ_mmhphftT',
   siteBaseUrl: 'https://edlaura.com/',
   rsvpPassword: 'STARFORD',
   debugRsvp: false,
